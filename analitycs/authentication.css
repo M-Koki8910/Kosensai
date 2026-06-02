@@ -1,0 +1,44 @@
+/* Authentication / Admin panel styles */
+.analytics-page .analytics-header { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.analytics-page .analytics-back { background:#ef4444; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+
+/* Login card */
+#login-panel .analytics-card { max-width:420px; width:100%; box-shadow:0 4px 12px rgba(2,6,23,0.08); }
+#login-form { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+#login-form input { width:100%; box-sizing:border-box; }
+#login-message { color:#b91c1c; margin-top:8px; }
+
+/* Admin layout */
+.analytics-layout { gap:24px; }
+#admin-sidebar { background:#f8fafc; border-radius:8px; padding:12px; box-shadow:0 2px 8px rgba(2,6,23,0.04); }
+#admin-sidebar .stamp-btn { width:100%; text-align:left; }
+
+.analytics-card { padding:16px; border-radius:10px; background:white; }
+.stamp-btn { background:#0ea5e9; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+.stamp-btn.secondary { background:#efefef; color:#0b1220; }
+
+.analytics-table { width:100%; border-collapse:collapse; margin-top:8px; }
+.analytics-table th, .analytics-table td { padding:8px; border-bottom:1px solid #edf2f7; text-align:left; }
+
+.header-session-area{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.header-session-info{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:0.9rem;
+  color:#475569;
+  background:#f8fafc;
+  padding:8px 12px;
+  border-radius:12px;
+  border:1px solid #cbd5e1;
+}
+
+@media (max-width:800px) {
+  .analytics-layout { flex-direction:column; }
+  #admin-sidebar { min-width:unset; display:flex; }
+}
