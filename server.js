@@ -6,8 +6,8 @@ const { DatabaseSync } = require('node:sqlite');
 
 const PORT = process.env.PORT || 3000;
 
-const STATIC_ROOT = path.join(__dirname, '..');
-const ENV_PATH = path.join(__dirname, '..', '.env');
+const STATIC_ROOT = __dirname;
+const ENV_PATH = path.join(__dirname, '.env');
 
 if (fs.existsSync(ENV_PATH)) {
   const envContents = fs.readFileSync(ENV_PATH, 'utf8');
@@ -31,7 +31,7 @@ if (fs.existsSync(ENV_PATH)) {
   });
 }
 
-// stamp-rally 配下の stamp.db を統合済みのマスターDBとして参照する
+// ルートに置かれた stamp.db を参照する
 const DB_PATH = path.join(__dirname, 'stamp.db');
 
 const SYSTEM_ADMIN_USERNAME =
@@ -198,11 +198,7 @@ function getFilePath(urlPath) {
 
   if (urlPath === '/' || urlPath === '') {
 
-    return path.join(
-      STATIC_ROOT,
-      'index',
-      'index.html'
-    );
+    return path.join(STATIC_ROOT, 'index.html');
   }
 
   const clean =

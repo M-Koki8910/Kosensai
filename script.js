@@ -25,10 +25,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initStampRally() {
     const locations = [
-        { id: "entrance", name: "正門", note: "正門横の案内ブース", linkText: "会場マップへ", href: "/map/index.html" },
-        { id: "museum", name: "展示ホール", note: "展示ホール入口", linkText: "高専祭とはへ", href: "/about/index.html" },
-        { id: "stage", name: "ステージ", note: "ステージ前の案内", linkText: "イベント紹介へ", href: "/event/index.html" },
-        { id: "shop", name: "模擬店エリア", note: "模擬店エリア入口", linkText: "模擬店紹介へ", href: "/shop/index.html" },
+        { id: "entrance", name: "正門", note: "正門横の案内ブース", linkText: "会場マップへ", href: "/map.html" },
+        { id: "museum", name: "展示ホール", note: "展示ホール入口", linkText: "高専祭とはへ", href: "/about.html" },
+        { id: "stage", name: "ステージ", note: "ステージ前の案内", linkText: "イベント紹介へ", href: "/event.html" },
+        { id: "shop", name: "模擬店エリア", note: "模擬店エリア入口", linkText: "模擬店紹介へ", href: "/shop.html" },
     ];
     const storageKey = "kosensai-stamp-rally";
     const analyticsKey = "kosensai-stamp-rally-analytics";
