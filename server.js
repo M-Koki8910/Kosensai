@@ -29,6 +29,9 @@ const DENIED_STATIC_EXTENSIONS = new Set([
   '.pem',
   '.key',
 ]);
+
+
+
 const loginAttempts = new Map();
 
 if (fs.existsSync(ENV_PATH)) {
@@ -57,9 +60,9 @@ if (fs.existsSync(ENV_PATH)) {
 const DB_PATH = path.join(__dirname, 'stamp.db');
 
 const SYSTEM_ADMIN_USERNAME =
-  process.env.SYSTEM_ADMIN_USERNAME /*|| 'Administrator'*/;
+  process.env.SYSTEM_ADMIN_USERNAME /*|| /*'Administrator'*/;
 const SYSTEM_ADMIN_PASSWORD =
-  process.env.SYSTEM_ADMIN_PASSWORD /*|| 'admin@J2337'*/;
+  process.env.SYSTEM_ADMIN_PASSWORD /*|| /*'admin@J2337'*/;
 
 const LOCATION_LABELS = {
   entrance: '正門',
@@ -127,6 +130,8 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
+
 
 function ensureColumn(tableName, columnDefinition) {
 
