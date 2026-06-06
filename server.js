@@ -1343,8 +1343,8 @@ const server = http.createServer((req, res) => {
           return sendJson(res, 400, { ok: false, error: 'Invalid username' });
         }
 
-        if (password.length < 12) {
-          return sendJson(res, 400, { ok: false, error: 'Password must be at least 12 characters' });
+        if (password.length < 4) {
+          return sendJson(res, 400, { ok: false, error: 'Password must be at least 4 characters' });
         }
 
         if (!ALLOWED_ROLES.includes(role)) {

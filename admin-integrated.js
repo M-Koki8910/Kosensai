@@ -11,6 +11,8 @@ const loginForm = document.getElementById('loginForm');
 const logoutBtn = document.getElementById('logoutBtn');
 const userDisplayName = document.getElementById('userDisplayName');
 const userRole = document.getElementById('userRole');
+const addUserForm = document.getElementById('add-user-form');
+const userMessage = document.getElementById('userMessage');
 
 // ページナビゲーション
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -70,6 +72,16 @@ function showLoginMessage(text, type) {
   msg.className = `login-message show ${type}`;
 }
 
+function showUserMessage(text, type = 'info') {
+  if (!userMessage) return;
+
+  userMessage.textContent = text;
+  userMessage.className = type; // success / error / info
+}
+
+ showUserMessage('ユーザーを追加しました', 'success');
+ showUserMessage('エラーが発生しました', 'error');
+
 function showAdminScreen() {
   loginScreen.style.display = 'none';
   adminScreen.style.display = 'flex';
@@ -80,9 +92,26 @@ function showAdminScreen() {
   userDisplayName.textContent = currentUser.username;
   userRole.textContent = `(${currentUser.role || 'senior'})`;
   document.getElementById('accountUsername').value = currentUser.username;
+
+   applyUIAccessControl();
 }
 
 function showPage(page) {
+  const pageMap = {
+    posts: 'posts.read',
+    'ng-rules': 'rules.read',
+    announcements: 'announcements.read',
+    analytics: 'analytics.read',
+    users: 'users.read',
+    logs: 'logs.read',
+    account: 'account.read'
+  };
+
+  if (pageMap[page] && !can(pageMap[page])) {
+    showMessage('このページへのアクセス権限がありません', 'error');
+    return;
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(page).classList.add('active');
 
@@ -92,6 +121,66 @@ function showPage(page) {
   if (page === 'analytics') loadAnalytics();
   if (page === 'users') loadUsers();
   if (page === 'logs') loadLogs();
+}
+
+function applyUIAccessControl() {
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    const page = btn.dataset.page;
+
+    const map = {
+      users: 'users.read',
+      logs: 'logs.read',
+      analytics: 'analytics.read'
+    };
+
+    const perm = map[page];
+    if (perm && !can(perm)) {
+      btn.style.display = 'none';
+    }
+  });
+}
+
+if (addUserForm) {
+  addUserForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const newUsername = document.getElementById('new-user')?.value || '';
+    const password = document.getElementById('new-password')?.value || '';
+    const role = document.getElementById('role')?.value || 'visitor';
+
+    const scope = Array.from(
+      document.querySelectorAll('input[type="checkbox"]:checked')
+    ).map(cb => cb.value);
+
+    if (!newUsername || !password) {
+      userMessage.textContent = 'ユーザ名とパスワードを入力してください';
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: newUsername, password, role, scope })
+      });
+
+      const data = await safeJson(res);
+
+      if (!res.ok) {
+        userMessage.textContent = data?.error || 'ユーザ追加に失敗しました';
+        return;
+      }
+
+      userMessage.textContent = `${data.username} を追加しました`;
+
+      addUserForm.reset();
+
+      await loadUsers();
+
+    } catch (err) {
+      userMessage.textContent = err.message;
+    }
+  });
 }
 
 // ============================================================================
@@ -113,12 +202,23 @@ function showMessage(text, type = 'info') {
 
 async function checkSession() {
   try {
-    const response = await fetch('/api/auth/me');
-    const data = await response.json();
+    const res = await fetch('/api/auth/me');
+    const data = await res.json();
 
     if (data.ok) {
       currentUser = data;
+
+      // ★追加
+      applyPermissions(data);
+
       showAdminScreen();
+      loadDashboard();
+
+      // 権限制御付き初期ロード
+      if (can('analytics.read')) loadAnalytics();
+      if (can('users.read')) loadUsers();
+      if (can('logs.read')) loadLogs();
+
     } else {
       showLoginScreen();
     }
@@ -581,6 +681,44 @@ function escapeHtml(text) {
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleString('ja-JP');
+}
+
+// ====================================================================
+// 権限管理レイヤー（追加）
+// ====================================================================
+
+//let currentUser = null;
+let permissions = new Set();
+
+function applyPermissions(user) {
+  permissions = new Set(user?.permissions || []);
+}
+
+function can(permission) {
+  if (!currentUser) return false;
+
+  // Administratorは全許可（サーバー前提でも保険）
+  if (currentUser.role === 'administrator') return true;
+
+  return permissions.has(permission);
+}
+
+async function securefetch(url, options = {}) {
+  const res = await fetch(url, options);
+
+  // 認証切れ
+  if (res.status === 401) {
+    showLoginScreen?.();
+    return null;
+  }
+
+  // 権限不足
+  if (res.status === 403) {
+    showMessage('権限がありません', 'error');
+    return null;
+  }
+
+  return res;
 }
 
 // ============================================================================

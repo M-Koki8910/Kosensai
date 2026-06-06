@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>管理画面 - 高専祭</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="./style.css">
   <style>
     * {
       margin: 0;
@@ -495,7 +495,7 @@
       <form id="loginForm">
         <div class="form-group">
           <label for="loginUsername">ユーザー名</label>
-          <input type="text" id="loginUsername" placeholder="Administrator" required>
+          <input type="text" id="loginUsername" placeholder="ユーザー名" required>
         </div>
         <div class="form-group">
           <label for="loginPassword">パスワード</label>
@@ -677,15 +677,40 @@
         </div>
 
         <!-- ユーザー管理 -->
+
         <div id="users" class="page">
           <div class="page-header">
             <div class="page-title">ユーザー管理</div>
             <div class="page-subtitle">運営アカウントのユーザーを管理します</div>
           </div>
 
-          <div class="controls">
-            <button class="btn btn-success" onclick="openUserModal()">+ ユーザー追加</button>
+          <div id="userMessage">
+           
           </div>
+
+
+          <div class="user-create-panel">
+  <form id="add-user-form" class="stamp-controls">
+    <input id="new-user" type="text" placeholder="新しいユーザ名" required />
+    <input id="new-password" type="password" placeholder="パスワード" required />
+
+    <label>ロール</label>
+    <select id="role">
+      <option value="visitor">visitor</option>
+      <option value="senior">senior</option>
+      <option value="administrator">administrator</option>
+    </select>
+
+    <label>参照範囲</label>
+    <label><input type="checkbox" value="entrance"> 正門</label>
+    <label><input type="checkbox" value="museum"> 展示ホール</label>
+    <label><input type="checkbox" value="stage"> ステージ</label>
+    <label><input type="checkbox" value="shop"> 模擬店</label>
+    <label><input type="checkbox" value="all"> 全て</label>
+
+    <button type="submit" class="btn btn-success">ユーザ追加</button>
+  </form>
+</div>
 
           <table id="usersTable">
             <thead>
