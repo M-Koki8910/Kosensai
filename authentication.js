@@ -156,15 +156,24 @@ async function safeJson(res) {
   try {
     return JSON.parse(text);
   } catch (error) {
-    throw new Error('サーバー応答の解析に失敗しました。');
+    throw new Error('サーバの応答を解析できませんでした。');
   }
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // SQLite のタイムスタンプ文字列（"YYYY-MM-DD HH:MM:SS"）を受け取り、
-// 表示時にサーバー時刻に +9 時間して JST 表示に変換します。
+// 表示時にブラウザのタイムゾーンで見やすい形式に変換する。
 function _parseSqliteTimestamp(ts) {
   if (!ts) return null;
-  // 'YYYY-MM-DD HH:MM:SS' -> 'YYYY-MM-DDTHH:MM:SSZ' として UTC 扱いで解釈
+  // 'YYYY-MM-DD HH:MM:SS' -> 'YYYY-MM-DDTHH:MM:SSZ' として UTC 扱いで解釈する。
   try {
     let iso = String(ts).trim().replace(' ', 'T');
     if (!iso.endsWith('Z')) iso = iso + 'Z';
@@ -313,11 +322,11 @@ async function loadLogs() {
           ${rows.map(r => `
             <tr>
               <td data-label="日時">${formatJST(r.created_at)}</td>
-              <td data-label="ユーザ">${r.username || ''}</td>
-              <td data-label="操作">${r.type}</td>
-              <td data-label="ページ">${r.page || ''}</td>
-              <td data-label="セッション">${r.session_id || ''}</td>
-              <td data-label="詳細">${r.detail || ''}</td>
+              <td data-label="ユーザ">${escapeHtml(r.username)}</td>
+              <td data-label="操作">${escapeHtml(r.type)}</td>
+              <td data-label="ページ">${escapeHtml(r.page)}</td>
+              <td data-label="セッション">${escapeHtml(r.session_id)}</td>
+              <td data-label="詳細">${escapeHtml(r.detail)}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -360,7 +369,7 @@ async function loadUsers() {
       <table class="analytics-table user-table">
         <thead>
           <tr>
-            <th>ユーザ名</th>
+             <th>ユーザ名</th>
             <th>権限</th>
             <th>範囲</th>
             <th>登録日</th>
@@ -375,15 +384,15 @@ async function loadUsers() {
             <tr>
 
               <td data-label="ユーザ名">
-                ${user.username}
+                ${escapeHtml(user.username)}
               </td>
 
               <td data-label="権限">
-                ${user.role || 'senior'}
+                ${escapeHtml(user.role || 'senior')}
               </td>
 
               <td data-label="範囲">
-                ${user.scope || 'entrance,museum'}
+                ${escapeHtml(user.scope || 'entrance,museum')}
               </td>
 
               <td data-label="登録日">
@@ -408,7 +417,7 @@ async function loadUsers() {
                       <button
                         type="button"
                         class="stamp-btn secondary delete-user-btn"
-                        data-username="${user.username}">
+                        data-username="${escapeHtml(user.username)}">
                         削除
                       </button>
                     `
@@ -449,7 +458,7 @@ async function loadAnalytics() {
     const events =
       await safeJson(eventsRes);
 
-    // サマリ表示
+    // サマリー表示
     document.getElementById('analytics-summary').textContent =
       `総訪問数 ${summary.totals.visits} / 総リンク遷移数 ${summary.totals.clicks}`;
 
@@ -461,10 +470,10 @@ async function loadAnalytics() {
         <tbody>
           ${ (summary.locations || []).map(loc => `
             <tr>
-              <td data-label="場所ID">${loc.stamp_id}</td>
-              <td data-label="場所名">${loc.stamp_name}</td>
-              <td data-label="訪問数">${loc.visits}</td>
-              <td data-label="リンク遷移数">${loc.clicks}</td>
+              <td data-label="場所ID">${escapeHtml(loc.stamp_id)}</td>
+              <td data-label="場所名">${escapeHtml(loc.stamp_name)}</td>
+              <td data-label="訪問数">${escapeHtml(loc.visits)}</td>
+              <td data-label="リンク遷移数">${escapeHtml(loc.clicks)}</td>
             </tr>
           `).join('') }
         </tbody>
@@ -625,21 +634,21 @@ function renderAnalyticsView(viewMode, locFilter, summary, visits, clicks) {
       eventsTable.style.display = '';
       eventsTable.innerHTML = `
         <thead>
-          <tr><th>#</th><th>ID</th><th>日時</th><th>アクション</th><th>場所ID</th><th>場所名</th><th>ページ</th><th>セッションID</th><th>ユーザー</th><th>属性</th></tr>
+          <tr><th>#</th><th>ID</th><th>日時</th><th>アクション</th><th>場所ID</th><th>場所名</th><th>ページ</th><th>セッションID</th><th>ユーザ</th><th>属性</th></tr>
         </thead>
         <tbody>
           ${ filtered.map((r,i) => `
             <tr>
               <td>${i+1}</td>
-              <td>${r.id || ''}</td>
+              <td>${escapeHtml(r.id)}</td>
               <td>${formatJST(r.created_at) || ''}</td>
-              <td>${r.action || ''}</td>
-              <td>${r.stamp_id || ''}</td>
-              <td>${r.stamp_name || ''}</td>
-              <td>${r.page || ''}</td>
-              <td>${r.session_id || ''}</td>
-              <td>${r.username || ''}</td>
-              <td>${r.demographic || ''}</td>
+              <td>${escapeHtml(r.action)}</td>
+              <td>${escapeHtml(r.stamp_id)}</td>
+              <td>${escapeHtml(r.stamp_name)}</td>
+              <td>${escapeHtml(r.page)}</td>
+              <td>${escapeHtml(r.session_id)}</td>
+              <td>${escapeHtml(r.username)}</td>
+              <td>${escapeHtml(r.demographic)}</td>
             </tr>
           `).join('') }
         </tbody>
@@ -659,9 +668,9 @@ function renderAnalyticsView(viewMode, locFilter, summary, visits, clicks) {
 
       let html = '';
       Object.keys(groups).forEach(loc => {
-        html += `\n<section class="analytics-location">\n  <h4>場所: ${loc}</h4>\n  <table class="analytics-table">\n    <thead><tr><th>#</th><th>ID</th><th>日時</th><th>アクション</th><th>ページ</th><th>セッションID</th><th>ユーザー</th><th>属性</th></tr></thead>\n    <tbody>`;
+        html += `\n<section class="analytics-location">\n  <h4>場所: ${escapeHtml(loc)}</h4>\n  <table class="analytics-table">\n    <thead><tr><th>#</th><th>ID</th><th>日時</th><th>アクション</th><th>ページ</th><th>セッションID</th><th>ユーザ</th><th>属性</th></tr></thead>\n    <tbody>`;
         groups[loc].forEach((r,i) => {
-          html += `<tr><td>${i+1}</td><td>${r.id||''}</td><td>${formatJST(r.created_at)||''}</td><td>${r.action||''}</td><td>${r.page||''}</td><td>${r.session_id||''}</td><td>${r.username||''}</td><td>${r.demographic||''}</td></tr>`;
+          html += `<tr><td>${i+1}</td><td>${escapeHtml(r.id)}</td><td>${formatJST(r.created_at)||''}</td><td>${escapeHtml(r.action)}</td><td>${escapeHtml(r.page)}</td><td>${escapeHtml(r.session_id)}</td><td>${escapeHtml(r.username)}</td><td>${escapeHtml(r.demographic)}</td></tr>`;
         });
         html += `</tbody></table></section>`;
       });
@@ -745,7 +754,7 @@ if (passwordForm) {
       const data = await safeJson(res);
 
       if (!res.ok) {
-        if (passwordMessage) passwordMessage.textContent = data && data.error ? data.error : 'パスワード変更に失敗しました';
+        if (passwordMessage) passwordMessage.textContent = data && data.error ? data.error : 'パスワードの変更に失敗しました';
         return;
       }
 

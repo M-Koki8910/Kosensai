@@ -1,9 +1,9 @@
 {
-  "name": "kosensai-homepage",
+  "name": "kosensai",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node stamp-rally/server.js"
+    "start": "node server.js"
   }
   ,
   "dependencies": {
