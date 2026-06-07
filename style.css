@@ -1422,6 +1422,64 @@ h2::after {
   color: #075985;
 }
 
+/* =========================
+   お知らせティッカー
+   ========================= */
+
+.announcement-ticker {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    height: 42px;
+
+    background: #fff3cd;
+    border-bottom: 1px solid #e0c85f;
+
+    overflow: hidden;
+}
+
+.ticker-label {
+    flex-shrink: 0;
+
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 15px;
+
+    font-weight: bold;
+
+    background: #ffc107;
+    color: #333;
+}
+
+.ticker-container {
+    flex: 1;
+
+    position: relative;
+
+    height: 100%;
+
+    overflow: hidden;
+}
+
+.ticker-content {
+    position: absolute;
+
+    top: 50%;
+
+    white-space: nowrap;
+
+    transform: translateY(-50%);
+
+    font-size: 14px;
+    font-weight: 500;
+
+    color: #333;
+}
+
 /* ===== フッター ===== */
 footer {
     background: linear-gradient(135deg, #1e3a8a 0%, #2d5aa0 100%);

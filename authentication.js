@@ -145,20 +145,7 @@ if (userListContainer) {
   });
 }
 
-async function safeJson(res) {
 
-  const text = await res.text();
-
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    throw new Error('サーバの応答を解析できませんでした。');
-  }
-}
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -548,6 +535,8 @@ loginForm.addEventListener('submit', async (event) => {
 });
 
 checkSession();
+
+
 
 // analytics controls handlers
 const analyticsRefreshBtn = document.getElementById('analytics-refresh');
