@@ -1,1 +1,1 @@
-# Kosensai-HomePage
+# 高専祭ホームページプロジェクト

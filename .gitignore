@@ -5,3 +5,4 @@ stamp.db-shm
 stamp.db-wal
 node_modules
 .env
+*.txt

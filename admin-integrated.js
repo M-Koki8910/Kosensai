@@ -3,6 +3,7 @@
 // ============================================================================
 
 let currentUser = null;
+let currentRule = null;
 
 // DOM要素
 const loginScreen = document.getElementById('loginScreen');
@@ -13,7 +14,7 @@ const userDisplayName = document.getElementById('userDisplayName');
 const userRole = document.getElementById('userRole');
 const addUserForm = document.getElementById('add-user-form');
 const userMessage = document.getElementById('userMessage');
-
+document.getElementById('addRuleBtn')?.addEventListener('click', saveRule);
 
 // ページナビゲーション
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -80,8 +81,8 @@ function showUserMessage(text, type = 'info') {
   userMessage.className = type; // success / error / info
 }
 
- showUserMessage('ユーザーを追加しました', 'success');
- showUserMessage('エラーが発生しました', 'error');
+ //showUserMessage('ユーザーを追加しました', 'success');
+ //showUserMessage('エラーが発生しました', 'error');
 
 function showAdminScreen() {
   loginScreen.style.display = 'none';
@@ -165,7 +166,7 @@ if (addUserForm) {
         body: JSON.stringify({ username: newUsername, password, role, scope })
       });
 
-      const data = await safeJson(res);
+      const data = await res.json();
 
       if (!res.ok) {
         userMessage.textContent = data?.error || 'ユーザ追加に失敗しました';
@@ -265,10 +266,19 @@ async function loadDashboard() {
 // ============================================================================
 // 投稿管理
 // ============================================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
 
 async function loadPosts() {
   try {
-    const response = await fetch('/api/admin/posts');
+    const response = await securefetch('/api/admin/posts');
+    if (!response) return;
+
     const data = await response.json();
 
     if (!data.ok) {
@@ -295,6 +305,11 @@ async function loadPosts() {
         <td>${new Date(post.created_at).toLocaleString('ja-JP')}</td>
         <td>
           <button class="btn" onclick="editPost(${post.id})">編集</button>
+          <button
+ class="btn btn-danger"
+ onclick="hidePost(${post.id})">
+ 非表示
+</button>
         </td>
       </tr>
     `).join('');
@@ -304,8 +319,153 @@ async function loadPosts() {
   }
 }
 
-function editPost(postId) {
-  showMessage('投稿編集機能は admin.js を参照してください', 'info');
+let currentPost = null;
+
+async function editPost(postId) {
+  try {
+    const response = await securefetch('/api/admin/posts');
+
+    if (!response) return;
+
+    const data = await response.json();
+
+    const post = data.posts.find(
+      p => p.id === postId
+    );
+
+    if (!post) {
+      showMessage('投稿が見つかりません', 'error');
+      return;
+    }
+
+    currentPost = post;
+
+    document.getElementById('postModalId').value = post.id;
+    document.getElementById('postModalContent').textContent = post.content;
+    document.getElementById('postModalRiskScore').value = post.risk_score;
+    document.getElementById('postModalCurrentStatus').value = post.status;
+    document.getElementById('postModalNewStatus').value = post.status;
+
+    openModal('postModal');
+
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function savePostStatus() {
+
+  if (!currentPost) return;
+
+  const status =
+    document.getElementById('postModalNewStatus').value;
+
+  const reason =
+    document.getElementById('postModalReason').value;
+
+  try {
+
+    const response =
+      await securefetch(
+        `/api/admin/posts/${currentPost.id}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            status,
+            reason
+          })
+        }
+      );
+
+    if (!response) return;
+
+    const data = await response.json();
+
+    if (data.ok) {
+
+      showMessage(
+        '投稿状態を更新しました',
+        'success'
+      );
+
+      closeModal('postModal');
+
+      loadPosts();
+
+    } else {
+
+      showMessage(
+        data.error,
+        'error'
+      );
+    }
+
+  } catch (e) {
+
+    console.error(e);
+
+    showMessage(
+      '更新に失敗しました',
+      'error'
+    );
+  }
+}
+
+async function hidePost(postId) {
+
+  if (!confirm('投稿を非表示にしますか？')) {
+    return;
+  }
+
+  try {
+
+    const response =
+      await securefetch(
+        `/api/admin/posts/${postId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            status: 'hidden'
+          })
+        }
+      );
+
+    if (!response) return;
+
+    const data = await response.json();
+
+    if (data.ok) {
+
+      showMessage(
+        '投稿を非表示にしました',
+        'success'
+      );
+
+      loadPosts();
+
+    } else {
+
+      showMessage(
+        data.error,
+        'error'
+      );
+    }
+
+  } catch (e) {
+
+    console.error(e);
+
+    showMessage(
+      '非表示に失敗しました',
+      'error'
+    );
+  }
 }
 
 // ============================================================================
@@ -354,8 +514,84 @@ async function loadRules() {
   }
 }
 
-function openRuleModal() {
-  showMessage('ルール追加機能は admin.js を参照してください', 'info');
+/*function openRuleModal() {
+  document.getElementById('ruleModalPattern').value = '';
+  document.getElementById('ruleModalType').value = '0';
+  document.getElementById('ruleModalRiskScore').value = '10';
+  document.getElementById('ruleModalDescription').value = '';
+
+  currentRule = null;
+
+  document.getElementById('ruleModal').classList.add('show');
+}*/
+
+async function saveRule() {
+
+  console.log(document.getElementById('ruleType'));
+
+  const pattern =
+    document.getElementById('rulePattern').value.trim();
+
+  const isRegex =
+    parseInt(document.getElementById('ruleType').value);
+
+  const riskScore =
+    parseInt(document.getElementById('ruleRiskScore').value);
+
+  const description =
+    document.getElementById('ruleDescription').value.trim();
+
+  if (!pattern) {
+    showMessage('パターンを入力してください', 'error');
+    return;
+  }
+
+  try {
+
+    const response = await fetch('/api/admin/ng-rules', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        pattern,
+        is_regex: isRegex,
+        risk_score: riskScore,
+        description: description || null
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+
+      showMessage('ルールを追加しました', 'success');
+
+      document.getElementById('rulePattern').value = '';
+      document.getElementById('ruleType').value = '0';
+      document.getElementById('ruleRiskScore').value = '10';
+      document.getElementById('ruleDescription').value = '';
+
+      loadRules();
+
+    } else {
+
+      showMessage(
+        data.error || '追加に失敗しました',
+        'error'
+      );
+
+    }
+
+  } catch (e) {
+
+    console.error(e);
+    showMessage(
+      'ルールの追加に失敗しました',
+      'error'
+    );
+
+  }
 }
 
 async function toggleRule(ruleId) {
@@ -395,6 +631,47 @@ async function deleteRule(ruleId) {
   } catch (e) {
     console.error('ルール削除エラー', e);
     showMessage('ルールの削除に失敗しました', 'error');
+  }
+}
+async function saveRule() {
+  const pattern = document.getElementById('rulePattern').value.trim();
+  const isRegex = parseInt(document.getElementById('ruleType').value);
+  const riskScore = parseInt(document.getElementById('ruleRiskScore').value);
+  const description = document.getElementById('ruleDescription').value.trim();
+
+  if (!pattern) {
+    showMessage('パターンを入力してください', 'error');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/admin/ng-rules', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        pattern,
+        is_regex: isRegex,
+        risk_score: riskScore,
+        description: description || null
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      showMessage('ルールを追加しました', 'success');
+
+      document.getElementById('ruleModal').classList.remove('show');
+
+      loadRules();
+    } else {
+      showMessage(data.error || '追加に失敗しました', 'error');
+    }
+  } catch (e) {
+    console.error('ルール追加エラー', e);
+    showMessage('ルールの追加に失敗しました', 'error');
   }
 }
 

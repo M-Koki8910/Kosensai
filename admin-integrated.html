@@ -638,9 +638,34 @@
             <div class="page-subtitle">投稿の自動判定ルールを管理します</div>
           </div>
 
-          <div class="controls">
-            <button class="btn btn-success" onclick="openRuleModal()">+ ルール追加</button>
-          </div>
+          <div class="rule-form">
+  <div class="form-group">
+    <label>パターン</label>
+    <input type="text" id="rulePattern">
+  </div>
+
+  <div class="form-group">
+    <label>種類</label>
+    <select id="ruleType">
+      <option value="0">テキスト</option>
+      <option value="1">正規表現</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>危険度</label>
+    <input type="number" id="ruleRiskScore" value="10">
+  </div>
+
+  <div class="form-group">
+    <label>説明</label>
+    <input type="text" id="ruleDescription">
+  </div>
+
+  <button class="btn btn-success" id="addRuleBtn">
+    ルール追加
+  </button>
+</div>
 
           <table id="rulesTable">
             <thead>
