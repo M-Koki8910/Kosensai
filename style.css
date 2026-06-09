@@ -268,12 +268,13 @@ body {
         transform: translateY(-100%);
         box-shadow: 0 4px 20px rgba(0,0,0,0.12);
         display: block;
+        overflow-y: auto;
     }
 
     #nav.active {
-        transform: translateY(0);
-        max-height: calc(100vh - var(--topbar-height));
-        display: block;
+    transform: translateY(0);
+    max-height: calc(100vh - var(--topbar-height));
+    overflow-y: auto;
     }
 
     #nav ul {
