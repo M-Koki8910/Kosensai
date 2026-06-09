@@ -89,7 +89,7 @@ body {
     flex-direction: column;
     gap: 12px;
     list-style: none;
-    padding: 86px 18px 24px;
+    padding: 86px 18px 100px;
     margin: 0;
 }
 
