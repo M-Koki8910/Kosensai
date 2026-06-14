@@ -199,17 +199,23 @@ function initStampRally() {
             statusEl.textContent = "カメラを起動しています...";
             let cameraConfig = { facingMode: "environment" };
 
-            if (typeof Html5Qrcode.getCameras === "function") {
-                try {
-                    const cameras = await Html5Qrcode.getCameras();
-                    if (cameras && cameras.length) {
-                        const backCamera = cameras.find(cam => /(back|rear|environment)/i.test(cam.label));
-                        cameraConfig = backCamera ? backCamera.id : cameras[0].id;
-                    }
-                } catch (error) {
-                    console.warn("カメラ一覧の取得に失敗しました", error);
-                }
+if (typeof Html5Qrcode.getCameras === "function") {
+    try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length) {
+            const backCamera = cameras.find(cam => 
+                /(back|rear|environment)/i.test(cam.label)
+            );
+            // ✅ deviceId をオブジェクトで渡す
+            if (backCamera || cameras[0]) {
+                const selectedCamera = backCamera || cameras[0];
+                cameraConfig = { deviceId: selectedCamera.id };
             }
+        }
+    } catch (error) {
+        console.warn("カメラ一覧の取得に失敗しました", error);
+    }
+}
 
             await scanner.start(
                 cameraConfig,

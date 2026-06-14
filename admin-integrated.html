@@ -1,3 +1,4 @@
+<!--admin-integrated.html-->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -752,18 +753,36 @@
 
     <label>ロール</label>
     <select id="role">
-      <option value="visitor">visitor</option>
-      <option value="senior">senior</option>
-      <option value="administrator">administrator</option>
+      <option value="administrator">Administrator</option>
+      <option value="executivestaff">Executive Staff</option>
+      <option value="staff">Staff</option>
+      <option value="company">Company</option>
     </select>
 
-    <label>参照範囲</label>
-    <label><input type="checkbox" value="entrance"> 正門</label>
-    <label><input type="checkbox" value="museum"> 展示ホール</label>
-    <label><input type="checkbox" value="stage"> ステージ</label>
-    <label><input type="checkbox" value="shop"> 模擬店</label>
-    <label><input type="checkbox" value="all"> 全て</label>
+    <h3>権限</h3>
 
+  <label>
+  <input type="checkbox"
+       class="permission-checkbox"
+       value="analytics.view">
+  Analytics
+  </label>
+
+  <label>
+  <input type="checkbox"
+         class="permission-checkbox"
+          value="logs.view">
+  Logs
+  </label>
+
+   <div id="scope-container" style="display:none;">
+  <label>参照範囲</label>
+
+  <label><input type="checkbox" value="entrance"> 正門</label>
+  <label><input type="checkbox" value="museum"> 展示ホール</label>
+  <label><input type="checkbox" value="stage"> ステージ</label>
+  <label><input type="checkbox" value="shop"> 模擬店</label>
+</div>
     <button type="submit" class="btn btn-success">ユーザ追加</button>
   </form>
 </div>

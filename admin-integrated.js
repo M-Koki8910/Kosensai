@@ -1,5 +1,5 @@
 // ============================================================================
-// 統合管理ページ - ログイン＆認証処理
+// 統合管理ページ - ログイン＆認証処理 admin-integrated.js
 // ============================================================================
 
 let currentUser = null;
@@ -15,6 +15,34 @@ const userRole = document.getElementById('userRole');
 const addUserForm = document.getElementById('add-user-form');
 const userMessage = document.getElementById('userMessage');
 document.getElementById('addRuleBtn')?.addEventListener('click', saveRule);
+
+const ROLE_DEFAULTS = {
+
+  administrator: [
+    'analytics.view',
+    'posts.manage',
+    'announcement.create',
+    'announcement.manage',
+    'logs.view',
+    'users.create'
+  ],
+
+  executivestaff: [
+    'analytics.view',
+    'posts.manage',
+    'announcement.create',
+    'announcement.manage',
+    'logs.view'
+  ],
+
+  staff: [
+    'announcement.create'
+  ],
+
+  company: [
+    'analytics.view'
+  ]
+};
 
 // ページナビゲーション
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -149,10 +177,13 @@ if (addUserForm) {
     const newUsername = document.getElementById('new-user')?.value || '';
     const password = document.getElementById('new-password')?.value || '';
     const role = document.getElementById('role')?.value || 'visitor';
-
+    
     const scope = Array.from(
-      document.querySelectorAll('input[type="checkbox"]:checked')
-    ).map(cb => cb.value);
+  document.querySelectorAll(
+    '#scope-container input:checked'
+  )
+).map(cb => cb.value);
+ 
 
     if (!newUsername || !password) {
       userMessage.textContent = 'ユーザ名とパスワードを入力してください';
@@ -163,7 +194,13 @@ if (addUserForm) {
       const res = await fetch('/api/auth/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: newUsername, password, role, scope })
+       body: JSON.stringify({
+            username: newUsername,
+            password,
+            role,
+            scope,
+            permissions
+          })
       });
 
       const data = await res.json();
@@ -183,6 +220,50 @@ if (addUserForm) {
       userMessage.textContent = err.message;
     }
   });
+}
+
+const roleSelect =
+  document.getElementById('role');
+
+const scopeContainer =
+  document.getElementById('scope-container');
+
+if (roleSelect) {
+
+  roleSelect.addEventListener(
+    'change',
+    updateRoleUI
+  );
+
+  updateRoleUI();
+}
+
+function updateRoleUI() {
+
+  const role =
+    roleSelect.value;
+
+  scopeContainer.style.display =
+    role === 'company'
+      ? 'block'
+      : 'none';
+
+  const defaults =
+    ROLE_DEFAULTS[role] || [];
+
+  document
+    .querySelectorAll(
+      '.permission-checkbox'
+    )
+    .forEach(cb => {
+
+      cb.checked =
+        defaults.includes(
+          cb.value
+        );
+
+    });
+
 }
 
 // ============================================================================

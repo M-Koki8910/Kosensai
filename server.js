@@ -13,7 +13,38 @@ const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const BODY_LIMIT_BYTES = 64 * 1024;
 const LOGIN_WINDOW_MS = 10 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 8;
-const ALLOWED_ROLES = ['administrator', 'senior'];
+
+// 1. ロール定義変更
+const ALLOWED_ROLES = [
+  'administrator',
+  'executivestaff',
+  'staff',
+  'company'
+];
+
+// 8. ROLE_PERMISSIONS追加
+const ROLE_PERMISSIONS = {
+  administrator: [
+    'analytics.read',
+    'users.read',
+    'logs.read',
+    'announcement.create',
+    'announcement.manage'
+  ],
+  executivestaff: [
+    'analytics.read',
+    'logs.read',
+    'announcement.create',
+    'announcement.manage'
+  ],
+  staff: [
+    'announcement.create'
+  ],
+  company: [
+    'analytics.read'
+  ]
+};
+
 const DENIED_STATIC_NAMES = new Set([
   '.env',
   'stamp.db',
@@ -29,8 +60,6 @@ const DENIED_STATIC_EXTENSIONS = new Set([
   '.pem',
   '.key',
 ]);
-
-
 
 const loginAttempts = new Map();
 
@@ -56,13 +85,12 @@ if (fs.existsSync(ENV_PATH)) {
   });
 }
 
-// ルートに置かれた stamp.db を参照する。
 const DB_PATH = path.join(__dirname, 'stamp.db');
 
 const SYSTEM_ADMIN_USERNAME =
-  process.env.SYSTEM_ADMIN_USERNAME /*|| /*'Administrator'*/;
-const SYSTEM_ADMIN_PASSWORD =
-  process.env.SYSTEM_ADMIN_PASSWORD /*|| /*'admin@J2337'*/;
+ process.env.SYSTEM_ADMIN_USERNAME || 'Administrator';
+const SYSTEM_ADMIN_PASSWORD = 
+  process.env.SYSTEM_ADMIN_PASSWORD || 'admin@J2337';
 
 const LOCATION_LABELS = {
   entrance: '正門',
@@ -73,6 +101,7 @@ const LOCATION_LABELS = {
 
 const db = new DatabaseSync(DB_PATH);
 
+// 各種テーブル初期化
 db.exec(`
   CREATE TABLE IF NOT EXISTS stamp_visits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,6 +111,15 @@ db.exec(`
     user_agent TEXT,
     page TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// 5. user_permissions テーブルの追加
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_permissions (
+    user_id INTEGER NOT NULL,
+    permission TEXT NOT NULL,
+    PRIMARY KEY (user_id, permission)
   );
 `);
 
@@ -102,8 +140,8 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'senior',
-    scope TEXT NOT NULL DEFAULT 'entrance,museum',
+    role TEXT NOT NULL DEFAULT 'staff',
+    scope TEXT NOT NULL DEFAULT 'all',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
@@ -111,9 +149,11 @@ db.exec(`
 db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
+    user_id INTEGER,
     username TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'senior',
-    scope TEXT NOT NULL DEFAULT 'entrance,museum',
+    role TEXT NOT NULL DEFAULT 'visitor',
+    scope TEXT NOT NULL DEFAULT 'all',
+    expires_at TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
@@ -131,62 +171,25 @@ db.exec(`
   );
 `);
 
-
-
+// カラム存在チェック兼動的追加関数
 function ensureColumn(tableName, columnDefinition) {
-
-  const info =
-    db.prepare(`PRAGMA table_info(${tableName})`)
-      .all();
-
-  const exists =
-    info.some(column =>
-      column.name === columnDefinition.name
-    );
-
+  const info = db.prepare(`PRAGMA table_info(${tableName})`).all();
+  const exists = info.some(column => column.name === columnDefinition.name);
   if (!exists) {
-
-    db.exec(`
-      ALTER TABLE ${tableName}
-      ADD COLUMN ${columnDefinition.sql}
-    `);
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnDefinition.sql}`);
   }
 }
 
-ensureColumn('users', {
-  name: 'role',
-  sql: 'role TEXT NOT NULL DEFAULT "senior"'
-});
-
-ensureColumn('users', {
-  name: 'scope',
-  sql: 'scope TEXT NOT NULL DEFAULT "entrance,museum"'
-});
-
-ensureColumn('sessions', {
-  name: 'role',
-  sql: 'role TEXT NOT NULL DEFAULT "senior"'
-});
-
-ensureColumn('sessions', {
-  name: 'scope',
-  sql: 'scope TEXT NOT NULL DEFAULT "entrance,museum"'
-});
-
-ensureColumn('sessions', {
-  name: 'demographic',
-  sql: 'demographic TEXT'
-});
-
-ensureColumn('sessions', {
-  name: 'expires_at',
-  sql: 'expires_at TEXT'
-});
+ensureColumn('users', { name: 'role', sql: 'role TEXT NOT NULL DEFAULT "staff"' });
+ensureColumn('users', { name: 'scope', sql: 'scope TEXT NOT NULL DEFAULT "all"' });
+ensureColumn('sessions', { name: 'user_id', sql: 'user_id INTEGER' });
+ensureColumn('sessions', { name: 'role', sql: 'role TEXT NOT NULL DEFAULT "visitor"' });
+ensureColumn('sessions', { name: 'scope', sql: 'scope TEXT NOT NULL DEFAULT "all"' });
+ensureColumn('sessions', { name: 'expires_at', sql: 'expires_at TEXT' });
 
 // ============================================================================
 // 掲示板・アナウンス機能用テーブル
 // ============================================================================
-
 db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -250,28 +253,11 @@ db.exec(`
   );
 `);
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS announcement_users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-`);
-
-// ============================================================================
-// NG判定ルール初期化
-// ============================================================================
-
-// デフォルトルールを設定（サーバー再起動時に同期）
+// デフォルトNGルール同期
 const defaultNGRules = [
-  // URL検出
   { pattern: 'https?://[^\\s]+', is_regex: 1, risk_score: 30, description: 'URL' },
-  // メールアドレス検出
   { pattern: '[\\w\\.-]+@[\\w\\.-]+\\.\\w+', is_regex: 1, risk_score: 25, description: 'Email address' },
-  // 電話番号検出
   { pattern: '\\d{3}[-.]?\\d{3,4}[-.]?\\d{4}', is_regex: 1, risk_score: 20, description: 'Phone number' },
-  // Twitter/SNS表記
   { pattern: '@[\\w]+', is_regex: 1, risk_score: 15, description: 'SNS mention' },
 ];
 
@@ -283,16 +269,11 @@ function syncNGRules() {
     ORDER BY description
   `).all();
 
-  const defaultRuleMap = Object.fromEntries(
-    defaultNGRules.map(r => [r.description, r])
-  );
-  const existingRuleMap = Object.fromEntries(
-    existingRules.map(r => [r.description, r])
-  );
+  const defaultRuleMap = Object.fromEntries(defaultNGRules.map(r => [r.description, r]));
+  const existingRuleMap = Object.fromEntries(existingRules.map(r => [r.description, r]));
 
   let needsSync = false;
 
-  // 新しいデフォルトルールの追加
   for (const rule of defaultNGRules) {
     if (!existingRuleMap[rule.description]) {
       needsSync = true;
@@ -303,7 +284,6 @@ function syncNGRules() {
     }
   }
 
-  // 削除されたデフォルトルールの削除
   for (const existing of existingRules) {
     if (!defaultRuleMap[existing.description]) {
       needsSync = true;
@@ -315,15 +295,11 @@ function syncNGRules() {
     console.log('NG判定ルールを再同期しました');
   }
 }
-
 syncNGRules();
 
-// ============================================================================
-// 掲示板定期自動判定処理
-// ============================================================================
-
-const AUTO_JUDGE_INTERVAL_MS = 30 * 1000; // 30秒ごと
-const BATCH_SIZE = 50; // 1回の処理で最大50件
+// 定期自動モデレーション処理 (30秒ごと)
+const AUTO_JUDGE_INTERVAL_MS = 30 * 1000;
+const BATCH_SIZE = 50;
 
 function autoJudgePosts() {
   try {
@@ -347,7 +323,6 @@ function autoJudgePosts() {
         WHERE id = ?
       `).run(newStatus, ngCheck.riskScore, post.id);
 
-      // 投稿集約を実行
       if (newStatus === 'published') {
         aggregateSimilarPosts(post.id, 0.75);
       }
@@ -361,35 +336,27 @@ function autoJudgePosts() {
         })
       });
     }
-
     console.log(`[自動判定] ${pendingPosts.length}件の投稿を処理しました`);
   } catch (e) {
     console.error('[自動判定エラー]', e);
   }
 }
 
-// 定期自動判定を開始
-const autoJudgeInterval = setInterval(() => {
+setInterval(() => {
   autoJudgePosts();
 }, AUTO_JUDGE_INTERVAL_MS);
 
 // ============================================================================
-
+// パスワード暗号化関連
+// ============================================================================
 function hashPassword(password) {
-
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto
-    .scryptSync(String(password), salt, 64)
-    .toString('hex');
-
+  const hash = crypto.scryptSync(String(password), salt, 64).toString('hex');
   return `scrypt$${salt}$${hash}`;
 }
 
 function legacyHashPassword(password) {
-  return crypto
-    .createHash('sha256')
-    .update(String(password))
-    .digest('hex');
+  return crypto.createHash('sha256').update(String(password)).digest('hex');
 }
 
 function timingSafeEqualHex(a, b) {
@@ -404,18 +371,12 @@ function timingSafeEqualHex(a, b) {
 
 function verifyPassword(password, storedHash) {
   const stored = String(storedHash || '');
-
   if (stored.startsWith('scrypt$')) {
     const [, salt, expectedHash] = stored.split('$');
     if (!salt || !expectedHash) return false;
-
-    const actualHash = crypto
-      .scryptSync(String(password), salt, 64)
-      .toString('hex');
-
+    const actualHash = crypto.scryptSync(String(password), salt, 64).toString('hex');
     return timingSafeEqualHex(actualHash, expectedHash);
   }
-
   return timingSafeEqualHex(legacyHashPassword(password), stored);
 }
 
@@ -423,62 +384,48 @@ function needsPasswordRehash(storedHash) {
   return !String(storedHash || '').startsWith('scrypt$');
 }
 
+// デフォルト管理者アカウント自動作成 相違点２
 if (SYSTEM_ADMIN_USERNAME && SYSTEM_ADMIN_PASSWORD) {
-  const systemAdminExists = db.prepare(`
-    SELECT id
-    FROM users
-    WHERE username = ?
-  `).get(SYSTEM_ADMIN_USERNAME);
-
+  const systemAdminExists = db.prepare(`SELECT id FROM users WHERE username = ?`).get(SYSTEM_ADMIN_USERNAME);
   if (!systemAdminExists) {
+    const result = db.prepare(`
+      INSERT INTO users (username, password_hash, role, scope)
+      VALUES (?, ?, 'administrator', 'all')
+    `).run(SYSTEM_ADMIN_USERNAME, hashPassword(SYSTEM_ADMIN_PASSWORD));
 
-    db.prepare(`
-      INSERT INTO users (
-        username,
-        password_hash,
-        role,
-        scope
-      )
-      VALUES (?, ?, ?, ?)
-    `).run(
-      SYSTEM_ADMIN_USERNAME,
-      hashPassword(SYSTEM_ADMIN_PASSWORD),
-      'administrator',
-      'all'
-    );
+    // 管理者アカウントにも全権限を明示的に user_permissions に紐付け
+    const adminId = result.lastInsertRowid;
+    const insertPerm = db.prepare(`INSERT OR IGNORE INTO user_permissions (user_id, permission) VALUES (?, ?)`);
+    ROLE_PERMISSIONS.administrator.forEach(p => insertPerm.run(adminId, p));
 
     console.log('System administrator account created');
   }
-} else {
-  console.warn('SYSTEM_ADMIN_USERNAME and SYSTEM_ADMIN_PASSWORD must be set to auto-create the administrator account.');
 }
 
-function sendJson(res, statusCode, data) {
+// ============================================================================
+// ヘルパー・ユーティリティ関数
+// ============================================================================
 
+
+function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
     'X-Content-Type-Options': 'nosniff'
   });
-
   res.end(JSON.stringify(data));
 }
 
 function getFilePath(urlPath) {
-
   if (urlPath === '/' || urlPath === '') {
-
     return path.join(STATIC_ROOT, 'index.html');
   }
-
   let clean;
-
   try {
     clean = decodeURIComponent(urlPath).replace(/^\/+/, '');
   } catch (error) {
     return null;
   }
-
   const resolved = path.resolve(STATIC_ROOT, clean);
   const relative = path.relative(STATIC_ROOT, resolved);
   const fileName = path.basename(resolved);
@@ -493,55 +440,35 @@ function getFilePath(urlPath) {
   ) {
     return null;
   }
-
   return resolved;
 }
 
 function serveStatic(res, filePath) {
-
   if (!filePath) {
-    res.writeHead(404, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'X-Content-Type-Options': 'nosniff'
-    });
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
     res.end('Not found');
     return;
   }
-
   fs.readFile(filePath, (error, data) => {
-
     if (error) {
-
-      res.writeHead(404, {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'X-Content-Type-Options': 'nosniff'
-      });
-
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
       res.end('Not found');
-
       return;
     }
-
-    const ext =
-      path.extname(filePath).toLowerCase();
-
+    const ext = path.extname(filePath).toLowerCase();
     const contentType = {
-
       '.html': 'text/html; charset=utf-8',
       '.css': 'text/css; charset=utf-8',
       '.js': 'application/javascript; charset=utf-8',
       '.json': 'application/json; charset=utf-8',
-
       '.png': 'image/png',
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
       '.gif': 'image/gif',
       '.svg': 'image/svg+xml',
       '.ico': 'image/x-icon',
-
     }[ext] || 'text/plain; charset=utf-8';
 
-    // 保持されているヘッダー（例: Set-Cookie）があればマージして送信する。
     const headers = {
       'Content-Type': contentType,
       'X-Content-Type-Options': 'nosniff',
@@ -552,14 +479,12 @@ function serveStatic(res, filePath) {
     if (existingSetCookie) headers['Set-Cookie'] = existingSetCookie;
 
     res.writeHead(200, headers);
-
     res.end(data);
   });
 }
 
 function isSecureRequest(req) {
-  return req.headers['x-forwarded-proto'] === 'https' ||
-    req.socket.encrypted === true;
+  return req.headers['x-forwarded-proto'] === 'https' || req.socket.encrypted === true;
 }
 
 function buildSessionCookie(req, sessionId, options = {}) {
@@ -569,29 +494,22 @@ function buildSessionCookie(req, sessionId, options = {}) {
     'HttpOnly',
     'SameSite=Lax',
   ];
-
-  if (isSecureRequest(req)) {
-    parts.push('Secure');
-  }
-
+  if (isSecureRequest(req)) parts.push('Secure');
   if (options.clear) {
     parts.push('Max-Age=0');
   } else if (options.maxAgeSeconds) {
     parts.push(`Max-Age=${options.maxAgeSeconds}`);
   }
-
   return parts.join('; ');
 }
 
 function setCookie(res, cookie) {
   const prev = res.getHeader && res.getHeader('Set-Cookie');
-
   if (prev) {
     const merged = Array.isArray(prev) ? prev.concat(cookie) : [prev, cookie];
     res.setHeader('Set-Cookie', merged);
     return;
   }
-
   res.setHeader('Set-Cookie', cookie);
 }
 
@@ -622,11 +540,7 @@ function clearRateLimit(key) {
 
 function isSameOrigin(req) {
   const origin = req.headers.origin;
-
-  if (!origin) {
-    return true;
-  }
-
+  if (!origin) return true;
   try {
     const expected = new URL(`http://${req.headers.host || 'localhost'}`);
     const actual = new URL(origin);
@@ -637,47 +551,24 @@ function isSameOrigin(req) {
 }
 
 function rejectCrossOriginWrite(req, res) {
-  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
-    return false;
-  }
-
-  if (isSameOrigin(req)) {
-    return false;
-  }
-
-  sendJson(res, 403, {
-    ok: false,
-    error: 'Forbidden origin'
-  });
-
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return false;
+  if (isSameOrigin(req)) return false;
+  sendJson(res, 403, { ok: false, error: 'Forbidden origin' });
   return true;
 }
 
-function normalizeStampId(stampId) {
-  const value = String(stampId || '').trim();
-  return Object.prototype.hasOwnProperty.call(LOCATION_LABELS, value) ? value : null;
-}
-
-function normalizePage(page) {
-  return String(page || '')
-    .replace(/[\u0000-\u001f\u007f]/g, '')
-    .slice(0, 256);
-}
-
+// 3. normalizeScope()をall対応にする
+//相違点３
 function normalizeScope(scope) {
-  if (scope === 'all') {
+  if (String(scope).trim().toLowerCase() === 'all') {
     return 'all';
   }
-
-  const raw = Array.isArray(scope)
-    ? scope
-    : String(scope || '').split(',');
-
+  const raw = Array.isArray(scope) ? scope : String(scope || '').split(',');
   const allowed = raw
     .map(item => String(item).trim())
     .filter(item => Object.prototype.hasOwnProperty.call(LOCATION_LABELS, item));
 
-  return allowed.length ? Array.from(new Set(allowed)).join(',') : 'entrance,museum';
+  return allowed.length ? Array.from(new Set(allowed)).join(',') : 'all'; // 2. デフォルトをallへ
 }
 
 function createVisitorSession(req, res) {
@@ -686,19 +577,15 @@ function createVisitorSession(req, res) {
     const expiresAt = getExpiresAt();
 
     db.prepare(`
-      INSERT INTO sessions (id, username, role, scope, expires_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(sessionId, 'anonymous', 'visitor', 'entrance,museum', expiresAt);
+      INSERT INTO sessions (id, user_id, username, role, scope, expires_at)
+      VALUES (?, NULL, 'anonymous', 'visitor', 'all', ?)
+    `).run(sessionId, expiresAt);
 
-    // クライアントへ Cookie を送る。既存ヘッダーがあれば追加する。
-    // note: serveStatic 側で既存 Set-Cookie を維持する実装を行っている。
     try {
       setCookie(res, buildSessionCookie(req, sessionId, {
         maxAgeSeconds: Math.floor(SESSION_TTL_MS / 1000)
       }));
-    } catch (e) {
-      // header 設定失敗は無視する。
-    }
+    } catch (e) { /* ignore header error */ }
 
     return sessionId;
   } catch (e) {
@@ -708,20 +595,17 @@ function createVisitorSession(req, res) {
 }
 
 function parseBody(req, callback) {
-
   let body = '';
   let size = 0;
   let tooLarge = false;
 
   req.on('data', chunk => {
     size += chunk.length;
-
     if (size > BODY_LIMIT_BYTES) {
       tooLarge = true;
       req.destroy();
       return;
     }
-
     body += chunk.toString();
   });
 
@@ -730,35 +614,21 @@ function parseBody(req, callback) {
   });
 
   req.on('end', () => {
-
     try {
-
-      callback(
-        null,
-        body ? JSON.parse(body) : {}
-      );
-
+      callback(null, body ? JSON.parse(body) : {});
     } catch (error) {
-
       callback(error);
     }
   });
 }
 
 function getCookies(req) {
-
-  const cookieHeader =
-    req.headers.cookie || '';
-
+  const cookieHeader = req.headers.cookie || '';
   return Object.fromEntries(
-
     cookieHeader
       .split(';')
       .map(item => {
-
-        const [key, ...rest] =
-          item.trim().split('=');
-
+        const [key, ...rest] = item.trim().split('=');
         return [key, rest.join('=')];
       })
       .filter(([key]) => key)
@@ -766,18 +636,12 @@ function getCookies(req) {
 }
 
 function getSessionUser(req) {
-
   const cookies = getCookies(req);
-
-  const sessionId =
-    cookies[SESSION_COOKIE_NAME];
-
-  if (!sessionId) {
-    return null;
-  }
+  const sessionId = cookies[SESSION_COOKIE_NAME];
+  if (!sessionId) return null;
 
   const row = db.prepare(`
-    SELECT username, role, scope, expires_at
+    SELECT user_id, username, role, scope, expires_at
     FROM sessions
     WHERE id = ?
   `).get(sessionId);
@@ -786,14 +650,11 @@ function getSessionUser(req) {
     db.prepare(`DELETE FROM sessions WHERE id = ?`).run(sessionId);
     return null;
   }
-
   return row || null;
 }
 
 function isAnonymousUser(user) {
-  return user &&
-    user.username === 'anonymous' &&
-    user.role === 'visitor';
+  return user && user.username === 'anonymous' && user.role === 'visitor';
 }
 
 function logEvent(type, data = {}) {
@@ -813,45 +674,45 @@ function logEvent(type, data = {}) {
     console.error('ログの記録に失敗しました', e);
   }
 }
-
+//相違点４
 function requireSession(req, res, next) {
-
   const user = getSessionUser(req);
-
   if (!user || isAnonymousUser(user)) {
-
-    sendJson(res, 401, {
-      ok: false,
-      error: 'Unauthorized'
-    });
-
-    return;
+    return sendJson(res, 401, { ok: false, error: 'Unauthorized' });
   }
-
   next(user);
 }
 
 function requireRole(req, res, role, next) {
-
   requireSession(req, res, (user) => {
-
     if (user.role !== role) {
-
-      sendJson(res, 403, {
-        ok: false,
-        error: 'Forbidden'
-      });
-
-      return;
+      return sendJson(res, 403, { ok: false, error: 'Forbidden' });
     }
-
     next(user);
   });
 }
+//相違点５
+// 7. 権限取得関数追加
+function getUserPermissions(userId) {
+  if (!userId) return [];
+  return db.prepare(`
+    SELECT permission
+    FROM user_permissions
+    WHERE user_id = ?
+  `)
+  .all(userId)
+  .map(row => row.permission);
+}
 
-// ============================================================================
-// 掲示板・アナウンス関連のヘルパー関数
-// ============================================================================
+// 9. hasPermission追加 (ハイブリッド判定)
+function hasPermission(user, permission) {
+  const permissions = new Set(ROLE_PERMISSIONS[user.role] || []);
+  
+  // セッションに保持されている user_id を使って個別追加権限をマージ
+  getUserPermissions(user.user_id).forEach(p => permissions.add(p));
+
+  return permissions.has(permission);
+}
 
 function checkNGRules(content) {
   const rules = db.prepare(`
@@ -885,37 +746,134 @@ function checkNGRules(content) {
       console.error(`Error checking NG rule ${rule.id}`, e);
     }
   }
-
-  return {
-    riskScore: totalRiskScore,
-    detectedRuleIds: detectedRules
-  };
+  return { riskScore: totalRiskScore, detectedRuleIds: detectedRules };
 }
 
 function calculatePostStatus(riskScore) {
-  if (riskScore <= 0) {
-    return 'published';
-  }
-  if (riskScore < 50) {
-    return 'published';
-  }
-  if (riskScore < 100) {
-    return 'review';
-  }
+  if (riskScore <= 0) return 'published';
+  if (riskScore < 50) return 'published';
+  if (riskScore < 100) return 'review';
   return 'rejected';
 }
 
-function getAnnouncementsSub() {
-  const now = new Date().toISOString();
-  return db.prepare(`
-    SELECT id, title, content, importance, published_at, expires_at, created_at
-    FROM announcements
-    WHERE published_at <= ?
-    AND expires_at > ?
-    ORDER BY importance DESC, published_at DESC
-  `).all(now, now);
+//相違点６
+// 4. getScopeList()を全範囲対応にする
+function getScopeList(scope) {
+  if (!scope || scope === 'all') {
+    return null;
+  }
+  return String(scope)
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
 }
 
+function aggregateSimilarPosts(newPostId, similarity = 0.7) {
+  const newPost = db.prepare(`SELECT content FROM posts WHERE id = ?`).get(newPostId);
+  if (!newPost) return;
+
+  const recentPosts = db.prepare(`
+    SELECT id, content FROM posts
+    WHERE status = 'published'
+    AND id < ?
+    AND datetime(created_at) > datetime('now', '-1 hour')
+    LIMIT 50
+  `).all(newPostId);
+
+  for (const post of recentPosts) {
+    const sim = calculateSimilarity(newPost.content, post.content);
+    if (sim >= similarity) {
+      db.prepare(`
+        INSERT OR IGNORE INTO post_aggregations
+        (representative_post_id, aggregated_post_ids, count, similarity_score)
+        VALUES (?, ?, 1, ?)
+      `).run(post.id, JSON.stringify([newPostId]), sim);
+      break;
+    }
+  }
+}
+
+function calculateSimilarity(str1, str2) {
+  const s1 = str1.toLowerCase().trim();
+  const s2 = str2.toLowerCase().trim();
+  if (s1 === s2) return 1.0;
+
+  const words1 = new Set(s1.split(/\s+/));
+  const words2 = new Set(s2.split(/\s+/));
+  const intersection = new Set([...words1].filter(x => words2.has(x)));
+  const union = new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+
+// スタンプID の正規化（LOCATION_LABELS に存在する値のみ許可）
+function normalizeStampId(stampId) {
+  const value = String(stampId || '').trim();
+  return Object.prototype.hasOwnProperty.call(LOCATION_LABELS, value) ? value : null;
+}
+
+// ページパスの正規化（制御文字の除去・256文字に切り詰め）
+function normalizePage(page) {
+  return String(page || '')
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .slice(0, 256);
+}
+
+// analytics.read 権限チェックミドルウェア
+function requirePermission(req, res, permission, next) {
+  requireSession(req, res, (user) => {
+    if (!hasPermission(user, permission)) {
+      return sendJson(res, 403, { ok: false, error: 'Forbidden' });
+    }
+    next(user);
+  });
+}
+
+// サマリーデータ集計（scope フィルタリング対応）
+function getSummary(user) {
+  const scopeList = getScopeList(user && user.scope);
+
+  const visits = db.prepare(`
+    SELECT stamp_id, COUNT(*) AS count
+    FROM stamp_visits
+    GROUP BY stamp_id
+  `).all();
+
+  const clicks = db.prepare(`
+    SELECT stamp_id, COUNT(*) AS count
+    FROM stamp_clicks
+    GROUP BY stamp_id
+  `).all();
+
+  const filteredVisits = scopeList
+    ? visits.filter(item => scopeList.includes(item.stamp_id))
+    : visits;
+
+  const filteredClicks = scopeList
+    ? clicks.filter(item => scopeList.includes(item.stamp_id))
+    : clicks;
+
+  const visitMap = Object.fromEntries(
+    filteredVisits.map(item => [item.stamp_id, item.count])
+  );
+  const clickMap = Object.fromEntries(
+    filteredClicks.map(item => [item.stamp_id, item.count])
+  );
+
+  return {
+    locations: Object.keys(LOCATION_LABELS).map(stampId => ({
+      stamp_id: stampId,
+      stamp_name: LOCATION_LABELS[stampId],
+      visits: visitMap[stampId] || 0,
+      clicks: clickMap[stampId] || 0,
+    })),
+    totals: {
+      visits: filteredVisits.reduce((sum, item) => sum + item.count, 0),
+      clicks: filteredClicks.reduce((sum, item) => sum + item.count, 0),
+    },
+  };
+}
+
+// 投稿一覧クエリサブルーチン
 function getPostsSub(filters = {}) {
   let query = `
     SELECT id, content, status, risk_score, created_at, updated_at
@@ -944,47 +902,19 @@ function getPostsSub(filters = {}) {
   return db.prepare(query).all(...params);
 }
 
-function calculateSimilarity(str1, str2) {
-  const s1 = str1.toLowerCase().trim();
-  const s2 = str2.toLowerCase().trim();
-
-  if (s1 === s2) return 1.0;
-
-  const words1 = new Set(s1.split(/\s+/));
-  const words2 = new Set(s2.split(/\s+/));
-
-  const intersection = new Set([...words1].filter(x => words2.has(x)));
-  const union = new Set([...words1, ...words2]);
-
-  return intersection.size / union.size;
+// 公開中アナウンス一覧取得サブルーチン
+function getAnnouncementsSub() {
+  const now = new Date().toISOString();
+  return db.prepare(`
+    SELECT id, title, content, importance, published_at, expires_at, created_at
+    FROM announcements
+    WHERE published_at <= ?
+    AND expires_at > ?
+    ORDER BY importance DESC, published_at DESC
+  `).all(now, now);
 }
 
-function aggregateSimilarPosts(newPostId, similarity = 0.7) {
-  const newPost = db.prepare(`SELECT content FROM posts WHERE id = ?`).get(newPostId);
-  if (!newPost) return;
-
-  const recentPosts = db.prepare(`
-    SELECT id, content FROM posts
-    WHERE status = 'published'
-    AND id < ?
-    AND datetime(created_at) > datetime('now', '-1 hour')
-    LIMIT 50
-  `).all(newPostId);
-
-  for (const post of recentPosts) {
-    const sim = calculateSimilarity(newPost.content, post.content);
-    if (sim >= similarity) {
-      db.prepare(`
-        INSERT OR IGNORE INTO post_aggregations
-        (representative_post_id, aggregated_post_ids, count, similarity_score)
-        VALUES (?, ?, 1, ?)
-      `).run(post.id, JSON.stringify([newPostId]), sim);
-
-      break;
-    }
-  }
-}
-
+// モデレーションログ記録
 function logModerationAction(postId, admin, action, oldStatus, newStatus, reason = null) {
   db.prepare(`
     INSERT INTO moderation_logs
@@ -993,164 +923,48 @@ function logModerationAction(postId, admin, action, oldStatus, newStatus, reason
   `).run(postId, admin, action, oldStatus, newStatus, reason);
 }
 
-function getScopeList(scope) {
-
-  if (!scope || scope === 'all') {
-    return null;
-  }
-
-  return String(scope)
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
-}
-
-function getSummary(user) {
-
-  const scopeList =
-    getScopeList(user && user.scope);
-
-  const visits = db.prepare(`
-    SELECT stamp_id, COUNT(*) AS count
-    FROM stamp_visits
-    GROUP BY stamp_id
-  `).all();
-
-  const clicks = db.prepare(`
-    SELECT stamp_id, COUNT(*) AS count
-    FROM stamp_clicks
-    GROUP BY stamp_id
-  `).all();
-
-  const filteredVisits =
-    scopeList
-      ? visits.filter(item =>
-          scopeList.includes(item.stamp_id)
-        )
-      : visits;
-
-  const filteredClicks =
-    scopeList
-      ? clicks.filter(item =>
-          scopeList.includes(item.stamp_id)
-        )
-      : clicks;
-
-  const visitMap =
-    Object.fromEntries(
-      filteredVisits.map(item => [
-        item.stamp_id,
-        item.count
-      ])
-    );
-
-  const clickMap =
-    Object.fromEntries(
-      filteredClicks.map(item => [
-        item.stamp_id,
-        item.count
-      ])
-    );
-
-  return {
-
-    locations:
-
-      Object.keys(LOCATION_LABELS)
-        .map(stampId => ({
-
-          stamp_id: stampId,
-
-          stamp_name:
-            LOCATION_LABELS[stampId],
-
-          visits:
-            visitMap[stampId] || 0,
-
-          clicks:
-            clickMap[stampId] || 0,
-        })),
-
-    totals: {
-
-      visits:
-        filteredVisits.reduce(
-          (sum, item) => sum + item.count,
-          0
-        ),
-
-      clicks:
-        filteredClicks.reduce(
-          (sum, item) => sum + item.count,
-          0
-        ),
-    },
-  };
-}
-
+// ============================================================================
+// HTTP サーバーコア・ルーティングルーチン
+// ============================================================================
 const server = http.createServer((req, res) => {
-
-  const url = new URL(
-    req.url,
-    `http://${req.headers.host || 'localhost'}`
-  );
-
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
 
-  if (rejectCrossOriginWrite(req, res)) {
-    return;
-  }
+  if (rejectCrossOriginWrite(req, res)) return;
 
-  // リクエストごとに匿名セッションを発行して Cookie を返す。
-  // クライアント側での自己生成 sessionId を廃止する方針に合わせる。
-  let issuedSessionId = null;
-  try {
+  // ログイン時以外の不要なセッションの蓄積を防ぐため、静的ファイル読み込み時のみ匿名を発行
+  if (req.method === 'GET' && !pathname.startsWith('/api')) {
     const cookies = getCookies(req);
     if (!cookies[SESSION_COOKIE_NAME]) {
-      issuedSessionId = createVisitorSession(req, res);
+      createVisitorSession(req, res);
     }
-  } catch (e) {
-    // 無視する。
   }
 
-  if (
-    pathname === '/api/login' &&
-    req.method === 'POST'
-  ) {
-
+  // API: ログイン
+  if (pathname === '/api/login' && req.method === 'POST') {
     const rateLimitKey = `login:${getClientKey(req)}`;
-
     if (isRateLimited(rateLimitKey)) {
-      return sendJson(res, 429, {
-        ok: false,
-        error: 'Too many login attempts'
-      });
+      return sendJson(res, 429, { ok: false, error: 'Too many login attempts' });
     }
 
     parseBody(req, (error, payload) => {
-
       if (error) {
-
         return sendJson(res, 400, {
           ok: false,
           error: error.message === 'Request body too large' ? 'Request body too large' : 'Invalid JSON'
         });
       }
 
-      const username =
-        String(payload.username || '')
-          .trim();
-
+      const username = String(payload.username || '').trim();
       const password = String(payload.password || '');
 
       const user = db.prepare(`
-        SELECT username, password_hash, role, scope
+        SELECT id, username, password_hash, role, scope
         FROM users
         WHERE username = ?
       `).get(username);
 
       if (!user || !verifyPassword(password, user.password_hash)) {
-
         logEvent('login_failed', {
           username,
           sessionId: getCookies(req)[SESSION_COOKIE_NAME],
@@ -1158,11 +972,7 @@ const server = http.createServer((req, res) => {
           page: pathname,
           detail: 'invalid_credentials'
         });
-
-        return sendJson(res, 401, {
-          ok: false,
-          error: 'Invalid credentials'
-        });
+        return sendJson(res, 401, { ok: false, error: 'Invalid credentials' });
       }
 
       clearRateLimit(rateLimitKey);
@@ -1179,19 +989,14 @@ const server = http.createServer((req, res) => {
       const expiresAt = getExpiresAt();
 
       db.prepare(`
-        INSERT INTO sessions (
-          id,
-          username,
-          role,
-          scope,
-          expires_at
-        )
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO sessions (id, user_id, username, role, scope, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?)
       `).run(
         sessionId,
+        user.id,
         user.username,
         user.role,
-        user.scope || 'entrance,museum',
+        user.scope || 'all',
         expiresAt
       );
 
@@ -1219,25 +1024,16 @@ const server = http.createServer((req, res) => {
         scope: user.scope,
       }));
     });
-
     return;
   }
-  if (
-    pathname === '/api/logout' &&
-    req.method === 'POST'
-  ) {
 
+  // API: ログアウト
+  if (pathname === '/api/logout' && req.method === 'POST') {
     const sessionId = getCookies(req)[SESSION_COOKIE_NAME];
-
-    const row = sessionId
-      ? db.prepare(`SELECT username FROM sessions WHERE id = ?`).get(sessionId)
-      : null;
+    const row = sessionId ? db.prepare(`SELECT username FROM sessions WHERE id = ?`).get(sessionId) : null;
 
     if (sessionId) {
-      db.prepare(`
-        DELETE FROM sessions
-        WHERE id = ?
-      `).run(sessionId);
+      db.prepare(`DELETE FROM sessions WHERE id = ?`).run(sessionId);
     }
 
     logEvent('logout', {
@@ -1254,52 +1050,40 @@ const server = http.createServer((req, res) => {
       'X-Content-Type-Options': 'nosniff',
       'Set-Cookie': buildSessionCookie(req, '', { clear: true }),
     });
-
     res.end(JSON.stringify({ ok: true }));
-
     return;
   }
 
+  // API: 認証状態取得 (me)
   if (pathname === '/api/auth/me') {
-
     const user = getSessionUser(req);
     const isAuthenticated = user && !isAnonymousUser(user);
 
-    sendJson(
-      res,
-      isAuthenticated ? 200 : 401,
-      {
-        ok: !!isAuthenticated,
-        username:
-          isAuthenticated && user.username,
-
-        role:
-          isAuthenticated && user.role,
-
-        scope:
-          isAuthenticated && user.scope
-      }
-    );
-
+    sendJson(res, isAuthenticated ? 200 : 401, {
+      ok: !!isAuthenticated,
+      username: isAuthenticated && user.username,
+      role: isAuthenticated && user.role,
+      scope: isAuthenticated && user.scope,
+      permissions: isAuthenticated ? getUserPermissions(user.user_id) : []//相違点６
+    });
     return;
   }
 
-  if (
-    pathname === '/api/auth/users' &&
-    req.method === 'GET'
-  ) {
-
+  // API: ユーザー一覧取得 (GET)
+  if (pathname === '/api/auth/users' && req.method === 'GET') {
     requireRole(req, res, 'administrator', (user) => {
-
       const users = db.prepare(`
-        SELECT
-          username,
-          role,
-          scope,
-          created_at
+        SELECT id, username, role, scope, created_at
         FROM users
         ORDER BY id
       `).all();
+
+      // 各ユーザーに個別の権限配列をマージしてフロントへ返す相違点７
+      const usersWithPermissions = users.map(u => ({
+        ...u,
+        permissions: getUserPermissions(u.id)
+      }));
+
 
       logEvent('admin_access', {
         username: user && user.username,
@@ -1309,85 +1093,92 @@ const server = http.createServer((req, res) => {
         detail: 'view_users'
       });
 
-      sendJson(res, 200, {
-        ok: true,
-        users
-      });
+      sendJson(res, 200, { ok: true, users: usersWithPermissions });
     });
-
     return;
   }
 
-  if (
-    pathname === '/api/auth/users' &&
-    req.method === 'POST'
-  ) {
+  // API: ユーザー作成 (POST)
+  if (pathname === '/api/auth/users' && req.method === 'POST') {
     requireRole(req, res, 'administrator', (user) => {
-
       parseBody(req, (error, payload) => {
-
         if (error) {
           return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
         }
 
+        // 1 & 6. ロール定義変更、デフォルトの決定　相違点８
         const newUsername = String(payload.username || '').trim();
         const password = String(payload.password || '');
-        const role = String(payload.role || 'senior').toLowerCase();
-        const scope = normalizeScope(payload.scope || 'entrance,museum');
+        const role = String(payload.role || 'staff').toLowerCase();
+        const scope = normalizeScope(payload.scope || 'all');
+
+        // 6. 権限アレイの担保
+        const permissions = Array.isArray(payload.permissions) ? payload.permissions : [];
 
         if (!newUsername || !password) {
           return sendJson(res, 400, { ok: false, error: 'username and password are required' });
         }
-
         if (!/^[A-Za-z0-9_.-]{3,64}$/.test(newUsername)) {
           return sendJson(res, 400, { ok: false, error: 'Invalid username' });
         }
-
         if (password.length < 4) {
           return sendJson(res, 400, { ok: false, error: 'Password must be at least 4 characters' });
         }
-
         if (!ALLOWED_ROLES.includes(role)) {
-          return sendJson(res, 400, { ok: false, error: 'Invalid role' });
+          return sendJson(res, 400, { ok: false, error: 'Invalid role assignment' });
         }
 
+        // 10. companyのみscopeを使い、それ以外はallとする
+        const finalScope = (role === 'company') ? scope : 'all';
+
         try {
-          db.prepare(`
-            INSERT INTO users (
-              username,
-              password_hash,
-              role,
-              scope
-            )
+          const insertUser = db.prepare(`
+            INSERT INTO users (username, password_hash, role, scope)
             VALUES (?, ?, ?, ?)
-          `).run(newUsername, hashPassword(password), role, scope);
+          `);
+          //相違点９
+          const result = insertUser.run(
+            newUsername,
+            hashPassword(password),
+            role,
+            finalScope
+          );
+
+          // 6. ユーザーINSERT直後の独自 Permission 保存対応
+          const userId = result.lastInsertRowid;
+          const insertPermission = db.prepare(`
+            INSERT OR IGNORE INTO user_permissions (user_id, permission)
+            VALUES (?, ?)
+          `);
+
+          for (const permission of permissions) {
+            insertPermission.run(userId, permission);
+          }
 
           logEvent('user_created', {
-            username: user && user.username,
+            username: user.username,
             sessionId: getCookies(req)[SESSION_COOKIE_NAME],
             userAgent: req.headers['user-agent'] || '',
             page: pathname,
-            detail: JSON.stringify({ target: newUsername, role, scope })
+            detail: `created_user:${newUsername}`
           });
 
-          sendJson(res, 200, { ok: true, username: newUsername, role, scope, hashFunction: 'scrypt' });
-
-        } catch (error) {
-          sendJson(res, 409, { ok: false, error: 'User already exists' });
+          sendJson(res, 200, { ok: true, userId });
+        } catch (e) {//相違点１０
+          if (e.message && e.message.includes('UNIQUE constraint failed')) {
+            return sendJson(res, 400, { ok: false, error: 'Username already exists' });
+          }
+          console.error(e);
+          sendJson(res, 500, { ok: false, error: 'Internal server error' });
         }
       });
     });
-
     return;
   }
+  //ここ以降ない
 
-  if (
-    pathname.startsWith('/api/auth/users/') &&
-    req.method === 'DELETE'
-  ) {
-
+  if (pathname.startsWith('/api/auth/users/') && req.method === 'DELETE') {
     requireRole(req, res, 'administrator', (user) => {
-
       const targetUsername = decodeURIComponent(
         pathname.split('/').filter(Boolean).pop() || ''
       );
@@ -1400,7 +1191,14 @@ const server = http.createServer((req, res) => {
         return sendJson(res, 403, { ok: false, error: '固定管理者アカウントは削除できません' });
       }
 
+      // セッションを先に削除（参照整合性の確保）
       db.prepare(`DELETE FROM sessions WHERE username = ?`).run(targetUsername);
+
+      // user_permissions も削除（変更後スクリプトで追加されたテーブル）
+      const target = db.prepare(`SELECT id FROM users WHERE username = ?`).get(targetUsername);
+      if (target) {
+        db.prepare(`DELETE FROM user_permissions WHERE user_id = ?`).run(target.id);
+      }
 
       const info = db.prepare(`DELETE FROM users WHERE username = ?`).run(targetUsername);
 
@@ -1409,7 +1207,7 @@ const server = http.createServer((req, res) => {
       }
 
       logEvent('user_deleted', {
-        username: user && user.username,
+        username: user.username,
         sessionId: getCookies(req)[SESSION_COOKIE_NAME],
         userAgent: req.headers['user-agent'] || '',
         page: pathname,
@@ -1418,32 +1216,22 @@ const server = http.createServer((req, res) => {
 
       sendJson(res, 200, { ok: true, username: targetUsername });
     });
-
     return;
   }
 
-  if (
-    pathname === '/api/auth/change-password' &&
-    req.method === 'POST'
-  ) {
-
+  // POST /api/auth/change-password
+  // パスワード変更（ログイン済みユーザー本人）
+  if (pathname === '/api/auth/change-password' && req.method === 'POST') {
     requireSession(req, res, (user) => {
-
       parseBody(req, (error, payload) => {
-
         if (error) {
-
-          return sendJson(res, 400, {
-            ok: false,
-            error: 'Invalid JSON'
-          });
+          return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
         }
 
         const current = String(payload.current_password || '');
         const next = String(payload.new_password || '');
 
         if (!current || !next) {
-
           return sendJson(res, 400, {
             ok: false,
             error: 'current_password and new_password are required'
@@ -1451,25 +1239,15 @@ const server = http.createServer((req, res) => {
         }
 
         const row = db.prepare(`
-          SELECT password_hash
-          FROM users
-          WHERE username = ?
+          SELECT password_hash FROM users WHERE username = ?
         `).get(user.username);
 
         if (!row) {
-
-          return sendJson(res, 404, {
-            ok: false,
-            error: 'User not found'
-          });
+          return sendJson(res, 404, { ok: false, error: 'User not found' });
         }
 
         if (!verifyPassword(current, row.password_hash)) {
-
-          return sendJson(res, 403, {
-            ok: false,
-            error: 'Current password is incorrect'
-          });
+          return sendJson(res, 403, { ok: false, error: 'Current password is incorrect' });
         }
 
         if (next.length < 12) {
@@ -1480,24 +1258,18 @@ const server = http.createServer((req, res) => {
         }
 
         db.prepare(`
-          UPDATE users
-          SET password_hash = ?
-          WHERE username = ?
-        `).run(
-          hashPassword(next),
-          user.username
-        );
+          UPDATE users SET password_hash = ? WHERE username = ?
+        `).run(hashPassword(next), user.username);
 
+        // パスワード変更後は他のセッションを無効化（現在のセッションは維持）
         const currentSessionId = getCookies(req)[SESSION_COOKIE_NAME];
         db.prepare(`
-          DELETE FROM sessions
-          WHERE username = ?
-          AND id <> ?
+          DELETE FROM sessions WHERE username = ? AND id <> ?
         `).run(user.username, currentSessionId || '');
 
         logEvent('password_change', {
           username: user.username,
-          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+          sessionId: currentSessionId,
           userAgent: req.headers['user-agent'] || '',
           page: pathname,
           detail: 'password_changed'
@@ -1506,15 +1278,19 @@ const server = http.createServer((req, res) => {
         sendJson(res, 200, { ok: true });
       });
     });
-
     return;
   }
-  
-  // stamp event ingestion endpoint (visit / click)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // スタンプ
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // POST /api/stamp-event
+  // スタンプイベント記録（visit / click / jump）
+  // 注: 変更後スクリプトでは静的GETリクエスト時のみ匿名セッションを発行するため、
+  //     issuedSessionId は削除し、Cookie セッションのみ参照する。
   if (pathname === '/api/stamp-event' && req.method === 'POST') {
-
     parseBody(req, (error, payload) => {
-
       if (error) {
         return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
       }
@@ -1526,8 +1302,7 @@ const server = http.createServer((req, res) => {
         return sendJson(res, 400, { ok: false, error: 'Invalid stampId' });
       }
 
-      // クライアントからの sessionId は廃止。Cookie または当リクエストで発行したセッションを使う。
-      const sessionId = String(getCookies(req)[SESSION_COOKIE_NAME] || issuedSessionId || '');
+      const sessionId = String(getCookies(req)[SESSION_COOKIE_NAME] || '');
       const page = normalizePage(payload.page);
       const userAgent = String(req.headers['user-agent'] || '').slice(0, 512);
       const stampName = LOCATION_LABELS[stampId];
@@ -1548,13 +1323,14 @@ const server = http.createServer((req, res) => {
         return sendJson(res, 200, { ok: true });
       }
 
-      if (type === 'click') {
+      // click / jump はどちらも stamp_clicks に記録（後方互換）
+      if (type === 'click' || type === 'jump') {
         db.prepare(`
           INSERT INTO stamp_clicks (stamp_id, stamp_name, session_id, user_agent, page)
           VALUES (?, ?, ?, ?, ?)
         `).run(stampId, stampName, sessionId || null, userAgent, page || null);
 
-        logEvent('stamp_click', {
+        logEvent(`stamp_${type}`, {
           sessionId,
           userAgent,
           page,
@@ -1564,66 +1340,91 @@ const server = http.createServer((req, res) => {
         return sendJson(res, 200, { ok: true });
       }
 
-      // クライアントで 'jump' を送る実装があるため、互換性のためにクリック扱いで保存する。
-      if (type === 'jump') {
-        db.prepare(`
-          INSERT INTO stamp_clicks (stamp_id, stamp_name, session_id, user_agent, page)
-          VALUES (?, ?, ?, ?, ?)
-        `).run(stampId, stampName, sessionId || null, userAgent, page || null);
-
-        logEvent('stamp_jump', {
-          sessionId,
-          userAgent,
-          page,
-          detail: JSON.stringify({ stampId, stampName })
-        });
-
-        return sendJson(res, 200, { ok: true });
-      }
-
-        sendJson(res, 400, { ok: false, error: 'Unknown type' });
+      sendJson(res, 400, { ok: false, error: 'Unknown type' });
     });
-
     return;
   }
 
-  // 訪問履歴と遷移（クリック/jump）履歴取得。
+  // GET /api/stamp-history
+  // スタンプ履歴取得
+  // ・管理者: 全件
+  // ・認証済みユーザー: 自分のセッション分のみ
+  // ・未認証: Cookie セッション分のみ
   if (pathname === '/api/stamp-history' && req.method === 'GET') {
     const targetSessionId = getCookies(req)[SESSION_COOKIE_NAME] || null;
     const authUser = getSessionUser(req);
 
-    // 管理者は全件取得。
     if (authUser && !isAnonymousUser(authUser) && authUser.role === 'administrator') {
-      const visits = db.prepare(`SELECT sv.*, s.username FROM stamp_visits sv LEFT JOIN sessions s ON sv.session_id = s.id ORDER BY sv.id DESC LIMIT 1000`).all();
-      const clicks = db.prepare(`SELECT sc.*, s.username FROM stamp_clicks sc LEFT JOIN sessions s ON sc.session_id = s.id ORDER BY sc.id DESC LIMIT 1000`).all();
+      const visits = db.prepare(`
+        SELECT sv.*, s.username
+        FROM stamp_visits sv
+        LEFT JOIN sessions s ON sv.session_id = s.id
+        ORDER BY sv.id DESC LIMIT 1000
+      `).all();
+      const clicks = db.prepare(`
+        SELECT sc.*, s.username
+        FROM stamp_clicks sc
+        LEFT JOIN sessions s ON sc.session_id = s.id
+        ORDER BY sc.id DESC LIMIT 1000
+      `).all();
       return sendJson(res, 200, { ok: true, visits, clicks });
     }
 
-    // 認証済みユーザは自分のセッションのみ取得。
     if (authUser && !isAnonymousUser(authUser)) {
-      const sessions = db.prepare(`SELECT id FROM sessions WHERE username = ?`).all(authUser.username).map(r => r.id);
-      if (!sessions.length) return sendJson(res, 200, { ok: true, visits: [], clicks: [] });
+      const sessions = db.prepare(`SELECT id FROM sessions WHERE username = ?`)
+        .all(authUser.username).map(r => r.id);
+
+      if (!sessions.length) {
+        return sendJson(res, 200, { ok: true, visits: [], clicks: [] });
+      }
 
       const placeholders = sessions.map(() => '?').join(',');
-      const visits = db.prepare(`SELECT sv.*, s.username FROM stamp_visits sv LEFT JOIN sessions s ON sv.session_id = s.id WHERE sv.session_id IN (${placeholders}) ORDER BY sv.id DESC LIMIT 1000`).all(...sessions);
-      const clicks = db.prepare(`SELECT sc.*, s.username FROM stamp_clicks sc LEFT JOIN sessions s ON sc.session_id = s.id WHERE sc.session_id IN (${placeholders}) ORDER BY sc.id DESC LIMIT 1000`).all(...sessions);
+      const visits = db.prepare(`
+        SELECT sv.*, s.username FROM stamp_visits sv
+        LEFT JOIN sessions s ON sv.session_id = s.id
+        WHERE sv.session_id IN (${placeholders})
+        ORDER BY sv.id DESC LIMIT 1000
+      `).all(...sessions);
+      const clicks = db.prepare(`
+        SELECT sc.*, s.username FROM stamp_clicks sc
+        LEFT JOIN sessions s ON sc.session_id = s.id
+        WHERE sc.session_id IN (${placeholders})
+        ORDER BY sc.id DESC LIMIT 1000
+      `).all(...sessions);
 
       return sendJson(res, 200, { ok: true, visits, clicks });
     }
 
-    // 未認証は自分の Cookie セッションのみ取得。
-    if (!targetSessionId) return sendJson(res, 400, { ok: false, error: 'sessionId is required' });
+    if (!targetSessionId) {
+      return sendJson(res, 400, { ok: false, error: 'sessionId is required' });
+    }
 
-    const visits = db.prepare(`SELECT sv.*, s.username FROM stamp_visits sv LEFT JOIN sessions s ON sv.session_id = s.id WHERE sv.session_id = ? ORDER BY sv.id DESC LIMIT 1000`).all(targetSessionId);
-    const clicks = db.prepare(`SELECT sc.*, s.username FROM stamp_clicks sc LEFT JOIN sessions s ON sc.session_id = s.id WHERE sc.session_id = ? ORDER BY sc.id DESC LIMIT 1000`).all(targetSessionId);
+    const visits = db.prepare(`
+      SELECT sv.*, s.username FROM stamp_visits sv
+      LEFT JOIN sessions s ON sv.session_id = s.id
+      WHERE sv.session_id = ?
+      ORDER BY sv.id DESC LIMIT 1000
+    `).all(targetSessionId);
+    const clicks = db.prepare(`
+      SELECT sc.*, s.username FROM stamp_clicks sc
+      LEFT JOIN sessions s ON sc.session_id = s.id
+      WHERE sc.session_id = ?
+      ORDER BY sc.id DESC LIMIT 1000
+    `).all(targetSessionId);
 
     return sendJson(res, 200, { ok: true, visits, clicks });
   }
-  if (pathname === '/api/admin/summary' && req.method === 'GET') {
 
-    requireSession(req, res, (user) => {
+  // ─────────────────────────────────────────────────────────────────────────
+  // 管理 API（サマリー・イベント・ログ）
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // GET /api/admin/summary
+  // analytics.read 権限で参照可能（administrator / executivestaff / company）
+  if (pathname === '/api/admin/summary' && req.method === 'GET') {
+    requirePermission(req, res, 'analytics.read', (user) => {
       logEvent('admin_access', {
-        username: user && user.username,
+        username: user.username,
         sessionId: getCookies(req)[SESSION_COOKIE_NAME],
         userAgent: req.headers['user-agent'] || '',
         page: pathname,
@@ -1632,21 +1433,33 @@ const server = http.createServer((req, res) => {
 
       sendJson(res, 200, getSummary(user));
     });
-
     return;
   }
 
+  // GET /api/admin/events
+  // analytics.read 権限で参照可能。
+  // 注: sessions.demographic カラムは変更後スクリプトで ensureColumn が削除されたため、
+  //     JOIN クエリから除去している。
   if (pathname === '/api/admin/events' && req.method === 'GET') {
-
-    requireSession(req, res, (user) => {
+    requirePermission(req, res, 'analytics.read', (user) => {
       const scopeList = getScopeList(user.scope);
 
       if (user.role === 'administrator') {
-        const visits = db.prepare(`SELECT sv.*, s.username, s.demographic FROM stamp_visits sv LEFT JOIN sessions s ON sv.session_id = s.id ORDER BY sv.id DESC LIMIT 100`).all();
-        const clicks = db.prepare(`SELECT sc.*, s.username, s.demographic FROM stamp_clicks sc LEFT JOIN sessions s ON sc.session_id = s.id ORDER BY sc.id DESC LIMIT 100`).all();
+        const visits = db.prepare(`
+          SELECT sv.*, s.username
+          FROM stamp_visits sv
+          LEFT JOIN sessions s ON sv.session_id = s.id
+          ORDER BY sv.id DESC LIMIT 100
+        `).all();
+        const clicks = db.prepare(`
+          SELECT sc.*, s.username
+          FROM stamp_clicks sc
+          LEFT JOIN sessions s ON sc.session_id = s.id
+          ORDER BY sc.id DESC LIMIT 100
+        `).all();
 
         logEvent('admin_access', {
-          username: user && user.username,
+          username: user.username,
           sessionId: getCookies(req)[SESSION_COOKIE_NAME],
           userAgent: req.headers['user-agent'] || '',
           page: pathname,
@@ -1656,15 +1469,25 @@ const server = http.createServer((req, res) => {
         return sendJson(res, 200, { visits, clicks });
       }
 
-      // 非管理者は scope に基づいて絞る。
-      const visitsAll = db.prepare(`SELECT sv.*, s.username, s.demographic FROM stamp_visits sv LEFT JOIN sessions s ON sv.session_id = s.id ORDER BY sv.id DESC LIMIT 1000`).all();
-      const clicksAll = db.prepare(`SELECT sc.*, s.username, s.demographic FROM stamp_clicks sc LEFT JOIN sessions s ON sc.session_id = s.id ORDER BY sc.id DESC LIMIT 1000`).all();
+      // 非管理者は scope で絞る
+      const visitsAll = db.prepare(`
+        SELECT sv.*, s.username
+        FROM stamp_visits sv
+        LEFT JOIN sessions s ON sv.session_id = s.id
+        ORDER BY sv.id DESC LIMIT 1000
+      `).all();
+      const clicksAll = db.prepare(`
+        SELECT sc.*, s.username
+        FROM stamp_clicks sc
+        LEFT JOIN sessions s ON sc.session_id = s.id
+        ORDER BY sc.id DESC LIMIT 1000
+      `).all();
 
       const visits = visitsAll.filter(item => !scopeList || scopeList.includes(item.stamp_id));
       const clicks = clicksAll.filter(item => !scopeList || scopeList.includes(item.stamp_id));
 
       logEvent('admin_access', {
-        username: user && user.username,
+        username: user.username,
         sessionId: getCookies(req)[SESSION_COOKIE_NAME],
         userAgent: req.headers['user-agent'] || '',
         page: pathname,
@@ -1673,11 +1496,11 @@ const server = http.createServer((req, res) => {
 
       sendJson(res, 200, { visits, clicks });
     });
-
     return;
   }
 
-  // 管理者によるイベント削除（訪問・遷移）。
+  // DELETE /api/admin/events
+  // イベント削除（管理者のみ）
   if (pathname === '/api/admin/events' && req.method === 'DELETE') {
     requireRole(req, res, 'administrator', (user) => {
       parseBody(req, (err, payload) => {
@@ -1695,7 +1518,7 @@ const server = http.createServer((req, res) => {
         }
 
         logEvent('admin_delete_events', {
-          username: user && user.username,
+          username: user.username,
           sessionId: getCookies(req)[SESSION_COOKIE_NAME],
           userAgent: req.headers['user-agent'] || '',
           page: pathname,
@@ -1705,54 +1528,52 @@ const server = http.createServer((req, res) => {
         sendJson(res, 200, { ok: true });
       });
     });
-
     return;
   }
 
-  if (pathname === '/api/admin/logs') {
-    if (req.method === 'GET') {
-      requireRole(req, res, 'administrator', (user) => {
-        const logs = db.prepare(`SELECT * FROM logs ORDER BY id DESC LIMIT 500`).all();
-
-        sendJson(res, 200, { ok: true, logs });
-      });
-
-      return;
-    }
-
-    if (req.method === 'DELETE') {
-      requireRole(req, res, 'administrator', (user) => {
-        // サポートする JSON ボディ: { before: 'YYYY-MM-DDTHH:MM:SS' }
-        parseBody(req, (err, payload) => {
-          if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
-
-          if (payload && payload.before) {
-            db.prepare(`DELETE FROM logs WHERE created_at < ?`).run(payload.before);
-          } else {
-            db.prepare(`DELETE FROM logs`).run();
-          }
-
-          logEvent('admin_delete_logs', {
-            username: user && user.username,
-            sessionId: getCookies(req)[SESSION_COOKIE_NAME],
-            userAgent: req.headers['user-agent'] || '',
-            page: pathname,
-            detail: JSON.stringify({ before: payload && payload.before || null })
-          });
-
-          sendJson(res, 200, { ok: true });
-        });
-      });
-
-      return;
-    }
+  // GET /api/admin/logs
+  // logs.read 権限で参照可能（administrator / executivestaff）
+  if (pathname === '/api/admin/logs' && req.method === 'GET') {
+    requirePermission(req, res, 'logs.read', (user) => {
+      const logs = db.prepare(`SELECT * FROM logs ORDER BY id DESC LIMIT 500`).all();
+      sendJson(res, 200, { ok: true, logs });
+    });
+    return;
   }
 
-  // ============================================================================
-  // 掲示板API
-  // ============================================================================
+  // DELETE /api/admin/logs
+  // ログ削除（管理者のみ）
+  if (pathname === '/api/admin/logs' && req.method === 'DELETE') {
+    requireRole(req, res, 'administrator', (user) => {
+      parseBody(req, (err, payload) => {
+        if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
 
-  // POST /api/posts - 新規投稿（匿名）
+        if (payload && payload.before) {
+          db.prepare(`DELETE FROM logs WHERE created_at < ?`).run(payload.before);
+        } else {
+          db.prepare(`DELETE FROM logs`).run();
+        }
+
+        logEvent('admin_delete_logs', {
+          username: user.username,
+          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+          userAgent: req.headers['user-agent'] || '',
+          page: pathname,
+          detail: JSON.stringify({ before: (payload && payload.before) || null })
+        });
+
+        sendJson(res, 200, { ok: true });
+      });
+    });
+    return;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 掲示板 API
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // POST /api/posts
+  // 投稿作成（匿名可）
   if (pathname === '/api/posts' && req.method === 'POST') {
     parseBody(req, (err, payload) => {
       if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
@@ -1761,7 +1582,6 @@ const server = http.createServer((req, res) => {
       if (!content) {
         return sendJson(res, 400, { ok: false, error: 'Content is required' });
       }
-
       if (content.length > 500) {
         return sendJson(res, 400, { ok: false, error: 'Content is too long (max 500 chars)' });
       }
@@ -1769,11 +1589,9 @@ const server = http.createServer((req, res) => {
       const ngCheck = checkNGRules(content);
       const status = calculatePostStatus(ngCheck.riskScore);
 
-      const insertStmt = db.prepare(`
-        INSERT INTO posts (content, status, risk_score)
-        VALUES (?, ?, ?)
-      `);
-      const result = insertStmt.run(content, status, ngCheck.riskScore);
+      const result = db.prepare(`
+        INSERT INTO posts (content, status, risk_score) VALUES (?, ?, ?)
+      `).run(content, status, ngCheck.riskScore);
 
       logEvent('post_created', {
         sessionId: getCookies(req)[SESSION_COOKIE_NAME],
@@ -1786,13 +1604,14 @@ const server = http.createServer((req, res) => {
         ok: true,
         message: '投稿を受け付けました',
         postId: result.lastInsertRowid,
-        status: status
+        status
       });
     });
     return;
   }
 
-  // GET /api/posts - 投稿一覧（公開済みのみ）
+  // GET /api/posts
+  // 投稿一覧（公開済みのみ・認証不要）
   if (pathname === '/api/posts' && req.method === 'GET') {
     const status = url.searchParams.get('status') || 'published';
     const search = url.searchParams.get('search') || '';
@@ -1800,16 +1619,17 @@ const server = http.createServer((req, res) => {
 
     const posts = getPostsSub({
       status: status === 'all' ? null : status,
-      search: search,
-      limit: limit
+      search,
+      limit
     });
 
     return sendJson(res, 200, { ok: true, posts });
   }
 
-  // PATCH /api/posts/:id/status - 投稿状態変更（管理者のみ）
+  // PATCH /api/admin/posts/:id/status
+  // 投稿ステータス変更（announcement.manage 権限）
   if (pathname.match(/^\/api\/admin\/posts\/(\d+)\/status$/) && req.method === 'PATCH') {
-    requireRole(req, res, 'administrator', (user) => {
+    requirePermission(req, res, 'announcement.manage', (user) => {
       const match = pathname.match(/^\/api\/admin\/posts\/(\d+)\/status$/);
       const postId = parseInt(match[1], 10);
 
@@ -1827,9 +1647,7 @@ const server = http.createServer((req, res) => {
         }
 
         db.prepare(`
-          UPDATE posts
-          SET status = ?, updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
+          UPDATE posts SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
         `).run(newStatus, postId);
 
         logModerationAction(postId, user.username, 'status_change', post.status, newStatus, payload.reason);
@@ -1848,29 +1666,22 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // GET /api/admin/posts - 投稿一覧（管理者向け・全状態表示）
+  // GET /api/admin/posts
+  // 投稿一覧（全ステータス・announcement.manage 権限）
   if (pathname === '/api/admin/posts' && req.method === 'GET') {
-    requireRole(req, res, 'administrator', (user) => {
+    requirePermission(req, res, 'announcement.manage', (user) => {
       const status = url.searchParams.get('status') || '';
       const search = url.searchParams.get('search') || '';
       const limit = parseInt(url.searchParams.get('limit') || '100', 10);
 
       let query = `
         SELECT id, content, status, risk_score, created_at, updated_at
-        FROM posts
-        WHERE 1=1
+        FROM posts WHERE 1=1
       `;
       const params = [];
 
-      if (status) {
-        query += ` AND status = ?`;
-        params.push(status);
-      }
-
-      if (search) {
-        query += ` AND content LIKE ?`;
-        params.push(`%${search}%`);
-      }
+      if (status) { query += ` AND status = ?`; params.push(status); }
+      if (search) { query += ` AND content LIKE ?`; params.push(`%${search}%`); }
 
       query += ` ORDER BY created_at DESC LIMIT ?`;
       params.push(limit);
@@ -1890,9 +1701,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // GET /api/admin/moderation-logs - 管理ログ
+  // GET /api/admin/moderation-logs
+  // モデレーションログ参照（announcement.manage 権限）
   if (pathname === '/api/admin/moderation-logs' && req.method === 'GET') {
-    requireRole(req, res, 'administrator', (user) => {
+    requirePermission(req, res, 'announcement.manage', (user) => {
       const postId = url.searchParams.get('postId');
       let query = `SELECT * FROM moderation_logs WHERE 1=1`;
       const params = [];
@@ -1903,7 +1715,6 @@ const server = http.createServer((req, res) => {
       }
 
       query += ` ORDER BY created_at DESC LIMIT 200`;
-
       const logs = db.prepare(query).all(...params);
 
       return sendJson(res, 200, { ok: true, logs });
@@ -1911,67 +1722,63 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ============================================================================
-  // アナウンスAPI
-  // ============================================================================
+  // ─────────────────────────────────────────────────────────────────────────
+  // アナウンス API
+  // ─────────────────────────────────────────────────────────────────────────
 
-  // GET /api/announcements - 公開中のアナウンス一覧
+  // GET /api/announcements
+  // 公開中アナウンス一覧（認証不要）
   if (pathname === '/api/announcements' && req.method === 'GET') {
     const announcements = getAnnouncementsSub();
     return sendJson(res, 200, { ok: true, announcements });
   }
 
-  // POST /api/announcements - アナウンス作成（アナウンス認証）
+  // POST /api/announcements
+  // アナウンス作成。
+  // 変更後スクリプトで announcement_users テーブルが廃止されたため、
+  // announcement.create パーミッションを持つセッションユーザーのみ投稿可能。
   if (pathname === '/api/announcements' && req.method === 'POST') {
-    // パスワード認証（Application/JSON のみ）
-    parseBody(req, (err, payload) => {
-      if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+    requirePermission(req, res, 'announcement.create', (user) => {
+      parseBody(req, (err, payload) => {
+        if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
 
-      const username = String(payload.username || '').trim();
-      const password = String(payload.password || '').trim();
-      const title = String(payload.title || '').trim();
-      const content = String(payload.content || '').trim();
-      const importance = String(payload.importance || 'normal').toLowerCase();
-      const publishedAt = String(payload.published_at || '');
-      const expiresAt = String(payload.expires_at || '');
+        const title = String(payload.title || '').trim();
+        const content = String(payload.content || '').trim();
+        const importance = String(payload.importance || 'normal').toLowerCase();
+        const publishedAt = String(payload.published_at || '');
+        const expiresAt = String(payload.expires_at || '');
 
-      if (!username || !password || !title || !content) {
-        return sendJson(res, 400, { ok: false, error: 'Missing required fields' });
-      }
+        if (!title || !content || !publishedAt || !expiresAt) {
+          return sendJson(res, 400, { ok: false, error: 'Missing required fields' });
+        }
 
-      const announcer = db.prepare(`
-        SELECT password_hash FROM announcement_users WHERE username = ?
-      `).get(username);
+        if (!['normal', 'important', 'urgent'].includes(importance)) {
+          return sendJson(res, 400, { ok: false, error: 'Invalid importance value' });
+        }
 
-      if (!announcer || !verifyPassword(password, announcer.password_hash)) {
-        return sendJson(res, 401, { ok: false, error: 'Invalid credentials' });
-      }
+        const result = db.prepare(`
+          INSERT INTO announcements (title, content, importance, published_at, expires_at, created_by)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(title, content, importance, publishedAt, expiresAt, user.username);
 
-      const result = db.prepare(`
-        INSERT INTO announcements (title, content, importance, published_at, expires_at, created_by)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(title, content, importance, publishedAt, expiresAt, username);
+        logEvent('announcement_created', {
+          username: user.username,
+          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+          userAgent: req.headers['user-agent'] || '',
+          page: pathname,
+          detail: JSON.stringify({ announcementId: result.lastInsertRowid })
+        });
 
-      logEvent('announcement_created', {
-        username: username,
-        sessionId: getCookies(req)[SESSION_COOKIE_NAME],
-        userAgent: req.headers['user-agent'] || '',
-        page: pathname,
-        detail: JSON.stringify({ announcementId: result.lastInsertRowid })
+        return sendJson(res, 201, { ok: true, announcementId: result.lastInsertRowid });
       });
-
-      return sendJson(res, 201, { ok: true, announcementId: result.lastInsertRowid });
     });
     return;
   }
 
-  // ============================================================================
-  // アナウンス管理API（管理者のみ）
-  // ============================================================================
-
-  // GET /api/admin/announcements - 全アナウンス表示（管理者向け）
+  // GET /api/admin/announcements
+  // 全アナウンス一覧（announcement.manage 権限）
   if (pathname === '/api/admin/announcements' && req.method === 'GET') {
-    requireRole(req, res, 'administrator', (user) => {
+    requirePermission(req, res, 'announcement.manage', (user) => {
       const announcements = db.prepare(`
         SELECT * FROM announcements ORDER BY created_at DESC LIMIT 100
       `).all();
@@ -1981,9 +1788,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // PATCH /api/admin/announcements/:id - アナウンス編集（管理者のみ）
+  // PATCH /api/admin/announcements/:id
+  // アナウンス編集（announcement.manage 権限）
   if (pathname.match(/^\/api\/admin\/announcements\/(\d+)$/) && req.method === 'PATCH') {
-    requireRole(req, res, 'administrator', (user) => {
+    requirePermission(req, res, 'announcement.manage', (user) => {
       const match = pathname.match(/^\/api\/admin\/announcements\/(\d+)$/);
       const id = parseInt(match[1], 10);
 
@@ -2020,9 +1828,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // DELETE /api/admin/announcements/:id - アナウンス削除（管理者のみ）
+  // DELETE /api/admin/announcements/:id
+  // アナウンス削除（announcement.manage 権限）
   if (pathname.match(/^\/api\/admin\/announcements\/(\d+)$/) && req.method === 'DELETE') {
-    requireRole(req, res, 'administrator', (user) => {
+    requirePermission(req, res, 'announcement.manage', (user) => {
       const match = pathname.match(/^\/api\/admin\/announcements\/(\d+)$/);
       const id = parseInt(match[1], 10);
 
@@ -2046,91 +1855,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ============================================================================
-  // アナウンス投稿者ユーザー管理（管理者のみ）
-  // ============================================================================
-
-  // GET /api/admin/announcement-users - ユーザー一覧
-  if (pathname === '/api/admin/announcement-users' && req.method === 'GET') {
-    requireRole(req, res, 'administrator', (user) => {
-      const users = db.prepare(`
-        SELECT id, username, created_at FROM announcement_users ORDER BY created_at DESC
-      `).all();
-
-      return sendJson(res, 200, { ok: true, users });
-    });
-    return;
-  }
-
-  // POST /api/admin/announcement-users - ユーザー追加
-  if (pathname === '/api/admin/announcement-users' && req.method === 'POST') {
-    requireRole(req, res, 'administrator', (user) => {
-      parseBody(req, (err, payload) => {
-        if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
-
-        const username = String(payload.username || '').trim();
-        const password = String(payload.password || '').trim();
-
-        if (!username || !password) {
-          return sendJson(res, 400, { ok: false, error: 'Username and password are required' });
-        }
-
-        if (password.length < 8) {
-          return sendJson(res, 400, { ok: false, error: 'Password must be at least 8 characters' });
-        }
-
-        try {
-          db.prepare(`
-            INSERT INTO announcement_users (username, password_hash)
-            VALUES (?, ?)
-          `).run(username, hashPassword(password));
-
-          logEvent('announcement_user_created', {
-            username: user.username,
-            sessionId: getCookies(req)[SESSION_COOKIE_NAME],
-            userAgent: req.headers['user-agent'] || '',
-            page: pathname,
-            detail: JSON.stringify({ newUsername: username })
-          });
-
-          return sendJson(res, 201, { ok: true });
-        } catch (e) {
-          return sendJson(res, 400, { ok: false, error: 'Username already exists' });
-        }
-      });
-    });
-    return;
-  }
-
-  // DELETE /api/admin/announcement-users/:id - ユーザー削除
-  if (pathname.match(/^\/api\/admin\/announcement-users\/(\d+)$/) && req.method === 'DELETE') {
-    requireRole(req, res, 'administrator', (user) => {
-      const match = pathname.match(/^\/api\/admin\/announcement-users\/(\d+)$/);
-      const id = parseInt(match[1], 10);
-
-      const announceUser = db.prepare(`SELECT * FROM announcement_users WHERE id = ?`).get(id);
-      if (!announceUser) {
-        return sendJson(res, 404, { ok: false, error: 'User not found' });
-      }
-
-      db.prepare(`DELETE FROM announcement_users WHERE id = ?`).run(id);
-
-      logEvent('announcement_user_deleted', {
-        username: user.username,
-        sessionId: getCookies(req)[SESSION_COOKIE_NAME],
-        userAgent: req.headers['user-agent'] || '',
-        page: pathname,
-        detail: JSON.stringify({ deletedUsername: announceUser.username })
-      });
-
-      return sendJson(res, 200, { ok: true });
-    });
-    return;
-  }
-
-  // ============================================================================
-  // NG判定ルール管理API（管理者のみ）
-  // ============================================================================
+  // ─────────────────────────────────────────────────────────────────────────
+  // NGルール管理 API（管理者のみ）
+  // ─────────────────────────────────────────────────────────────────────────
 
   // GET /api/admin/ng-rules - ルール一覧
   if (pathname === '/api/admin/ng-rules' && req.method === 'GET') {
@@ -2146,184 +1873,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // GET /api/admin/ng-rules/:id - ルール詳細
-  if (pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/) && req.method === 'GET') {
-    requireRole(req, res, 'administrator', (user) => {
-      const match = pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/);
-      const id = parseInt(match[1], 10);
-
-      const rule = db.prepare(`
-        SELECT id, pattern, is_regex, risk_score, enabled, description, created_at
-        FROM ng_rules
-        WHERE id = ?
-      `).get(id);
-
-      if (!rule) {
-        return sendJson(res, 404, { ok: false, error: 'Rule not found' });
-      }
-
-      return sendJson(res, 200, { ok: true, rule });
-    });
-    return;
-  }
-
-  // POST /api/admin/ng-rules - ルール追加
-  if (pathname === '/api/admin/ng-rules' && req.method === 'POST') {
-    requireRole(req, res, 'administrator', (user) => {
-      parseBody(req, (err, payload) => {
-        if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
-
-        const pattern = String(payload.pattern || '').trim();
-        const isRegex = payload.is_regex ? 1 : 0;
-        const riskScore = parseInt(payload.risk_score || 0, 10);
-        const description = String(payload.description || '').trim();
-
-        if (!pattern) {
-          return sendJson(res, 400, { ok: false, error: 'Pattern is required' });
-        }
-
-        if (riskScore < 0 || riskScore > 100) {
-          return sendJson(res, 400, { ok: false, error: 'Risk score must be between 0 and 100' });
-        }
-
-        // 正規表現の検証
-        if (isRegex) {
-          try {
-            new RegExp(pattern);
-          } catch (e) {
-            return sendJson(res, 400, { ok: false, error: 'Invalid regex pattern' });
-          }
-        }
-
-        const result = db.prepare(`
-          INSERT INTO ng_rules (pattern, is_regex, risk_score, enabled, description)
-          VALUES (?, ?, ?, 1, ?)
-        `).run(pattern, isRegex, riskScore, description);
-
-        logEvent('ng_rule_created', {
-          username: user.username,
-          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
-          userAgent: req.headers['user-agent'] || '',
-          page: pathname,
-          detail: JSON.stringify({ ruleId: result.lastInsertRowid, pattern })
-        });
-
-        return sendJson(res, 201, { ok: true, ruleId: result.lastInsertRowid });
-      });
-    });
-    return;
-  }
-
-  // PATCH /api/admin/ng-rules/:id - ルール編集
-  if (pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/) && req.method === 'PATCH') {
-    requireRole(req, res, 'administrator', (user) => {
-      const match = pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/);
-      const id = parseInt(match[1], 10);
-
-      parseBody(req, (err, payload) => {
-        if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
-
-        const rule = db.prepare(`SELECT * FROM ng_rules WHERE id = ?`).get(id);
-        if (!rule) {
-          return sendJson(res, 404, { ok: false, error: 'Rule not found' });
-        }
-
-        const pattern = payload.pattern !== undefined ? String(payload.pattern).trim() : rule.pattern;
-        const isRegex = payload.is_regex !== undefined ? (payload.is_regex ? 1 : 0) : rule.is_regex;
-        const riskScore = payload.risk_score !== undefined ? parseInt(payload.risk_score, 10) : rule.risk_score;
-        const description = payload.description !== undefined ? String(payload.description).trim() : rule.description;
-
-        if (!pattern) {
-          return sendJson(res, 400, { ok: false, error: 'Pattern cannot be empty' });
-        }
-
-        if (riskScore < 0 || riskScore > 100) {
-          return sendJson(res, 400, { ok: false, error: 'Risk score must be between 0 and 100' });
-        }
-
-        // 正規表現の検証
-        if (isRegex) {
-          try {
-            new RegExp(pattern);
-          } catch (e) {
-            return sendJson(res, 400, { ok: false, error: 'Invalid regex pattern' });
-          }
-        }
-
-        db.prepare(`
-          UPDATE ng_rules
-          SET pattern = ?, is_regex = ?, risk_score = ?, description = ?
-          WHERE id = ?
-        `).run(pattern, isRegex, riskScore, description, id);
-
-        logEvent('ng_rule_updated', {
-          username: user.username,
-          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
-          userAgent: req.headers['user-agent'] || '',
-          page: pathname,
-          detail: JSON.stringify({ ruleId: id })
-        });
-
-        return sendJson(res, 200, { ok: true });
-      });
-    });
-    return;
-  }
-
-  // DELETE /api/admin/ng-rules/:id - ルール削除
-  if (pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/) && req.method === 'DELETE') {
-    requireRole(req, res, 'administrator', (user) => {
-      const match = pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/);
-      const id = parseInt(match[1], 10);
-
-      const rule = db.prepare(`SELECT * FROM ng_rules WHERE id = ?`).get(id);
-      if (!rule) {
-        return sendJson(res, 404, { ok: false, error: 'Rule not found' });
-      }
-
-      db.prepare(`DELETE FROM ng_rules WHERE id = ?`).run(id);
-
-      logEvent('ng_rule_deleted', {
-        username: user.username,
-        sessionId: getCookies(req)[SESSION_COOKIE_NAME],
-        userAgent: req.headers['user-agent'] || '',
-        page: pathname,
-        detail: JSON.stringify({ ruleId: id, pattern: rule.pattern })
-      });
-
-      return sendJson(res, 200, { ok: true });
-    });
-    return;
-  }
-
-  // POST /api/admin/ng-rules/:id/toggle - ルール有効/無効切り替え
-  if (pathname.match(/^\/api\/admin\/ng-rules\/(\d+)\/toggle$/) && req.method === 'POST') {
-    requireRole(req, res, 'administrator', (user) => {
-      const match = pathname.match(/^\/api\/admin\/ng-rules\/(\d+)\/toggle$/);
-      const id = parseInt(match[1], 10);
-
-      const rule = db.prepare(`SELECT * FROM ng_rules WHERE id = ?`).get(id);
-      if (!rule) {
-        return sendJson(res, 404, { ok: false, error: 'Rule not found' });
-      }
-
-      const newEnabled = rule.enabled ? 0 : 1;
-      db.prepare(`UPDATE ng_rules SET enabled = ? WHERE id = ?`).run(newEnabled, id);
-
-      logEvent('ng_rule_toggled', {
-        username: user.username,
-        sessionId: getCookies(req)[SESSION_COOKIE_NAME],
-        userAgent: req.headers['user-agent'] || '',
-        page: pathname,
-        detail: JSON.stringify({ ruleId: id, newEnabled })
-      });
-
-      return sendJson(res, 200, { ok: true, enabled: newEnabled });
-    });
-    return;
-  }
-
-  // POST /api/admin/ng-rules/test - NG判定テスト
+  // POST /api/admin/ng-rules/test - NG判定テスト（個別ルートより先に定義）
   if (pathname === '/api/admin/ng-rules/test' && req.method === 'POST') {
     requireRole(req, res, 'administrator', (user) => {
       parseBody(req, (err, payload) => {
@@ -2336,8 +1886,7 @@ const server = http.createServer((req, res) => {
 
         const rules = db.prepare(`
           SELECT id, pattern, is_regex, risk_score, description
-          FROM ng_rules
-          WHERE enabled = 1
+          FROM ng_rules WHERE enabled = 1
           ORDER BY risk_score DESC
         `).all();
 
@@ -2348,11 +1897,8 @@ const server = http.createServer((req, res) => {
           try {
             let isMatch = false;
             if (rule.is_regex) {
-              try {
-                isMatch = new RegExp(rule.pattern, 'i').test(content);
-              } catch (e) {
-                console.error(`Invalid regex pattern: ${rule.pattern}`, e);
-              }
+              try { isMatch = new RegExp(rule.pattern, 'i').test(content); }
+              catch (e) { console.error(`Invalid regex pattern: ${rule.pattern}`, e); }
             } else {
               isMatch = content.toLowerCase().includes(rule.pattern.toLowerCase());
             }
@@ -2386,7 +1932,166 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // サイト（静的ファイル）への通常アクセスはログに残す。
+  // GET /api/admin/ng-rules/:id - ルール詳細
+  if (pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/) && req.method === 'GET') {
+    requireRole(req, res, 'administrator', (user) => {
+      const match = pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/);
+      const id = parseInt(match[1], 10);
+
+      const rule = db.prepare(`
+        SELECT id, pattern, is_regex, risk_score, enabled, description, created_at
+        FROM ng_rules WHERE id = ?
+      `).get(id);
+
+      if (!rule) return sendJson(res, 404, { ok: false, error: 'Rule not found' });
+
+      return sendJson(res, 200, { ok: true, rule });
+    });
+    return;
+  }
+
+  // POST /api/admin/ng-rules - ルール追加
+  if (pathname === '/api/admin/ng-rules' && req.method === 'POST') {
+    requireRole(req, res, 'administrator', (user) => {
+      parseBody(req, (err, payload) => {
+        if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+
+        const pattern = String(payload.pattern || '').trim();
+        const isRegex = payload.is_regex ? 1 : 0;
+        const riskScore = parseInt(payload.risk_score || 0, 10);
+        const description = String(payload.description || '').trim();
+
+        if (!pattern) {
+          return sendJson(res, 400, { ok: false, error: 'Pattern is required' });
+        }
+        if (riskScore < 0 || riskScore > 100) {
+          return sendJson(res, 400, { ok: false, error: 'Risk score must be between 0 and 100' });
+        }
+        if (isRegex) {
+          try { new RegExp(pattern); }
+          catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid regex pattern' }); }
+        }
+
+        const result = db.prepare(`
+          INSERT INTO ng_rules (pattern, is_regex, risk_score, enabled, description)
+          VALUES (?, ?, ?, 1, ?)
+        `).run(pattern, isRegex, riskScore, description);
+
+        logEvent('ng_rule_created', {
+          username: user.username,
+          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+          userAgent: req.headers['user-agent'] || '',
+          page: pathname,
+          detail: JSON.stringify({ ruleId: result.lastInsertRowid, pattern })
+        });
+
+        return sendJson(res, 201, { ok: true, ruleId: result.lastInsertRowid });
+      });
+    });
+    return;
+  }
+
+  // PATCH /api/admin/ng-rules/:id - ルール編集
+  if (pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/) && req.method === 'PATCH') {
+    requireRole(req, res, 'administrator', (user) => {
+      const match = pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/);
+      const id = parseInt(match[1], 10);
+
+      parseBody(req, (err, payload) => {
+        if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+
+        const rule = db.prepare(`SELECT * FROM ng_rules WHERE id = ?`).get(id);
+        if (!rule) return sendJson(res, 404, { ok: false, error: 'Rule not found' });
+
+        const pattern = payload.pattern !== undefined ? String(payload.pattern).trim() : rule.pattern;
+        const isRegex = payload.is_regex !== undefined ? (payload.is_regex ? 1 : 0) : rule.is_regex;
+        const riskScore = payload.risk_score !== undefined ? parseInt(payload.risk_score, 10) : rule.risk_score;
+        const description = payload.description !== undefined ? String(payload.description).trim() : rule.description;
+
+        if (!pattern) {
+          return sendJson(res, 400, { ok: false, error: 'Pattern cannot be empty' });
+        }
+        if (riskScore < 0 || riskScore > 100) {
+          return sendJson(res, 400, { ok: false, error: 'Risk score must be between 0 and 100' });
+        }
+        if (isRegex) {
+          try { new RegExp(pattern); }
+          catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid regex pattern' }); }
+        }
+
+        db.prepare(`
+          UPDATE ng_rules
+          SET pattern = ?, is_regex = ?, risk_score = ?, description = ?
+          WHERE id = ?
+        `).run(pattern, isRegex, riskScore, description, id);
+
+        logEvent('ng_rule_updated', {
+          username: user.username,
+          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+          userAgent: req.headers['user-agent'] || '',
+          page: pathname,
+          detail: JSON.stringify({ ruleId: id })
+        });
+
+        return sendJson(res, 200, { ok: true });
+      });
+    });
+    return;
+  }
+
+  // DELETE /api/admin/ng-rules/:id - ルール削除
+  if (pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/) && req.method === 'DELETE') {
+    requireRole(req, res, 'administrator', (user) => {
+      const match = pathname.match(/^\/api\/admin\/ng-rules\/(\d+)$/);
+      const id = parseInt(match[1], 10);
+
+      const rule = db.prepare(`SELECT * FROM ng_rules WHERE id = ?`).get(id);
+      if (!rule) return sendJson(res, 404, { ok: false, error: 'Rule not found' });
+
+      db.prepare(`DELETE FROM ng_rules WHERE id = ?`).run(id);
+
+      logEvent('ng_rule_deleted', {
+        username: user.username,
+        sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+        userAgent: req.headers['user-agent'] || '',
+        page: pathname,
+        detail: JSON.stringify({ ruleId: id, pattern: rule.pattern })
+      });
+
+      return sendJson(res, 200, { ok: true });
+    });
+    return;
+  }
+
+  // POST /api/admin/ng-rules/:id/toggle - 有効/無効切り替え
+  if (pathname.match(/^\/api\/admin\/ng-rules\/(\d+)\/toggle$/) && req.method === 'POST') {
+    requireRole(req, res, 'administrator', (user) => {
+      const match = pathname.match(/^\/api\/admin\/ng-rules\/(\d+)\/toggle$/);
+      const id = parseInt(match[1], 10);
+
+      const rule = db.prepare(`SELECT * FROM ng_rules WHERE id = ?`).get(id);
+      if (!rule) return sendJson(res, 404, { ok: false, error: 'Rule not found' });
+
+      const newEnabled = rule.enabled ? 0 : 1;
+      db.prepare(`UPDATE ng_rules SET enabled = ? WHERE id = ?`).run(newEnabled, id);
+
+      logEvent('ng_rule_toggled', {
+        username: user.username,
+        sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+        userAgent: req.headers['user-agent'] || '',
+        page: pathname,
+        detail: JSON.stringify({ ruleId: id, newEnabled })
+      });
+
+      return sendJson(res, 200, { ok: true, enabled: newEnabled });
+    });
+    return;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 静的ファイルアクセスのログ記録
+  // （直後に serveStatic を配置すること）
+  // ─────────────────────────────────────────────────────────────────────────
   try {
     if (req.method === 'GET' && !pathname.startsWith('/api')) {
       const session = getSessionUser(req);
@@ -2399,15 +2104,14 @@ const server = http.createServer((req, res) => {
       });
     }
   } catch (e) {
-    /* ignore logging errors */
+    /* logging errors は無視 */
   }
 
+  // 静的ファイル配信
   serveStatic(res, getFilePath(pathname));
 });
 
+// サーバー起動
 server.listen(PORT, () => {
-
-  console.log(
-    `Server running at https://localhost:${PORT}`
-  );
-}); 
+  console.log(`Server running at http://localhost:${PORT}/`);
+});
