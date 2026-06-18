@@ -1,3 +1,5 @@
+/*不要なものがいろいろ散乱してるので、あとで整理すること*/
+
 /* リセット */
 
 html {
@@ -383,14 +385,15 @@ h2::after {
 /* ===== カード（トップ用） ===== */
 .cards {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 30px;
-    padding: 80px 0;
-    max-width: 1200px;
-    margin: 0 auto;
-    justify-content: center;
-}
 
+    width: 100%;
+    max-width: 1400px;
+
+    margin: 0 auto;
+    padding: 80px 20px;
+}
 /* ===== 共通カード ===== */
 .card {
     display: block; /* aタグでも崩れないように */
@@ -485,10 +488,17 @@ h2::after {
 /* ===== グリッド（模擬店・イベント用） ===== */
 .grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
     gap: 25px;
-    margin-bottom: 40px;
-    margin-left: 30px;
+
+    width: 100%;
+
+    margin: 0;
+    padding: 0 20px;
+
+    justify-items: stretch;
 }
 
 /* ===== ゲスト ===== */
@@ -1514,6 +1524,9 @@ footer {
     .grid {
         grid-template-columns: 1fr;
         gap: 25px;
+        width: 100%;
+        padding: 0 10px;
+        margin: 0;
     }
 
     .access-container {
@@ -1579,6 +1592,7 @@ footer {
     .grid {
         grid-template-columns: 1fr;
         gap: 20px;
+
     }
 
     .card img {
