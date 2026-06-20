@@ -484,13 +484,46 @@
       font-size: 13px;
       word-wrap: break-word;
     }
+
+    .page {
+  display: none;
+  padding: 20px;
+}
+
+.page.active {
+  display: block;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
   </style>
 </head>
 
-<div class="topbar">
+<!--<div class="topbar">
     <a href="/" class="home-link">高専祭TOP</a>
     <button class="menu-toggle" aria-label="メニューを開く">☰</button>
-</div>
+</div>-->
 
 <nav id="nav">
     <ul>
@@ -551,7 +584,9 @@
         <li><button class="nav-item" data-page="analytics">📈 アナリティクス</button></li>
         <li><button class="nav-item" data-page="users">👥 ユーザー管理</button></li>
         <li><button class="nav-item" data-page="logs">📋 ログ</button></li>
+        <li><button class="nav-item" data-page="publish">🌐 公開管理</button></li>
         <li><button class="nav-item" data-page="account">⚙️ アカウント</button></li>
+        <li><button class="nav-item" onclick="location.href='./index.html'">🏠 TOPへ戻る</button></li>
       </ul>
     </div>
 
@@ -824,6 +859,29 @@
             </tbody>
           </table>
         </div>
+
+        <!-- 公開管理 -->
+       <section id="site-control" class="page">
+
+  <h1>🚦 公開管理</h1>
+
+  <button class="btn" onclick="loadPublish()">
+    🔄 状態更新
+  </button>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ページ</th>
+        <th>公開状態</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+
+    <tbody id="publish-table-body"></tbody>
+  </table>
+
+</section>
 
         <!-- アカウント -->
         <div id="account" class="page">

@@ -16,6 +16,21 @@ const addUserForm = document.getElementById('add-user-form');
 const userMessage = document.getElementById('userMessage');
 document.getElementById('addRuleBtn')?.addEventListener('click', saveRule);
 
+const PAGE_LIST = [
+  'index',
+  'about',
+  'guest',
+  'shop',
+  'event',
+  'stamp-rally',
+  'schedule',
+  'company',
+  'map',
+  'announcements',
+  'bulletin',
+  'access'
+];
+
 const ROLE_DEFAULTS = {
 
   administrator: [
@@ -137,7 +152,13 @@ function showAdminScreen() {
   // （ログインハンドラ内で呼ぶため）
 }
 
-function showPage(page) {
+/*function showPage(page) {
+
+
+
+  if (page === 'publish') {
+  loadPublish();
+  }
   // ダッシュボードとアカウント設定は常に許可
   if (page === 'dashboard' || page === 'account') {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -168,6 +189,56 @@ function showPage(page) {
   document.getElementById(page).classList.add('active');
  
   // 各ページの読み込み処理
+  if (page === 'posts') loadPosts();
+  if (page === 'ng-rules') loadRules();
+  if (page === 'announcements') loadAnnouncements();
+  if (page === 'analytics') loadAnalytics();
+  if (page === 'users') loadUsers();
+  if (page === 'logs') loadLogs();
+}*/
+function showPage(page) {
+ 
+  // publish / site-control ページは administrator のみ
+  if (page === 'publish' || page === 'site-control') {
+    if (!can('control')) {
+      showMessage('このページへのアクセス権限がありません', 'error');
+      return;
+    }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('site-control').classList.add('active');
+    loadPublish();
+    return;
+  }
+ 
+  // ダッシュボードとアカウント設定は常に許可
+  if (page === 'dashboard' || page === 'account') {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page).classList.add('active');
+    if (page === 'account') {
+      document.getElementById('accountUsername').value = currentUser.username;
+    }
+    return;
+  }
+ 
+  // その他のページは権限チェック
+  const pageMap = {
+    posts: 'announcement.manage',
+    'ng-rules': 'announcement.manage',
+    announcements: 'announcement.manage',
+    analytics: 'analytics.read',
+    users: 'users.read',
+    logs: 'logs.read'
+  };
+ 
+  const requiredPerm = pageMap[page];
+  if (requiredPerm && !can(requiredPerm)) {
+    showMessage('このページへのアクセス権限がありません', 'error');
+    return;
+  }
+ 
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+ 
   if (page === 'posts') loadPosts();
   if (page === 'ng-rules') loadRules();
   if (page === 'announcements') loadAnnouncements();
@@ -1159,6 +1230,139 @@ async function securefetch(url, options = {}) {
   }
 
   return res;
+}
+
+async function loadPublish() {
+  try {
+    const res = await fetch('/api/admin/publish');
+    if (!res.ok) {
+      showMessage('公開状態の読み込みに失敗しました', 'error');
+      return;
+    }
+ 
+    const data = await res.json();
+    window.publishState = data;
+ 
+    const tbody = document.getElementById('publish-table-body');
+ 
+    // サイト全体非公開トグル
+    let html = `
+      <tr style="background: #f0f0f0; font-weight: bold;">
+        <td>【サイト全体】</td>
+        <td>${data.siteWidePublished !== false ? '🟢 公開' : '🔴 非公開'}</td>
+        <td>
+          <button class="btn" onclick="toggleSiteWide(${data.siteWidePublished !== false})" style="background: ${data.siteWidePublished !== false ? '#28a745' : '#dc3545'}; color: white;">
+            ${data.siteWidePublished !== false ? '非公開にする' : '公開する'}
+          </button>
+        </td>
+      </tr>
+    `;
+ 
+    // 個別ページ（【修正】page 名は小文字で統一）
+    html += Object.entries(data.pages || {}).map(([page, published]) => {
+      const displayName = String(page).toLowerCase().trim();
+      return `
+        <tr>
+          <td>${displayName}</td>
+          <td>${published ? '🟢 公開' : '🔴 非公開'}</td>
+          <td>
+            <button class="btn" onclick="togglePublish('${displayName}', ${published})" style="background: ${published ? '#ffc107' : '#17a2b8'}; color: white;">
+              ${published ? '非公開に' : '公開に'}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+ 
+    tbody.innerHTML = html;
+  } catch (e) {
+    console.error('loadPublish error:', e);
+    showMessage('公開状態の読み込みに失敗しました', 'error');
+  }
+}
+
+async function updatePublish() {
+  const page = document.getElementById('publish-page').value;
+  const state = document.getElementById('publish-state').value === 'true';
+
+  await fetch('/api/admin/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      page,
+      published: state
+    })
+  });
+
+  showMessage('公開状態を更新しました', 'success');
+}
+
+async function toggleSiteWide(currentState) {
+  try {
+    const res = await fetch('/api/admin/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        siteWidePublished: !currentState
+      })
+    });
+ 
+    if (!res.ok) {
+      const errorData = await res.json();
+      showMessage(errorData.error || 'サイト全体の公開状態更新に失敗しました', 'error');
+      console.error('Site-wide toggle failed:', errorData);
+      return;
+    }
+ 
+    const responseData = await res.json();
+    console.log('[Publish] Updated config:', responseData.config);
+    
+    showMessage(
+      !currentState ? 'サイト全体を公開しました' : 'サイト全体を非公開にしました',
+      'success'
+    );
+    
+    await loadPublish();
+  } catch (e) {
+    console.error('toggleSiteWide error:', e);
+    showMessage('更新に失敗しました', 'error');
+  }
+}
+
+async function togglePublish(page, currentState) {
+  // 【修正】page 名を小文字に統一してからサーバーに送信
+  const normalizedPage = String(page).toLowerCase().trim();
+  
+  try {
+    const res = await fetch('/api/admin/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: normalizedPage,
+        published: !currentState
+      })
+    });
+ 
+    if (!res.ok) {
+      const errorData = await res.json();
+      showMessage(errorData.error || '公開状態の更新に失敗しました', 'error');
+      console.error('Toggle failed:', errorData);
+      return;
+    }
+ 
+    const responseData = await res.json();
+    console.log('[Publish] Updated config:', responseData.config);
+    
+    showMessage(
+      !currentState ? `${normalizedPage} を公開しました` : `${normalizedPage} を非公開にしました`,
+      'success'
+    );
+    
+    await loadPublish();
+  } catch (e) {
+    console.error('togglePublish error:', e);
+    showMessage('更新に失敗しました', 'error');
+  }
 }
 
 // ============================================================================

@@ -29,7 +29,8 @@ const ROLE_PERMISSIONS = {
     'users.read',
     'logs.read',
     'announcement.create',
-    'announcement.manage'
+    'announcement.manage',
+    'control'
   ],
   executivestaff: [
     'analytics.read',
@@ -62,6 +63,42 @@ const DENIED_STATIC_EXTENSIONS = new Set([
 ]);
 
 const loginAttempts = new Map();
+
+function loadConfig() {
+  try {
+    const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
+    return config;
+  } catch (e) {
+    // config が壊れている、または存在しない場合は初期化
+    const PAGE_LIST = [
+      'index',
+      'about',
+      'guest',
+      'shop',
+      'event',
+      'stamp-rally',
+      'schedule',
+      'company',
+      'map',
+      'announcements',
+      'bulletin',
+      'access'
+    ];
+ 
+    const defaultConfig = {
+      pages: Object.fromEntries(PAGE_LIST.map(p => [p, true])),
+      siteWidePublished: true
+    };
+ 
+    try {
+      fs.writeFileSync('./config.json', JSON.stringify(defaultConfig, null, 2));
+    } catch (writeErr) {
+      console.error('Failed to write config.json:', writeErr);
+    }
+ 
+    return defaultConfig;
+  }
+}
 
 if (fs.existsSync(ENV_PATH)) {
   const envContents = fs.readFileSync(ENV_PATH, 'utf8');
@@ -253,6 +290,8 @@ db.exec(`
   );
 `);
 
+
+
 // デフォルトNGルール同期
 const defaultNGRules = [
   { pattern: 'https?://[^\\s]+', is_regex: 1, risk_score: 30, description: 'URL' },
@@ -296,6 +335,8 @@ function syncNGRules() {
   }
 }
 syncNGRules();
+
+
 
 // 定期自動モデレーション処理 (30秒ごと)
 const AUTO_JUDGE_INTERVAL_MS = 30 * 1000;
@@ -449,6 +490,8 @@ function serveStatic(res, filePath) {
     res.end('Not found');
     return;
   }
+  // const filePath = path.join(__dirname, 'public', req.url);
+
   fs.readFile(filePath, (error, data) => {
     if (error) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
@@ -923,6 +966,36 @@ function logModerationAction(postId, admin, action, oldStatus, newStatus, reason
   `).run(postId, admin, action, oldStatus, newStatus, reason);
 }
 
+
+
+function serveFile(res, filePath) {
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      res.end('Not Found');
+      return;
+    }
+
+    res.writeHead(200);
+    res.end(data);
+  });
+}
+
+/*function serveStatic(req, res) {
+  const filePath = path.join(__dirname, 'public', req.url);
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+
+    res.writeHead(200);
+    res.end(data);
+  });
+}*/
+
 // ============================================================================
 // HTTP サーバーコア・ルーティングルーチン
 // ============================================================================
@@ -930,6 +1003,52 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
 
+ const config = loadConfig();
+ 
+// ===== 公開制御 =====
+//const page = pathname.replace(/\.html$/, '').replace(/^\//, '');
+ 
+let page = pathname
+    .replace(/^\/+/, '')                     // 先頭のスラッシュを除去
+    .replace(/\.html$/, '')                  // 末尾の .html を除去
+    .toLowerCase();                          // 小文字に統一
+  
+  if (!page) page = 'index';                 // 空なら 'index' に設定
+ 
+  const isApi = pathname.startsWith('/api/');
+  const isStatic =
+    pathname.startsWith('/css/') ||
+    pathname.startsWith('/js/') ||
+    pathname.startsWith('/img/') ||
+    pathname.startsWith('/assets/');
+ 
+  // ===== 公開制御チェック =====
+  if (!isApi && !isStatic) {
+    // closed.html と unpublished.html へのアクセスはリダイレクト対象外
+    const isErrorPage = page === 'closed' || page === 'unpublished' || page === 'login';
+    
+    if (!isErrorPage) {
+      // 【修正】サイト全体非公開チェックを先に実行
+      if (config.siteWidePublished === false) {
+        res.writeHead(302, {
+          Location: '/closed.html'
+        });
+        res.end();
+        return;
+      }
+ 
+      // 【修正】個別ページ非公開チェック（page 名が正規化されているので一致するはず）
+      if (config.pages?.[page] === false) {
+        res.writeHead(302, {
+          Location: '/unpublished.html'
+        });
+        res.end();
+        return;
+      }
+    }
+  }
+
+  
   if (rejectCrossOriginWrite(req, res)) return;
 
   // ログイン時以外の不要なセッションの蓄積を防ぐため、静的ファイル読み込み時のみ匿名を発行
@@ -2106,6 +2225,117 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
+
+ // GET /api/admin/publish - ページ公開状態取得（管理者のみ）
+  if (req.url === '/api/admin/publish' && req.method === 'GET') {
+    const user = getSessionUser(req);
+    if (!user || !hasPermission(user, 'control')) {
+      return sendJson(res, 403, { ok: false, error: 'Forbidden' });
+    }
+ 
+    const config = loadConfig();
+    return sendJson(res, 200, {
+      ok: true,
+      pages: config.pages || {},
+      siteWidePublished: config.siteWidePublished !== false
+    });
+  }
+ 
+  // POST /api/admin/publish - ページ公開状態更新（管理者のみ）
+   if (req.url === '/api/admin/publish' && req.method === 'POST') {
+    const user = getSessionUser(req);
+    if (!user || !hasPermission(user, 'control')) {
+      return sendJson(res, 403, { ok: false, error: 'Forbidden' });
+    }
+ 
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk;
+      if (body.length > BODY_LIMIT_BYTES) {
+        req.destroy();
+      }
+    });
+ 
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        const config = loadConfig();
+ 
+        // 【修正】page 名を小文字に正規化してから保存
+        if (data.page !== undefined) {
+          const normalizedPage = String(data.page).toLowerCase().trim();
+          
+          if (!normalizedPage) {
+            return sendJson(res, 400, { ok: false, error: 'Invalid page name' });
+          }
+          
+          config.pages = config.pages || {};
+          config.pages[normalizedPage] = Boolean(data.published);
+          
+          console.log(`[Publish] Page '${data.page}' normalized to '${normalizedPage}', published: ${config.pages[normalizedPage]}`);
+          
+          logEvent('page_published_toggled', {
+            username: user.username,
+            sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+            userAgent: req.headers['user-agent'] || '',
+            page: '/api/admin/publish',
+            detail: JSON.stringify({ 
+              originalPage: data.page,
+              normalizedPage: normalizedPage, 
+              published: config.pages[normalizedPage] 
+            })
+          });
+        }
+ 
+        // サイト全体非公開フラグの更新
+        if (data.siteWidePublished !== undefined) {
+          config.siteWidePublished = Boolean(data.siteWidePublished);
+          
+          console.log(`[Publish] Site-wide published: ${config.siteWidePublished}`);
+          
+          logEvent('site_published_toggled', {
+            username: user.username,
+            sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+            userAgent: req.headers['user-agent'] || '',
+            page: '/api/admin/publish',
+            detail: JSON.stringify({ siteWidePublished: config.siteWidePublished })
+          });
+        }
+ 
+        // 【修正】ファイル書き込みエラーハンドリング
+        try {
+          fs.writeFileSync('./config.json', JSON.stringify(config, null, 2));
+        } catch (writeErr) {
+          console.error('[Error] Failed to write config.json:', writeErr);
+          return sendJson(res, 500, { 
+            ok: false, 
+            error: 'Failed to save configuration' 
+          });
+        }
+ 
+        return sendJson(res, 200, { 
+          ok: true,
+          message: 'Configuration updated successfully',
+          config: {
+            pages: config.pages,
+            siteWidePublished: config.siteWidePublished
+          }
+        });
+      } catch (e) {
+        console.error('[Error] Error updating publish config:', e);
+        return sendJson(res, 400, { ok: false, error: 'Invalid request' });
+      }
+    });
+ 
+    req.on('error', (e) => {
+      console.error('[Error] Request error:', e);
+      return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+    });
+ 
+    return;
+  }
+ 
+ 
 
   // ─────────────────────────────────────────────────────────────────────────
   // 静的ファイルアクセスのログ記録
