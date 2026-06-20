@@ -975,6 +975,19 @@ const server = http.createServer((req, res) => {
         return sendJson(res, 401, { ok: false, error: 'Invalid credentials' });
       }
 
+      if (user.role === 'staff') {
+        logEvent('login_blocked_staff', {
+          username: user.username,
+          userAgent: req.headers['user-agent'] || '',
+          page: pathname,
+      });
+
+  return sendJson(res, 403, {
+    ok: false,
+    error: 'Staff users cannot log in'
+  });
+}
+
       clearRateLimit(rateLimitKey);
 
       if (needsPasswordRehash(user.password_hash)) {
@@ -1022,7 +1035,13 @@ const server = http.createServer((req, res) => {
         username: user.username,
         role: user.role,
         scope: user.scope,
-      }));
+        // ★ここから追加
+        permissions: (() => {
+          const rolePerms = ROLE_PERMISSIONS[user.role] || [];
+          const userPerms = getUserPermissions(user.id);
+          return [...new Set([...rolePerms, ...userPerms])];
+        })()
+        }));
     });
     return;
   }

@@ -59,19 +59,29 @@ loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const username = document.getElementById('loginUsername').value;
   const password = document.getElementById('loginPassword').value;
-
+ 
   try {
     const response = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-
+ 
     const data = await response.json();
-
+ 
     if (data.ok) {
       currentUser = data;
+      
+      // ★修正：permissions を明示的に設定
+      applyPermissions(data);
+      
+      // ★修正：UI アクセス制御を先に適用
       showAdminScreen();
+      applyUIAccessControl();
+      
+      // ★修正：ダッシュボードに強制遷移
+      showPage('dashboard');
+      
       loadDashboard();
     } else {
       showLoginMessage(data.error || 'ログインに失敗しました', 'error');
@@ -118,33 +128,46 @@ function showAdminScreen() {
   document.getElementById('sidebar').classList.add('show');
   document.getElementById('mainContent').classList.add('show');
   document.getElementById('headerBar').classList.add('show');
-
+ 
   userDisplayName.textContent = currentUser.username;
   userRole.textContent = `(${currentUser.role || 'senior'})`;
   document.getElementById('accountUsername').value = currentUser.username;
-
-   applyUIAccessControl();
+ 
+  // ★削除：applyUIAccessControl() はここから削除
+  // （ログインハンドラ内で呼ぶため）
 }
 
 function showPage(page) {
+  // ダッシュボードとアカウント設定は常に許可
+  if (page === 'dashboard' || page === 'account') {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page).classList.add('active');
+    if (page === 'account') {
+      document.getElementById('accountUsername').value = currentUser.username;
+    }
+    return;
+  }
+ 
+  // その他のページは権限チェック
   const pageMap = {
-    posts: 'posts.read',
-    'ng-rules': 'rules.read',
-    announcements: 'announcements.read',
+    posts: 'announcement.manage',      // ★修正：posts管理
+    'ng-rules': 'announcement.manage',  // ★修正：NGルール管理
+    announcements: 'announcement.manage', // ★修正：アナウンス管理
     analytics: 'analytics.read',
     users: 'users.read',
-    logs: 'logs.read',
-    account: 'account.read'
+    logs: 'logs.read'
   };
-
-  if (pageMap[page] && !can(pageMap[page])) {
+ 
+  const requiredPerm = pageMap[page];
+  if (requiredPerm && !can(requiredPerm)) {
     showMessage('このページへのアクセス権限がありません', 'error');
     return;
   }
-
+ 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(page).classList.add('active');
-
+ 
+  // 各ページの読み込み処理
   if (page === 'posts') loadPosts();
   if (page === 'ng-rules') loadRules();
   if (page === 'announcements') loadAnnouncements();
@@ -156,16 +179,28 @@ function showPage(page) {
 function applyUIAccessControl() {
   document.querySelectorAll('.nav-item').forEach(btn => {
     const page = btn.dataset.page;
-
+ 
+    // ダッシュボードとアカウント設定は常に表示
+    if (page === 'dashboard' || page === 'account') {
+      btn.style.display = 'block';
+      return;
+    }
+ 
+    // その他のページは権限に基づいて表示・非表示
     const map = {
+      posts: 'announcement.manage',      // ★修正
+      'ng-rules': 'announcement.manage', // ★修正
+      announcements: 'announcement.manage', // ★修正
       users: 'users.read',
       logs: 'logs.read',
       analytics: 'analytics.read'
     };
-
+ 
     const perm = map[page];
     if (perm && !can(perm)) {
       btn.style.display = 'none';
+    } else {
+      btn.style.display = 'block';
     }
   });
 }
@@ -287,21 +322,22 @@ async function checkSession() {
   try {
     const res = await fetch('/api/auth/me');
     const data = await res.json();
-
+ 
     if (data.ok) {
       currentUser = data;
-
-      // ★追加
+ 
+      // ★修正：permissions を設定
       applyPermissions(data);
-
+ 
+      // ★修正：UI アクセス制御を先に適用
       showAdminScreen();
+      applyUIAccessControl();
+      
+      // ★修正：ダッシュボードに遷移
+      showPage('dashboard');
+      
       loadDashboard();
-
-      // 権限制御付き初期ロード
-      if (can('analytics.read')) loadAnalytics();
-      if (can('users.read')) loadUsers();
-      if (can('logs.read')) loadLogs();
-
+ 
     } else {
       showLoginScreen();
     }
@@ -821,12 +857,12 @@ async function deleteAnnouncement(annId) {
 // アナリティクス
 // ============================================================================
 
-async function loadAnalytics() {
+/*async function loadAnalytics() {
   try {
     const response = await fetch('/api/admin/summary');
     const data = await response.json();
 
-    if (!data.ok) {
+    if (!data.locations) {
       showMessage('アナリティクスを読み込めませんでした', 'error');
       return;
     }
@@ -863,8 +899,53 @@ async function loadAnalytics() {
     console.error('アナリティクス読み込みエラー', e);
     showMessage('アナリティクスを読み込めませんでした', 'error');
   }
-}
+}*/
+async function loadAnalytics() {
+  try {
+    const response = await fetch('/api/admin/summary');
+    const data = await response.json();
 
+    if (!data.locations) {
+      showMessage('アナリティクスを読み込めませんでした', 'error');
+      return;
+    }
+
+    const summary = data;
+
+    const statsHtml = `
+      <div class="stat-item">
+        <div class="stat-number">${summary.totals?.visits || 0}</div>
+        <div class="stat-label">訪問数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">${summary.totals?.clicks || 0}</div>
+        <div class="stat-label">クリック数</div>
+      </div>
+    `;
+
+    document.getElementById('analyticsStats').innerHTML = statsHtml;
+
+    const tbody = document.getElementById('analyticsTableBody');
+    const locations = summary.locations || [];
+
+    if (locations.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty-state">データなし</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = locations.map(loc => `
+      <tr>
+        <td>${loc.stamp_name}</td>
+        <td>${loc.visits}</td>
+        <td>${loc.clicks}</td>
+      </tr>
+    `).join('');
+
+  } catch (e) {
+    console.error('アナリティクス読み込みエラー', e);
+    showMessage('アナリティクスを読み込めませんでした', 'error');
+  }
+}
 // ============================================================================
 // ユーザー管理
 // ============================================================================
