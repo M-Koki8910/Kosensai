@@ -902,8 +902,14 @@ function getSummary(user) {
     filteredClicks.map(item => [item.stamp_id, item.count])
   );
 
+  const visibleStampIds = scopeList
+  ? Object.keys(LOCATION_LABELS).filter(id =>
+      scopeList.includes(id)
+    )
+  : Object.keys(LOCATION_LABELS);
+
   return {
-    locations: Object.keys(LOCATION_LABELS).map(stampId => ({
+    locations: visibleStampIds.map(stampId => ({
       stamp_id: stampId,
       stamp_name: LOCATION_LABELS[stampId],
       visits: visitMap[stampId] || 0,

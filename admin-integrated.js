@@ -996,8 +996,23 @@ async function loadAnalytics() {
 
     document.getElementById('analyticsStats').innerHTML = statsHtml;
 
+    const cards = document.getElementById('analyticsLocationCards');
     const tbody = document.getElementById('analyticsTableBody');
     const locations = summary.locations || [];
+
+cards.innerHTML = locations.map(loc => `
+  <div class="stat-item">
+    <div class="stat-number">${loc.visits}</div>
+    <div class="stat-label">${loc.stamp_name} 訪問</div>
+
+    <div style="margin-top:10px;font-size:20px;font-weight:bold;color:#28a745;">
+      ${loc.clicks}
+    </div>
+    <div class="stat-label">クリック</div>
+  </div>
+`).join('');
+
+    
 
     if (locations.length === 0) {
       tbody.innerHTML = '<tr><td colspan="3" class="empty-state">データなし</td></tr>';
