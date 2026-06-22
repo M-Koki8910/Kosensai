@@ -6,3 +6,4 @@ stamp.db-wal
 node_modules
 .env
 *.txt
+*.db

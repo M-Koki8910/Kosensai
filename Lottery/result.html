@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高専祭 抽選｜結果</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* ローディング */
+    .loading-container {
+      background: white;
+      border-radius: 20px;
+      padding: 60px 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .spinner {
+      border: 4px solid #f3f4f6;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: #4a5568;
+      font-size: 1.1em;
+    }
+
+    /* 結果コンテナ */
+    .result-container {
+      display: none;
+      animation: slideIn 0.6s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 当選時 */
+    .result-card.win {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .result-card.win .result-emoji {
+      font-size: 4em;
+      margin-bottom: 20px;
+      animation: bounce 0.6s ease-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .result-card.win .result-title {
+      font-size: 2.5em;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .result-card.win .result-subtitle {
+      font-size: 1.1em;
+      opacity: 0.9;
+      margin-bottom: 30px;
+    }
+
+    /* ハズレ時 */
+    .result-card.lose {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      color: #2d3748;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .result-card.lose .result-emoji {
+      font-size: 4em;
+      margin-bottom: 20px;
+      opacity: 0.7;
+    }
+
+    .result-card.lose .result-title {
+      font-size: 2em;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+
+    .result-card.lose .result-subtitle {
+      font-size: 1em;
+      color: #718096;
+      margin-bottom: 30px;
+    }
+
+    /* 詳細情報 */
+    .info-section {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      margin-bottom: 30px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #718096;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: #2d3748;
+      font-weight: 700;
+    }
+
+    /* 景品情報 */
+    .prize-section {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      margin-bottom: 30px;
+      display: none;
+    }
+
+    .prize-section.show {
+      display: block;
+    }
+
+    .prize-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .prize-header .label {
+      color: #718096;
+      font-size: 0.95em;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .prize-name {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+
+    .prize-rank {
+      color: #f59e0b;
+      font-weight: 700;
+      font-size: 1.1em;
+    }
+
+    /* QR コード */
+    .qr-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      margin-bottom: 30px;
+      display: none;
+      color: white;
+    }
+
+    .qr-section.show {
+      display: block;
+    }
+
+    .qr-section .label {
+      font-size: 1em;
+      opacity: 0.9;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .qr-code {
+      width: 250px;
+      height: 250px;
+      margin: 0 auto 25px;
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-code canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .qr-instruction {
+      font-size: 0.95em;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    /* ボタン */
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 150px;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f7fafc;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+
+    .btn-secondary:hover {
+      background: #edf2f7;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      color: white;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(72, 187, 120, 0.4);
+    }
+
+    /* メッセージ */
+    .message {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      text-align: center;
+      color: #4a5568;
+      font-size: 1em;
+      line-height: 1.6;
+    }
+
+    .message strong {
+      color: #2d3748;
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+    }
+
+    /* 次のステップ */
+    .next-steps {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .next-steps h3 {
+      color: #2d3748;
+      font-size: 1.3em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .next-steps ol {
+      list-style-position: inside;
+      color: #4a5568;
+    }
+
+    .next-steps li {
+      padding: 12px 0;
+      line-height: 1.6;
+    }
+
+    .next-steps li strong {
+      color: #2d3748;
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 480px) {
+      .result-card.win .result-title {
+        font-size: 2em;
+      }
+
+      .qr-code {
+        width: 200px;
+        height: 200px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+
+    /* エラー */
+    .error-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      display: none;
+    }
+
+    .error-container.show {
+      display: block;
+    }
+
+    .error-emoji {
+      font-size: 4em;
+      margin-bottom: 20px;
+    }
+
+    .error-title {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #c53030;
+      margin-bottom: 10px;
+    }
+
+    .error-message {
+      color: #4a5568;
+      margin-bottom: 30px;
+      font-size: 1em;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ローディング -->
+    <div id="loadingContainer" class="loading-container">
+      <div class="spinner"></div>
+      <p class="loading-text">抽選結果を取得中...</p>
+    </div>
+
+    <!-- 結果表示 -->
+    <div id="resultContainer" class="result-container">
+      <!-- 当選時 -->
+      <div id="winResult">
+        <div class="result-card win">
+          <div class="result-emoji">🎉</div>
+          <div class="result-title">あなたは当選です！</div>
+          <div class="result-subtitle">素晴らしい景品が当たりました</div>
+        </div>
+
+        <div class="prize-section show">
+          <div class="prize-header">
+            <div class="label">景品</div>
+            <div class="prize-name" id="prizeName">景品名</div>
+            <div class="prize-rank" id="prizeRank">⭐</div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <div class="info-row">
+            <span class="info-label">抽選番号</span>
+            <span class="info-value" id="ticketNo">#0000</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">景品ランク</span>
+            <span class="info-value" id="rankInfo">Rank 3</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">ステータス</span>
+            <span class="info-value">受け取り待機中</span>
+          </div>
+        </div>
+
+        <div class="qr-section show">
+          <div class="label">📱 受け取り用QRコード</div>
+          <div class="qr-code" id="qrCode"></div>
+          <div class="qr-instruction">
+            当選した場合、このQRコードを運営スタッフに提示して景品を受け取ってください。<br>
+            <strong>受け取り場所: 文化棟前（管理棟隣）</strong>
+          </div>
+        </div>
+
+        <div class="next-steps">
+          <h3>🎁 受け取り手順</h3>
+          <ol>
+            <li><strong>QRコード提示:</strong> スタッフにこのページのQRコードを見せます</li>
+            <li><strong>情報確認:</strong> あなたの抽選番号と景品が確認されます</li>
+            <li><strong>景品受け取り:</strong> 景品を受け取ります</li>
+            <li><strong>終了:</strong> 受け取り完了！祭りを楽しんでください</li>
+          </ol>
+        </div>
+
+        <div class="button-group">
+          <button class="btn btn-success" onclick="printQR()">
+            🖨️ QRコードを印刷
+          </button>
+          <button class="btn btn-secondary" onclick="window.history.back()">
+            戻る
+          </button>
+        </div>
+      </div>
+
+      <!-- ハズレ時 -->
+      <div id="loseResult" style="display: none;">
+        <div class="result-card lose">
+          <div class="result-emoji">😢</div>
+          <div class="result-title">残念...</div>
+          <div class="result-subtitle">今回は当選しませんでした</div>
+        </div>
+
+        <div class="message">
+          <strong>次回の高専祭での参加をお待ちしています！</strong>
+          <br>
+          来年もチャレンジしてください。あなたの運を試してみませんか？
+        </div>
+
+        <div class="info-section">
+          <div class="info-row">
+            <span class="info-label">抽選番号</span>
+            <span class="info-value" id="ticketNoLose">#0000</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">結果</span>
+            <span class="info-value">ハズレ</span>
+          </div>
+        </div>
+
+        <div style="
+          background: #f7fafc;
+          border-radius: 15px;
+          padding: 20px;
+          margin-bottom: 30px;
+          text-align: center;
+          color: #4a5568;
+        ">
+          📊 今回の当選者数: <strong id="winnerCount">45人</strong><br>
+          👥 総参加者数: <strong id="totalCount">342人</strong>
+        </div>
+
+        <div class="button-group">
+          <button class="btn btn-primary" onclick="window.location.href='index.html'">
+            トップに戻る
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- エラー表示 -->
+    <div id="errorContainer" class="error-container">
+      <div class="error-emoji">❌</div>
+      <div class="error-title">エラーが発生しました</div>
+      <div class="error-message" id="errorMessage">
+        結果を取得できませんでした。もう一度お試しください。
+      </div>
+      <button class="btn btn-primary" onclick="window.location.href='index.html'">
+        トップに戻る
+      </button>
+    </div>
+  </div>
+
+  <!-- QRコード生成ライブラリ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode.js/1.5.3/qrcode.min.js"></script>
+
+  <script>
+    // URL パラメータ取得
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const ticket = params.get('ticket');
+
+    const loadingContainer = document.getElementById('loadingContainer');
+    const resultContainer = document.getElementById('resultContainer');
+    const errorContainer = document.getElementById('errorContainer');
+    const winResult = document.getElementById('winResult');
+    const loseResult = document.getElementById('loseResult');
+
+    // 初期化
+    async function init() {
+      if (!token) {
+        showError('トークンが見つかりません');
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/result/${token}`);
+        const data = await response.json();
+
+        if (data.success) {
+          displayResult(data);
+        } else {
+          showError(data.message || '結果を取得できませんでした');
+        }
+      } catch (err) {
+        showError('サーバーエラー: ' + err.message);
+      }
+    }
+
+    // 結果表示
+    function displayResult(data) {
+      loadingContainer.style.display = 'none';
+      resultContainer.style.display = 'block';
+
+      if (data.result === 'WIN') {
+        displayWin(data);
+      } else {
+        displayLose(data);
+      }
+    }
+
+    // 当選表示
+    function displayWin(data) {
+      winResult.style.display = 'block';
+      loseResult.style.display = 'none';
+
+      document.getElementById('ticketNo').textContent = `#${String(data.ticket_no).padStart(4, '0')}`;
+      document.getElementById('prizeName').textContent = data.prize.name;
+      document.getElementById('prizeRank').textContent = getRankEmoji(data.prize.rank);
+      document.getElementById('rankInfo').textContent = `Rank ${data.prize.rank}`;
+
+      // QRコード生成
+      const qrContainer = document.getElementById('qrCode');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: data.claim_token,
+        width: 220,
+        height: 220,
+        colorDark: '#667eea',
+        colorLight: '#ffffff'
+      });
+    }
+
+    // ハズレ表示
+    async function displayLose(data) {
+      winResult.style.display = 'none';
+      loseResult.style.display = 'block';
+
+      document.getElementById('ticketNoLose').textContent = `#${String(data.ticket_no).padStart(4, '0')}`;
+
+      // 統計情報取得
+      try {
+        const statsResponse = await fetch('http://localhost:3001/api/admin/stats?admin_key=default-admin-key-change-this');
+        const stats = await statsResponse.json();
+        if (stats.success) {
+          document.getElementById('winnerCount').textContent = stats.winners_count;
+          document.getElementById('totalCount').textContent = stats.total_participants;
+        }
+      } catch (err) {
+        console.error('Cannot fetch stats:', err);
+      }
+    }
+
+    // ランク絵文字
+    function getRankEmoji(rank) {
+      const emojis = ['⭐⭐⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐', '⭐⭐', '⭐'];
+      return emojis[rank - 1] || '⭐';
+    }
+
+    // QR印刷
+    function printQR() {
+      const printWindow = window.open('', '_blank');
+      const qrCanvas = document.querySelector('#qrCode canvas');
+      
+      if (!qrCanvas) {
+        alert('QRコードが見つかりません');
+        return;
+      }
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>QRコード - 景品受け取り</title>
+          <style>
+            body { text-align: center; padding: 40px; font-family: Arial, sans-serif; }
+            h1 { font-size: 24px; margin-bottom: 20px; }
+            .qr { margin: 30px 0; }
+            .info { margin-top: 30px; color: #666; }
+            @media print { body { padding: 20px; } }
+          </style>
+        </head>
+        <body>
+          <h1>🎉 高専祭 景品受け取り</h1>
+          <div class="qr">
+            <img src="${qrCanvas.toDataURL()}" style="max-width: 300px; width: 100%;">
+          </div>
+          <div class="info">
+            <p><strong>受け取り場所: 文化棟前（管理棟隣）</strong></p>
+            <p>このQRコードをスタッフに提示してください</p>
+            <p style="font-size: 12px; margin-top: 20px;">
+              高専祭にご参加いただきありがとうございます
+            </p>
+          </div>
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    // エラー表示
+    function showError(message) {
+      loadingContainer.style.display = 'none';
+      resultContainer.style.display = 'none';
+      errorContainer.classList.add('show');
+      document.getElementById('errorMessage').textContent = message;
+    }
+
+    // 初期化
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

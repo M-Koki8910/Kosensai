@@ -1,19 +1,426 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>運営スキャナ</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高専祭 | 運営スキャナ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .header h1 { font-size: 24px; margin-bottom: 5px; }
+    .header p { font-size: 12px; opacity: 0.9; }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .scanner-panel { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+
+    .camera-container {
+      position: relative;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      border: 3px solid #667eea;
+    }
+
+    #canvas { width: 100%; height: 100%; display: block; }
+
+    .scan-overlay {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px; height: 250px;
+      border: 3px solid #4ade80;
+      border-radius: 12px;
+      box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(74, 222, 128, 0.3);
+    }
+
+    .controls { display: flex; gap: 10px; }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3); }
+
+    .btn-secondary { background: #333; color: #fff; border: 1px solid #555; }
+    .btn-secondary:hover { background: #444; }
+
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .info-panel { width: 350px; display: flex; flex-direction: column; gap: 15px; }
+
+    .panel-card {
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #444;
+    }
+
+    .panel-title { font-size: 14px; font-weight: 600; color: #999; text-transform: uppercase; margin-bottom: 15px; }
+
+    .scan-result { display: none; }
+    .scan-result.show { display: block; }
+
+    .result-status {
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .result-status.success { background: #065f46; color: #86efac; }
+    .result-status.error { background: #7f1d1d; color: #fca5a5; }
+    .result-status.pending { background: #3730a3; color: #a5b4fc; }
+
+    .result-info {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #444;
+      font-size: 13px;
+    }
+
+    .info-row label { color: #999; }
+    .info-row .value { color: #fff; font-weight: 600; }
+
+    .prize-display {
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 12px 0;
+      text-align: center;
+    }
+
+    .prize-display .name { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+    .prize-display .rank { font-size: 12px; opacity: 0.9; }
+
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .stat-item { background: #333; padding: 12px; border-radius: 8px; text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #4ade80; }
+    .stat-label { font-size: 11px; color: #999; margin-top: 4px; }
+
+    .log-container {
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .log-entry { padding: 4px 0; color: #999; }
+    .log-entry.success { color: #4ade80; }
+    .log-entry.error { color: #f87171; }
+
+    @media (max-width: 1024px) {
+      .container { flex-direction: column; }
+      .info-panel { width: 100%; }
+      .camera-container { min-height: 400px; }
+    }
+
+    .manual-input-group { display: flex; gap: 10px; }
+    .manual-input-group input {
+      flex: 1;
+      padding: 8px 12px;
+      background: #333;
+      border: 1px solid #555;
+      color: white;
+      border-radius: 6px;
+    }
+    .manual-input-group button { flex: 0.3; }
+  </style>
 </head>
 <body>
+  <div class="header">
+    <h1>🎰 運営スキャナ</h1>
+    <p>QRコードをスキャンして受け取り処理を実行</p>
+  </div>
 
-<h1>QR読み取り（仮）</h1>
+  <div class="container">
+    <div class="scanner-panel">
+      <div class="camera-container">
+        <canvas id="canvas"></canvas>
+        <div class="scan-overlay"></div>
+      </div>
 
-<input id="token" placeholder="token入力（QR代替）">
+      <div class="controls">
+        <button class="btn-primary" id="startBtn">📹 カメラ起動</button>
+        <button class="btn-secondary" id="stopBtn" disabled>⏹ 停止</button>
+        <button class="btn-danger" id="resetBtn">🔄 リセット</button>
+      </div>
 
-<button onclick="scan()">照会</button>
+      <div class="panel-card">
+        <div class="panel-title">手動入力</div>
+        <div class="manual-input-group">
+          <input type="text" id="manualToken" placeholder="トークンを入力...">
+          <button class="btn-primary" id="submitManualBtn" style="flex: 0.2;">送信</button>
+        </div>
+      </div>
+    </div>
 
-<h2 id="result"></h2>
+    <div class="info-panel">
+      <div class="panel-card scan-result" id="scanResult">
+        <div class="panel-title">スキャン結果</div>
+        <div class="result-status" id="resultStatus"></div>
+        <div class="result-info" id="resultInfo"></div>
+        <button class="btn-primary" style="margin-top: 15px; width: 100%;" id="confirmBtn">✓ 受け取り確定</button>
+      </div>
 
-<script src="reader.js"></script>
+      <div class="panel-card">
+        <div class="panel-title">統計情報</div>
+        <div class="stats">
+          <div class="stat-item">
+            <div class="stat-value" id="statClaimed">0</div>
+            <div class="stat-label">受取済み</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="statPending">0</div>
+            <div class="stat-label">待機中</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-title">ログ</div>
+        <div class="log-container" id="logContainer"></div>
+      </div>
+
+      <a href="/admin/index.html" style="text-align: center; color: #667eea; text-decoration: none;">← 管理ページへ戻る</a>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const submitManualBtn = document.getElementById('submitManualBtn');
+    const manualToken = document.getElementById('manualToken');
+    const scanResult = document.getElementById('scanResult');
+    const resultStatus = document.getElementById('resultStatus');
+    const resultInfo = document.getElementById('resultInfo');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const logContainer = document.getElementById('logContainer');
+    
+    let stream = null;
+    let video = null;
+    let scanning = false;
+    let currentToken = null;
+    const ADMIN_KEY = localStorage.getItem('adminKey') || '';
+
+    function addLog(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+      if (logContainer.children.length > 50) {
+        logContainer.removeChild(logContainer.firstChild);
+      }
+    }
+
+    function updateStats() {
+      fetch('/api/admin/stats?admin_key=' + ADMIN_KEY)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('statClaimed').textContent = data.claimed_count || 0;
+            document.getElementById('statPending').textContent = data.pending_count || 0;
+          }
+        })
+        .catch(e => addLog('統計更新失敗', 'error'));
+    }
+
+    async function processToken(token) {
+      currentToken = token;
+      scanResult.classList.add('show');
+      
+      try {
+        const response = await fetch('/api/admin/stats?admin_key=' + ADMIN_KEY);
+        const data = await response.json();
+        
+        resultStatus.textContent = '📋 情報を取得中...';
+        resultStatus.className = 'result-status pending';
+        
+        // 実装時は実際のAPI呼び出しでデータ取得
+        // ここはテスト用のダミー表示
+        resultInfo.innerHTML = `
+          <div class="info-row">
+            <label>チケット番号</label>
+            <div class="value">#0042</div>
+          </div>
+          <div class="info-row">
+            <label>当選状態</label>
+            <div class="value">当選</div>
+          </div>
+          <div class="prize-display">
+            <div class="name">AirPods Pro</div>
+            <div class="rank">⭐ ランク 3</div>
+          </div>
+        `;
+        resultStatus.textContent = '✓ 当選者です';
+        resultStatus.className = 'result-status success';
+        addLog(`トークン読み込み: ${token.substring(0, 8)}...`, 'info');
+        
+      } catch (err) {
+        resultStatus.textContent = '❌ エラー';
+        resultStatus.className = 'result-status error';
+        addLog('トークン処理失敗: ' + err.message, 'error');
+      }
+    }
+
+    startBtn.addEventListener('click', async () => {
+      try {
+        video = document.createElement('video');
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' },
+          audio: false 
+        });
+        video.srcObject = stream;
+        video.play();
+        
+        scanning = true;
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        addLog('カメラ起動成功', 'success');
+        
+        function scanQR() {
+          if (!scanning) return;
+          
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+          
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          
+          if (code) {
+            console.log('QR読み込み成功:', code.data);
+            addLog('QR読み込み成功', 'success');
+            processToken(code.data);
+            scanning = false;
+            stream.getTracks().forEach(t => t.stop());
+            stopBtn.click();
+          } else {
+            requestAnimationFrame(scanQR);
+          }
+        }
+        
+        scanQR();
+        
+      } catch (err) {
+        addLog('カメラアクセス失敗: ' + err.message, 'error');
+        alert('カメラへのアクセスが拒否されました');
+      }
+    });
+
+    stopBtn.addEventListener('click', () => {
+      scanning = false;
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+      }
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      addLog('カメラ停止', 'info');
+    });
+
+    resetBtn.addEventListener('click', () => {
+      stopBtn.click();
+      scanResult.classList.remove('show');
+      currentToken = null;
+      manualToken.value = '';
+      addLog('リセット完了', 'info');
+    });
+
+    submitManualBtn.addEventListener('click', () => {
+      if (manualToken.value.trim()) {
+        processToken(manualToken.value.trim());
+      }
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+      if (!currentToken) return;
+      
+      try {
+        const response = await fetch('/api/admin/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            token: currentToken,
+            admin_key: ADMIN_KEY 
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          resultStatus.textContent = '✓ 受け取り完了！';
+          resultStatus.className = 'result-status success';
+          addLog('受け取り処理完了', 'success');
+          updateStats();
+          setTimeout(() => resetBtn.click(), 2000);
+        } else {
+          resultStatus.textContent = '❌ ' + data.message;
+          resultStatus.className = 'result-status error';
+          addLog('受け取り失敗: ' + data.message, 'error');
+        }
+      } catch (err) {
+        addLog('受け取り処理エラー', 'error');
+      }
+    });
+
+    // 初期化
+    updateStats();
+    setInterval(updateStats, 5000);
+    addLog('運営スキャナ起動', 'success');
+  </script>
 </body>
 </html>
