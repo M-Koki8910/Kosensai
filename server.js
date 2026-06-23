@@ -1,3 +1,5 @@
+process.env.TZ = 'Asia/Tokyo';
+
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -100,6 +102,72 @@ function loadConfig() {
   }
 }
 
+const DEFAULT_COMPANY_MASTER = [
+  {
+    id: 'company-a',
+    name: '企業A',
+    note: '企業Aのブース前のQRコードを読み取る',
+    linkText: '企業紹介へ',
+    href: '/company.html',
+    image: '/header_ed.jpg'
+  },
+  {
+    id: 'company-b',
+    name: '企業B',
+    note: '企業Bのブース前のQRコードを読み取る',
+    linkText: '企業紹介へ',
+    href: '/company.html',
+    image: '/about.jpg'
+  },
+  {
+    id: 'company-c',
+    name: '企業C',
+    note: '企業Cのブース前のQRコードを読み取る',
+    linkText: '企業紹介へ',
+    href: '/company.html',
+    image: '/event.jpg'
+  },
+  {
+    id: 'company-d',
+    name: '企業D',
+    note: '企業Dのブース前のQRコードを読み取る',
+    linkText: '企業紹介へ',
+    href: '/company.html',
+    image: '/shop.jpg'
+  }
+];
+
+function loadCompanyMaster() {
+  const masterPath = path.join(__dirname, 'companies.json');
+  try {
+    if (!fs.existsSync(masterPath)) {
+      return DEFAULT_COMPANY_MASTER;
+    }
+
+    const parsed = JSON.parse(fs.readFileSync(masterPath, 'utf8'));
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return DEFAULT_COMPANY_MASTER;
+    }
+
+    return parsed.map((item, index) => ({
+      id: String(item.id || `company-${String.fromCharCode(97 + index)}`),
+      name: String(item.name || `企業${String.fromCharCode(65 + index)}`),
+      note: String(item.note || `${String(item.name || `企業${String.fromCharCode(65 + index)}`)}のブース前のQRコードを読み取る`),
+      linkText: String(item.linkText || '企業紹介へ'),
+      href: String(item.href || '/company.html'),
+      image: String(item.image || '/header_ed.jpg')
+    }));
+  } catch (error) {
+    console.error('Failed to load company master, falling back to defaults', error);
+    return DEFAULT_COMPANY_MASTER;
+  }
+}
+
+const COMPANY_MASTER = loadCompanyMaster();
+const LOCATION_LABELS = Object.fromEntries(
+  COMPANY_MASTER.map(item => [item.id, item.name])
+);
+
 if (fs.existsSync(ENV_PATH)) {
   const envContents = fs.readFileSync(ENV_PATH, 'utf8');
   envContents.split(/\r?\n/).forEach((line) => {
@@ -129,13 +197,6 @@ const SYSTEM_ADMIN_USERNAME =
 const SYSTEM_ADMIN_PASSWORD = 
   process.env.SYSTEM_ADMIN_PASSWORD || 'admin@J2337';
 
-const LOCATION_LABELS = {
-  entrance: '正門',
-  museum: '展示ホール',
-  stage: 'ステージ',
-  shop: '模擬店エリア',
-};
-
 const db = new DatabaseSync(DB_PATH);
 
 // 各種テーブル初期化
@@ -147,7 +208,7 @@ db.exec(`
     session_id TEXT,
     user_agent TEXT,
     page TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
   );
 `);
 
@@ -168,7 +229,7 @@ db.exec(`
     session_id TEXT,
     user_agent TEXT,
     page TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
   );
 `);
 
@@ -179,7 +240,7 @@ db.exec(`
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'staff',
     scope TEXT NOT NULL DEFAULT 'all',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
   );
 `);
 
@@ -190,8 +251,9 @@ db.exec(`
     username TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'visitor',
     scope TEXT NOT NULL DEFAULT 'all',
+    profile_attributes TEXT,
     expires_at TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
   );
 `);
 
@@ -204,7 +266,7 @@ db.exec(`
     user_agent TEXT,
     page TEXT,
     detail TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
   );
 `);
 
@@ -222,6 +284,7 @@ ensureColumn('users', { name: 'scope', sql: 'scope TEXT NOT NULL DEFAULT "all"' 
 ensureColumn('sessions', { name: 'user_id', sql: 'user_id INTEGER' });
 ensureColumn('sessions', { name: 'role', sql: 'role TEXT NOT NULL DEFAULT "visitor"' });
 ensureColumn('sessions', { name: 'scope', sql: 'scope TEXT NOT NULL DEFAULT "all"' });
+ensureColumn('sessions', { name: 'profile_attributes', sql: 'profile_attributes TEXT' });
 ensureColumn('sessions', { name: 'expires_at', sql: 'expires_at TEXT' });
 
 // ============================================================================
@@ -233,8 +296,8 @@ db.exec(`
     content TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     risk_score INTEGER DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
   );
 `);
 
@@ -246,7 +309,7 @@ db.exec(`
     risk_score INTEGER NOT NULL DEFAULT 10,
     enabled BOOLEAN DEFAULT 1,
     description TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
   );
 `);
 
@@ -257,7 +320,7 @@ db.exec(`
     aggregated_post_ids TEXT NOT NULL,
     count INTEGER NOT NULL DEFAULT 0,
     similarity_score REAL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
     FOREIGN KEY(representative_post_id) REFERENCES posts(id)
   );
 `);
@@ -271,7 +334,7 @@ db.exec(`
     old_status TEXT,
     new_status TEXT,
     reason TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
     FOREIGN KEY(post_id) REFERENCES posts(id)
   );
 `);
@@ -285,8 +348,8 @@ db.exec(`
     published_at TEXT NOT NULL,
     expires_at TEXT NOT NULL,
     created_by TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
   );
 `);
 
@@ -317,8 +380,8 @@ function syncNGRules() {
     if (!existingRuleMap[rule.description]) {
       needsSync = true;
       db.prepare(`
-        INSERT INTO ng_rules (pattern, is_regex, risk_score, enabled, description)
-        VALUES (?, ?, ?, 1, ?)
+        INSERT INTO ng_rules (pattern, is_regex, risk_score, enabled, description, created_at)
+        VALUES (?, ?, ?, 1, ?, datetime('now', '+9 hours'))
       `).run(rule.pattern, rule.is_regex, rule.risk_score, rule.description);
     }
   }
@@ -335,6 +398,116 @@ function syncNGRules() {
   }
 }
 syncNGRules();
+
+// 配列を受け取り ng_rules テーブルへ同期するユーティリティ
+function applyNGRulesArray(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return;
+  const selectByPattern = db.prepare('SELECT id, enabled FROM ng_rules WHERE pattern = ?');
+  const insertStmt = db.prepare(`
+    INSERT INTO ng_rules (pattern, is_regex, risk_score, enabled, description, created_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now', '+9 hours'))
+  `);
+  const updateStmt = db.prepare(`
+    UPDATE ng_rules
+    SET pattern = ?, is_regex = ?, risk_score = ?, description = ?, enabled = ?
+    WHERE id = ?
+  `);
+
+  let changed = false;
+  for (const r of arr) {
+    try {
+      const pattern = String(r.pattern || '').trim();
+      if (!pattern) continue;
+      const is_regex = r.is_regex ? 1 : 0;
+      const risk_score = typeof r.risk_score === 'number' ? r.risk_score : (parseInt(r.risk_score || '10', 10) || 10);
+      const description = r.description !== undefined ? String(r.description) : null;
+      const enabledFromFile = r.enabled === undefined ? undefined : (r.enabled ? 1 : 0);
+
+      const existing = selectByPattern.get(pattern);
+      if (existing) {
+        const enabledToUse = enabledFromFile === undefined ? existing.enabled : enabledFromFile;
+        updateStmt.run(pattern, is_regex, risk_score, description, enabledToUse, existing.id);
+        changed = true;
+      } else {
+        const enabledToUse = enabledFromFile === undefined ? 1 : enabledFromFile;
+        insertStmt.run(pattern, is_regex, risk_score, enabledToUse, description);
+        changed = true;
+      }
+    } catch (e) {
+      console.error('Error processing NG rule entry', e);
+    }
+  }
+
+  if (changed) console.log('NGルールを同期しました (配列入力)');
+}
+
+// 外部ファイルから NG ルールを読み込み、配列として適用する
+function loadExternalNGRules(filePath) {
+  if (!filePath) return;
+  try {
+    const resolved = path.resolve(__dirname, filePath);
+    if (!fs.existsSync(resolved)) {
+      console.log(`NG rules file not found: ${resolved}`);
+      return;
+    }
+    const content = fs.readFileSync(resolved, 'utf8');
+    const arr = JSON.parse(content);
+    if (!Array.isArray(arr)) {
+      console.error('NG rules file must contain an array');
+      return;
+    }
+    applyNGRulesArray(arr);
+    console.log('External NGルールを同期しました:', resolved);
+  } catch (e) {
+    console.error('NG rules file load error', e);
+  }
+}
+
+// .env 内に NG_RULES がある場合、それを抽出してパースする
+function parseNGRulesFromEnvFile() {
+  try {
+    if (!fs.existsSync(ENV_PATH)) return null;
+    const raw = fs.readFileSync(ENV_PATH, 'utf8');
+    const m = raw.match(/NG_RULES\s*=\s*(\[[\s\S]*?\])/m);
+    if (!m) return null;
+    try {
+      const arr = JSON.parse(m[1]);
+      return Array.isArray(arr) ? arr : null;
+    } catch (e) {
+      console.error('Failed to parse NG_RULES from .env', e);
+      return null;
+    }
+  } catch (e) {
+    console.error('Failed reading .env for NG_RULES', e);
+    return null;
+  }
+}
+
+function parseNGRulesJsonSafely(rawValue) {
+  if (!rawValue) return null;
+  try {
+    const parsed = JSON.parse(rawValue);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// 起動時の同期順序:
+// 1. process.env.NG_RULES (文字列 JSON) を優先
+// 2. .env 内の NG_RULES ブロックをパース
+// 3. 環境変数 NG_RULES_FILE または ./scripts/ng-rules.json を試す
+const envVarRules = parseNGRulesJsonSafely(process.env.NG_RULES);
+if (envVarRules) {
+  applyNGRulesArray(envVarRules);
+} else {
+  const envArr = parseNGRulesFromEnvFile();
+  if (envArr) {
+    applyNGRulesArray(envArr);
+  } else {
+    loadExternalNGRules(process.env.NG_RULES_FILE || './scripts/ng-rules.json');
+  }
+}
 
 
 
@@ -360,7 +533,7 @@ function autoJudgePosts() {
 
       db.prepare(`
         UPDATE posts
-        SET status = ?, risk_score = ?, updated_at = CURRENT_TIMESTAMP
+        SET status = ?, risk_score = ?, updated_at = datetime('now', '+9 hours')
         WHERE id = ?
       `).run(newStatus, ngCheck.riskScore, post.id);
 
@@ -430,8 +603,8 @@ if (SYSTEM_ADMIN_USERNAME && SYSTEM_ADMIN_PASSWORD) {
   const systemAdminExists = db.prepare(`SELECT id FROM users WHERE username = ?`).get(SYSTEM_ADMIN_USERNAME);
   if (!systemAdminExists) {
     const result = db.prepare(`
-      INSERT INTO users (username, password_hash, role, scope)
-      VALUES (?, ?, 'administrator', 'all')
+      INSERT INTO users (username, password_hash, role, scope, created_at)
+      VALUES (?, ?, 'administrator', 'all', datetime('now', '+9 hours'))
     `).run(SYSTEM_ADMIN_USERNAME, hashPassword(SYSTEM_ADMIN_PASSWORD));
 
     // 管理者アカウントにも全権限を明示的に user_permissions に紐付け
@@ -485,19 +658,65 @@ function getFilePath(urlPath) {
 }
 
 function serveStatic(res, filePath) {
-  if (!filePath) {
-    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
-    res.end('Not found');
-    return;
-  }
-  // const filePath = path.join(__dirname, 'public', req.url);
+  //if (!filePath) {
+    //res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
+    //res.end('Not found');
+    //return;
+  //}
+   if (!filePath) {
+  const notFoundPath = path.join(STATIC_ROOT, '404notfound.html');
 
-  fs.readFile(filePath, (error, data) => {
+  fs.readFile(notFoundPath, (error, data) => {
     if (error) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
+      res.writeHead(404, {
+        'Content-Type': 'text/plain; charset=utf-8'
+      });
       res.end('Not found');
       return;
     }
+
+    res.writeHead(404, {
+      'Content-Type': 'text/html; charset=utf-8'
+    });
+    res.end(data);
+  });
+
+  return;
+}
+  // const filePath = path.join(__dirname, 'public', req.url);
+
+  fs.readFile(filePath, (error, data) => {
+    //if (error) {
+     //res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
+     //res.end('Not found');
+      //return;
+    //}
+
+    if (error) {
+  const notFoundPath = path.join(STATIC_ROOT, '404notfound.html');
+
+  fs.readFile(notFoundPath, (err404, data404) => {
+    if (err404) {
+      // 404.html自体が読めない場合
+      res.writeHead(404, {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff'
+      });
+      res.end('Not found');
+      return;
+    }
+
+    res.writeHead(404, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'X-Content-Type-Options': 'nosniff'
+    });
+
+    res.end(data404);
+  });
+
+  return;
+}
+  
     const ext = path.extname(filePath).toLowerCase();
     const contentType = {
       '.html': 'text/html; charset=utf-8',
@@ -620,8 +839,8 @@ function createVisitorSession(req, res) {
     const expiresAt = getExpiresAt();
 
     db.prepare(`
-      INSERT INTO sessions (id, user_id, username, role, scope, expires_at)
-      VALUES (?, NULL, 'anonymous', 'visitor', 'all', ?)
+      INSERT INTO sessions (id, user_id, username, role, scope, expires_at, created_at)
+      VALUES (?, NULL, 'anonymous', 'visitor', 'all', ?, datetime('now', '+9 hours'))
     `).run(sessionId, expiresAt);
 
     try {
@@ -703,8 +922,8 @@ function isAnonymousUser(user) {
 function logEvent(type, data = {}) {
   try {
     db.prepare(`
-      INSERT INTO logs (type, username, session_id, user_agent, page, detail)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO logs (type, username, session_id, user_agent, page, detail, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'))
     `).run(
       String(type),
       data.username || null,
@@ -828,8 +1047,8 @@ function aggregateSimilarPosts(newPostId, similarity = 0.7) {
     if (sim >= similarity) {
       db.prepare(`
         INSERT OR IGNORE INTO post_aggregations
-        (representative_post_id, aggregated_post_ids, count, similarity_score)
-        VALUES (?, ?, 1, ?)
+        (representative_post_id, aggregated_post_ids, count, similarity_score, created_at)
+        VALUES (?, ?, 1, ?, datetime('now', '+9 hours'))
       `).run(post.id, JSON.stringify([newPostId]), sim);
       break;
     }
@@ -903,10 +1122,8 @@ function getSummary(user) {
   );
 
   const visibleStampIds = scopeList
-  ? Object.keys(LOCATION_LABELS).filter(id =>
-      scopeList.includes(id)
-    )
-  : Object.keys(LOCATION_LABELS);
+    ? COMPANY_MASTER.filter(item => scopeList.includes(item.id)).map(item => item.id)
+    : COMPANY_MASTER.map(item => item.id);
 
   return {
     locations: visibleStampIds.map(stampId => ({
@@ -918,6 +1135,7 @@ function getSummary(user) {
     totals: {
       visits: filteredVisits.reduce((sum, item) => sum + item.count, 0),
       clicks: filteredClicks.reduce((sum, item) => sum + item.count, 0),
+      companyCount: visibleStampIds.length,
     },
   };
 }
@@ -967,8 +1185,8 @@ function getAnnouncementsSub() {
 function logModerationAction(postId, admin, action, oldStatus, newStatus, reason = null) {
   db.prepare(`
     INSERT INTO moderation_logs
-    (post_id, admin_username, action, old_status, new_status, reason)
-    VALUES (?, ?, ?, ?, ?, ?)
+    (post_id, admin_username, action, old_status, new_status, reason, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'))
   `).run(postId, admin, action, oldStatus, newStatus, reason);
 }
 
@@ -1127,8 +1345,8 @@ let page = pathname
       const expiresAt = getExpiresAt();
 
       db.prepare(`
-        INSERT INTO sessions (id, user_id, username, role, scope, expires_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO sessions (id, user_id, username, role, scope, expires_at, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'))
       `).run(
         sessionId,
         user.id,
@@ -1277,8 +1495,8 @@ let page = pathname
 
         try {
           const insertUser = db.prepare(`
-            INSERT INTO users (username, password_hash, role, scope)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO users (username, password_hash, role, scope, created_at)
+            VALUES (?, ?, ?, ?, datetime('now', '+9 hours'))
           `);
           //相違点９
           const result = insertUser.run(
@@ -1453,8 +1671,8 @@ let page = pathname
 
       if (type === 'visit') {
         db.prepare(`
-          INSERT INTO stamp_visits (stamp_id, stamp_name, session_id, user_agent, page)
-          VALUES (?, ?, ?, ?, ?)
+          INSERT INTO stamp_visits (stamp_id, stamp_name, session_id, user_agent, page, created_at)
+          VALUES (?, ?, ?, ?, ?, datetime('now', '+9 hours'))
         `).run(stampId, stampName, sessionId || null, userAgent, page || null);
 
         logEvent('stamp_visit', {
@@ -1470,8 +1688,8 @@ let page = pathname
       // click / jump はどちらも stamp_clicks に記録（後方互換）
       if (type === 'click' || type === 'jump') {
         db.prepare(`
-          INSERT INTO stamp_clicks (stamp_id, stamp_name, session_id, user_agent, page)
-          VALUES (?, ?, ?, ?, ?)
+          INSERT INTO stamp_clicks (stamp_id, stamp_name, session_id, user_agent, page, created_at)
+          VALUES (?, ?, ?, ?, ?, datetime('now', '+9 hours'))
         `).run(stampId, stampName, sessionId || null, userAgent, page || null);
 
         logEvent(`stamp_${type}`, {
@@ -1485,6 +1703,72 @@ let page = pathname
       }
 
       sendJson(res, 400, { ok: false, error: 'Unknown type' });
+    });
+    return;
+  }
+
+  // POST /api/stamp-survey
+  // スタンプラリー開始前の任意アンケートをセッションに保存
+  if (pathname === '/api/stamp-survey' && req.method === 'POST') {
+    parseBody(req, (error, payload) => {
+      if (error) {
+        return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+      }
+
+      let sessionId = String(getCookies(req)[SESSION_COOKIE_NAME] || '');
+
+      if (!sessionId) {
+        sessionId = createVisitorSession(req, res) || '';
+      }
+
+      if (!sessionId) {
+        return sendJson(res, 500, { ok: false, error: 'Failed to create session' });
+      }
+
+      const rawAttributes = payload && payload.attributes && typeof payload.attributes === 'object'
+        ? payload.attributes
+        : null;
+
+      const normalizedAttributes = rawAttributes
+        ? Object.fromEntries(
+            Object.entries(rawAttributes)
+              .map(([key, value]) => [String(key).trim(), String(value || '').trim()])
+              .filter(([key, value]) => key && value)
+          )
+        : null;
+
+      const attributesJson = normalizedAttributes && Object.keys(normalizedAttributes).length
+        ? JSON.stringify(normalizedAttributes)
+        : null;
+
+      const existingSession = db.prepare(`
+        SELECT id FROM sessions WHERE id = ?
+      `).get(sessionId);
+
+      if (!existingSession) {
+        db.prepare(`
+          INSERT INTO sessions (id, user_id, username, role, scope, expires_at, created_at)
+          VALUES (?, NULL, 'anonymous', 'visitor', 'all', ?, datetime('now', '+9 hours'))
+        `).run(sessionId, getExpiresAt());
+      }
+
+      db.prepare(`
+        UPDATE sessions
+        SET profile_attributes = ?
+        WHERE id = ?
+      `).run(attributesJson, sessionId);
+
+      logEvent('stamp_survey', {
+        sessionId,
+        userAgent: req.headers['user-agent'] || '',
+        page: pathname,
+        detail: attributesJson || 'null'
+      });
+
+      return sendJson(res, 200, {
+        ok: true,
+        attributes: normalizedAttributes || null
+      });
     });
     return;
   }
@@ -1582,25 +1866,26 @@ let page = pathname
 
   // GET /api/admin/events
   // analytics.read 権限で参照可能。
-  // 注: sessions.demographic カラムは変更後スクリプトで ensureColumn が削除されたため、
-  //     JOIN クエリから除去している。
   if (pathname === '/api/admin/events' && req.method === 'GET') {
     requirePermission(req, res, 'analytics.read', (user) => {
       const scopeList = getScopeList(user.scope);
+      const activeStampIds = new Set(COMPANY_MASTER.map(item => item.id));
+
+      const filterByCompanyMaster = (rows) => rows.filter(item => activeStampIds.has(item.stamp_id));
 
       if (user.role === 'administrator') {
-        const visits = db.prepare(`
-          SELECT sv.*, s.username
+        const visits = filterByCompanyMaster(db.prepare(`
+          SELECT sv.*, s.username, s.profile_attributes AS attributes
           FROM stamp_visits sv
           LEFT JOIN sessions s ON sv.session_id = s.id
           ORDER BY sv.id DESC LIMIT 100
-        `).all();
-        const clicks = db.prepare(`
-          SELECT sc.*, s.username
+        `).all());
+        const clicks = filterByCompanyMaster(db.prepare(`
+          SELECT sc.*, s.username, s.profile_attributes AS attributes
           FROM stamp_clicks sc
           LEFT JOIN sessions s ON sc.session_id = s.id
           ORDER BY sc.id DESC LIMIT 100
-        `).all();
+        `).all());
 
         logEvent('admin_access', {
           username: user.username,
@@ -1614,18 +1899,18 @@ let page = pathname
       }
 
       // 非管理者は scope で絞る
-      const visitsAll = db.prepare(`
-        SELECT sv.*, s.username
+      const visitsAll = filterByCompanyMaster(db.prepare(`
+        SELECT sv.*, s.username, s.profile_attributes AS attributes
         FROM stamp_visits sv
         LEFT JOIN sessions s ON sv.session_id = s.id
         ORDER BY sv.id DESC LIMIT 1000
-      `).all();
-      const clicksAll = db.prepare(`
-        SELECT sc.*, s.username
+      `).all());
+      const clicksAll = filterByCompanyMaster(db.prepare(`
+        SELECT sc.*, s.username, s.profile_attributes AS attributes
         FROM stamp_clicks sc
         LEFT JOIN sessions s ON sc.session_id = s.id
         ORDER BY sc.id DESC LIMIT 1000
-      `).all();
+      `).all());
 
       const visits = visitsAll.filter(item => !scopeList || scopeList.includes(item.stamp_id));
       const clicks = clicksAll.filter(item => !scopeList || scopeList.includes(item.stamp_id));
@@ -1734,7 +2019,8 @@ let page = pathname
       const status = calculatePostStatus(ngCheck.riskScore);
 
       const result = db.prepare(`
-        INSERT INTO posts (content, status, risk_score) VALUES (?, ?, ?)
+        INSERT INTO posts (content, status, risk_score, created_at, updated_at)
+        VALUES (?, ?, ?, datetime('now', '+9 hours'), datetime('now', '+9 hours'))
       `).run(content, status, ngCheck.riskScore);
 
       logEvent('post_created', {
@@ -1791,7 +2077,7 @@ let page = pathname
         }
 
         db.prepare(`
-          UPDATE posts SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+          UPDATE posts SET status = ?, updated_at = datetime('now', '+9 hours') WHERE id = ?
         `).run(newStatus, postId);
 
         logModerationAction(postId, user.username, 'status_change', post.status, newStatus, payload.reason);
@@ -1901,8 +2187,8 @@ let page = pathname
         }
 
         const result = db.prepare(`
-          INSERT INTO announcements (title, content, importance, published_at, expires_at, created_by)
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO announcements (title, content, importance, published_at, expires_at, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'), datetime('now', '+9 hours'))
         `).run(title, content, importance, publishedAt, expiresAt, user.username);
 
         logEvent('announcement_created', {
@@ -1954,7 +2240,7 @@ let page = pathname
 
         db.prepare(`
           UPDATE announcements
-          SET title = ?, content = ?, importance = ?, expires_at = ?, updated_at = CURRENT_TIMESTAMP
+          SET title = ?, content = ?, importance = ?, expires_at = ?, updated_at = datetime('now', '+9 hours')
           WHERE id = ?
         `).run(title, content, importance, expiresAt, id);
 
@@ -2117,8 +2403,8 @@ let page = pathname
         }
 
         const result = db.prepare(`
-          INSERT INTO ng_rules (pattern, is_regex, risk_score, enabled, description)
-          VALUES (?, ?, ?, 1, ?)
+          INSERT INTO ng_rules (pattern, is_regex, risk_score, enabled, description, created_at)
+          VALUES (?, ?, ?, 1, ?, datetime('now', '+9 hours'))
         `).run(pattern, isRegex, riskScore, description);
 
         logEvent('ng_rule_created', {
@@ -2364,6 +2650,7 @@ let page = pathname
 
   // 静的ファイル配信
   serveStatic(res, getFilePath(pathname));
+
 });
 
 // サーバー起動

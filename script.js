@@ -24,15 +24,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initStampRally() {
-    const locations = [
-        { id: "entrance", name: "正門", note: "正門横の案内ブース", linkText: "会場マップへ", href: "/map.html" },
-        { id: "museum", name: "展示ホール", note: "展示ホール入口", linkText: "高専祭とはへ", href: "/about.html" },
-        { id: "stage", name: "ステージ", note: "ステージ前の案内", linkText: "イベント紹介へ", href: "/event.html" },
-        { id: "shop", name: "模擬店エリア", note: "模擬店エリア入口", linkText: "模擬店紹介へ", href: "/shop.html" },
-    ];
     const storageKey = "kosensai-stamp-rally";
     const analyticsKey = "kosensai-stamp-rally-analytics";
-    const stampCards = Array.from(document.querySelectorAll(".stamp-card"));
+    let locations = [];
+    let stampCards = [];
     const statusEl = document.getElementById("scan-status");
     const summaryEl = document.getElementById("stamp-summary");
     const startBtn = document.getElementById("start-scan");
@@ -40,8 +35,74 @@ function initStampRally() {
     const rallyIntroSection = document.getElementById("stamp-rally-start");
     const stampSection = document.getElementById("stamp-rally");
     const readerEl = document.getElementById("reader");
+    const surveyAgeEl = document.getElementById("survey-age-group");
+    const surveyVisitorTypeEl = document.getElementById("survey-visitor-type");
+    const surveyGroupTypeEl = document.getElementById("survey-group-type");
 
     let scanner = null;
+
+    /*
+    旧・会場スポット版の定義は将来の再利用用に残しています。
+    const legacyLocations = [
+        { id: "entrance", name: "正門", note: "正門横の案内ブース", linkText: "会場マップへ", href: "/map.html" },
+        { id: "museum", name: "展示ホール", note: "展示ホール入口", linkText: "高専祭とはへ", href: "/about.html" },
+        { id: "stage", name: "ステージ", note: "ステージ前の案内", linkText: "イベント紹介へ", href: "/event.html" },
+        { id: "shop", name: "模擬店エリア", note: "模擬店エリア入口", linkText: "模擬店紹介へ", href: "/shop.html" },
+    ];
+    */
+
+    async function loadCompanyMaster() {
+        try {
+            const response = await fetch('/companies.json', { cache: 'no-store' });
+            if (!response.ok) {
+                return [];
+            }
+
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                return [];
+            }
+
+            return data.map((item, index) => ({
+                id: String(item.id || `company-${String.fromCharCode(97 + index)}`),
+                name: String(item.name || `企業${String.fromCharCode(65 + index)}`),
+                note: String(item.note || `${String(item.name || `企業${String.fromCharCode(65 + index)}`)}のブース前のQRコードを読み取る`),
+                linkText: String(item.linkText || '企業紹介へ'),
+                href: String(item.href || '/company.html'),
+                image: String(item.image || '/header_ed.jpg')
+            }));
+        } catch (error) {
+            console.warn('出展企業マスタの読み込みに失敗しました', error);
+            return [];
+        }
+    }
+
+    function renderStampCards() {
+        const stampGrid = document.getElementById('stamp-grid');
+        if (!stampGrid) return;
+
+        stampGrid.innerHTML = locations.map((location, index) => `
+            <article class="stamp-card" data-stamp-id="${location.id}">
+                <p class="stamp-label">STEP ${index + 1}</p>
+                <img class="stamp-thumb" src="${location.image || '/header_ed.jpg'}" alt="${location.name}のサムネイル">
+                <h3>${location.name}</h3>
+                <p class="stamp-note">${location.note}</p>
+                <canvas class="stamp-qr" width="160" height="160" aria-label="${location.name}のQRコード"></canvas>
+                <a class="stamp-link" href="${location.href || '/company.html'}" data-stamp-id="${location.id}">${location.linkText || '企業紹介へ'}</a>
+                <p class="stamp-status">未訪問</p>
+            </article>
+        `).join('');
+
+        stampCards = Array.from(stampGrid.querySelectorAll('.stamp-card'));
+
+        document.querySelectorAll('#stamp-grid .stamp-link').forEach(link => {
+            link.addEventListener('click', () => {
+                recordJump(link.dataset.stampId);
+            });
+        });
+
+        generateQrCodes();
+    }
 
     function loadVisited() {
         try {
@@ -74,6 +135,34 @@ function initStampRally() {
         }
     }
 
+    function collectSurveyAttributes() {
+        const attributes = {
+            ageGroup: surveyAgeEl ? surveyAgeEl.value : '',
+            visitorType: surveyVisitorTypeEl ? surveyVisitorTypeEl.value : '',
+            groupType: surveyGroupTypeEl ? surveyGroupTypeEl.value : '',
+        };
+
+        const filtered = Object.fromEntries(
+            Object.entries(attributes).filter(([, value]) => String(value || '').trim() !== '')
+        );
+
+        return Object.keys(filtered).length ? filtered : null;
+    }
+
+    async function sendSurveyAttributes() {
+        const attributes = collectSurveyAttributes();
+
+        try {
+            await fetch('/api/stamp-survey', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ attributes }),
+            });
+        } catch (error) {
+            console.warn('アンケート属性の送信に失敗しました', error);
+        }
+    }
+
     function loadAnalytics() {
         try {
             return JSON.parse(localStorage.getItem(analyticsKey) || "{\"visits\":{},\"jumps\":{}}")
@@ -88,6 +177,10 @@ function initStampRally() {
     }
 
     function renderStampState() {
+        if (!stampCards.length) {
+            stampCards = Array.from(document.querySelectorAll('.stamp-card'));
+        }
+
         const visited = loadVisited();
         const analytics = loadAnalytics();
 
@@ -111,8 +204,11 @@ function initStampRally() {
             }
         });
 
-        const progress = Math.round((visited.length / locations.length) * 100);
-        summaryEl.textContent = `現在 ${visited.length} / ${locations.length} か所を訪問済みです（${progress}%）。この端末の履歴と集計は localStorage に保存されます。`;
+        const total = locations.length || 0;
+        const progress = total ? Math.round((visited.length / total) * 100) : 0;
+        summaryEl.textContent = total
+            ? `現在 ${visited.length} / ${total} 件の出展企業を訪問済みです（${progress}%）。この端末の履歴と集計は localStorage に保存されます。`
+            : '出展企業情報を読み込んでいます。';
     }
 
     // サーバー側の訪問履歴は管理者向けに限定するため、公開ページでは取得しません。
@@ -235,7 +331,9 @@ if (typeof Html5Qrcode.getCameras === "function") {
         }
     }
 
-    function startStampRally() {
+    async function startStampRally() {
+        await sendSurveyAttributes();
+
         if (rallyIntroSection) {
             rallyIntroSection.classList.add("hidden");
         }
@@ -258,12 +356,9 @@ if (typeof Html5Qrcode.getCameras === "function") {
         });
     }
 
-    document.querySelectorAll(".stamp-link").forEach(link => {
-        link.addEventListener("click", () => {
-            recordJump(link.dataset.stampId);
-        });
+    loadCompanyMaster().then(master => {
+        locations = master;
+        renderStampCards();
+        renderStampState();
     });
-
-    generateQrCodes();
-    renderStampState();
 }

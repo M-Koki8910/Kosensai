@@ -806,6 +806,37 @@ h2::after {
     margin-top: 12px;
 }
 
+.stamp-survey {
+    margin: 18px 0;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.stamp-survey-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.stamp-survey-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #334155;
+    font-size: 14px;
+}
+
+.stamp-survey-grid select {
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fff;
+    color: #111827;
+}
+
 
 .analytics-page {
     padding-top: 24px;

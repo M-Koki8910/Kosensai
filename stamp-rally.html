@@ -51,13 +51,54 @@
 
     <section class="container-section">
         <h2>スタンプラリーとは</h2>
-        <p class="stamp-intro">高専祭会場の4か所を回って、QRコードを読み取るとスタンプが増えていく体験型コンテンツです。スマートフォンで読み取れば、会場の見どころを巡りながら楽しく参加できます。</p>
+        <p class="stamp-intro">高専祭会場の出展企業を巡って、QRコードを読み取るとスタンプが増えていく体験型コンテンツです。スマートフォンで読み取れば、会場の見どころを巡りながら楽しく参加できます。</p>
         <p class="stamp-intro">このページでは、スタンプの集め方と会場マップの確認から、実際のQR読み取りまで一つながりで体験できます。</p>
     </section>
 
     <section class="container-section" id="stamp-rally-start">
         <h2>スタンプラリーを始める</h2>
         <p class="stamp-intro">まずは説明を確認してから、下のボタンでスタンプラリーを開始してください。開始後に巡る場所のカード、QR読み取りボタン、会場マップが表示されます。</p>
+
+        <div class="stamp-survey" id="stamp-survey" aria-label="任意アンケート">
+            <h3>開始前アンケート（任意）</h3>
+            <p class="stamp-note">未回答のまま開始できます。未回答の場合、属性は null として記録されます。</p>
+            <div class="stamp-survey-grid">
+                <label>
+                    年代
+                    <select id="survey-age-group">
+                        <option value="">回答しない</option>
+                        <option value="under-13">13歳未満</option>
+                        <option value="13-18">13-18歳</option>
+                        <option value="19-29">19-29歳</option>
+                        <option value="30-49">30-49歳</option>
+                        <option value="50-plus">50歳以上</option>
+                    </select>
+                </label>
+                <label>
+                    来場区分
+                    <select id="survey-visitor-type">
+                        <option value="">回答しない</option>
+                        <option value="student">学生</option>
+                        <option value="guardian">保護者</option>
+                        <option value="alumni">卒業生</option>
+                        <option value="community">地域来場者</option>
+                        <option value="other">その他</option>
+                    </select>
+                </label>
+                <label>
+                    同伴
+                    <select id="survey-group-type">
+                        <option value="">回答しない</option>
+                        <option value="alone">1人</option>
+                        <option value="family">家族</option>
+                        <option value="friends">友人</option>
+                        <option value="school-group">学校関係者グループ</option>
+                        <option value="other">その他</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
         <button id="begin-rally" class="stamp-btn" type="button">スタンプラリーを始める</button>
     </section>
 
@@ -65,44 +106,17 @@
         <h2>スタンプを集める</h2>
         <p class="stamp-intro">会場のQRコードを読み取ると、訪問履歴がこの端末に保存されます。各場所のカードを見ながら、QRコードを読み取ってスタンプを集めましょう。</p>
 
-        <div class="stamp-grid" id="stamp-grid">
-            <article class="stamp-card" data-stamp-id="entrance">
-                <p class="stamp-label">STEP 1</p>
-                <img class="stamp-thumb" src="/header_ed.jpg" alt="正門のサムネイル">
-                <h3>正門</h3>
-                <p class="stamp-note">案内ブース横のQRコードを読み取る</p>
-                <canvas class="stamp-qr" width="160" height="160" aria-label="正門のQRコード"></canvas>
-                <a class="stamp-link" href="/map.html" data-stamp-id="entrance">会場マップへ</a>
-                <p class="stamp-status">未訪問</p>
-            </article>
-            <article class="stamp-card" data-stamp-id="museum">
-                <p class="stamp-label">STEP 2</p>
-                <img class="stamp-thumb" src="/about.jpg" alt="展示ホールのサムネイル">
-                <h3>展示ホール</h3>
-                <p class="stamp-note">展示ホール入口のQRコードを読み取る</p>
-                <canvas class="stamp-qr" width="160" height="160" aria-label="展示ホールのQRコード"></canvas>
-                <a class="stamp-link" href="/about.html" data-stamp-id="museum">高専祭とはへ</a>
-                <p class="stamp-status">未訪問</p>
-            </article>
-            <article class="stamp-card" data-stamp-id="stage">
-                <p class="stamp-label">STEP 3</p>
-                <img class="stamp-thumb" src="/event.jpg" alt="ステージのサムネイル">
-                <h3>ステージ</h3>
-                <p class="stamp-note">ステージ前のQRコードを読み取る</p>
-                <canvas class="stamp-qr" width="160" height="160" aria-label="ステージのQRコード"></canvas>
-                <a class="stamp-link" href="/event.html" data-stamp-id="stage">イベント紹介へ</a>
-                <p class="stamp-status">未訪問</p>
-            </article>
-            <article class="stamp-card" data-stamp-id="shop">
-                <p class="stamp-label">STEP 4</p>
-                <img class="stamp-thumb" src="/shop.jpg" alt="模擬店エリアのサムネイル">
-                <h3>模擬店エリア</h3>
-                <p class="stamp-note">模擬店エリアのQRコードを読み取る</p>
-                <canvas class="stamp-qr" width="160" height="160" aria-label="模擬店エリアのQRコード"></canvas>
-                <a class="stamp-link" href="/shop.html" data-stamp-id="shop">模擬店紹介へ</a>
-                <p class="stamp-status">未訪問</p>
-            </article>
+        <div class="stamp-grid" id="stamp-grid"></div>
+
+        <!--
+        以前の会場スポット版スタンプカードは、将来の再利用に備えて残しています。
+        <div class="stamp-grid" id="stamp-grid-legacy">
+            <article class="stamp-card" data-stamp-id="entrance">...</article>
+            <article class="stamp-card" data-stamp-id="museum">...</article>
+            <article class="stamp-card" data-stamp-id="stage">...</article>
+            <article class="stamp-card" data-stamp-id="shop">...</article>
         </div>
+        -->
 
         <div class="stamp-controls">
             <button id="start-scan" class="stamp-btn" type="button">カメラでQRを読み取る</button>

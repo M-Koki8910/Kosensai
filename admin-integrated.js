@@ -948,6 +948,10 @@ async function deleteAnnouncement(annId) {
         <div class="stat-number">${summary.totals?.clicks || 0}</div>
         <div class="stat-label">クリック数</div>
       </div>
+      <div class="stat-item">
+        <div class="stat-number">${summary.totals?.companyCount || 0}</div>
+        <div class="stat-label">出展企業数</div>
+      </div>
     `;
     document.getElementById('analyticsStats').innerHTML = statsHtml;
 
@@ -973,8 +977,13 @@ async function deleteAnnouncement(annId) {
 }*/
 async function loadAnalytics() {
   try {
-    const response = await fetch('/api/admin/summary');
-    const data = await response.json();
+    const [summaryRes, eventsRes] = await Promise.all([
+      fetch('/api/admin/summary'),
+      fetch('/api/admin/events')
+    ]);
+
+    const data = await summaryRes.json();
+    const eventsData = await eventsRes.json();
 
     if (!data.locations) {
       showMessage('アナリティクスを読み込めませんでした', 'error');
@@ -999,6 +1008,17 @@ async function loadAnalytics() {
     const cards = document.getElementById('analyticsLocationCards');
     const tbody = document.getElementById('analyticsTableBody');
     const locations = summary.locations || [];
+    const visits = Array.isArray(eventsData.visits) ? eventsData.visits : [];
+    const clicks = Array.isArray(eventsData.clicks) ? eventsData.clicks : [];
+
+    const rows = [];
+    visits.forEach(item => rows.push({ ...item, eventType: 'visit' }));
+    clicks.forEach(item => rows.push({ ...item, eventType: 'click' }));
+    rows.sort((a, b) => {
+      const aTime = new Date(a.created_at || 0).getTime();
+      const bTime = new Date(b.created_at || 0).getTime();
+      return bTime - aTime;
+    });
 
 cards.innerHTML = locations.map(loc => `
   <div class="stat-item">
@@ -1015,15 +1035,22 @@ cards.innerHTML = locations.map(loc => `
     
 
     if (locations.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" class="empty-state">データなし</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">データなし</td></tr>';
       return;
     }
 
-    tbody.innerHTML = locations.map(loc => `
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">イベント履歴がありません</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(row => `
       <tr>
-        <td>${loc.stamp_name}</td>
-        <td>${loc.visits}</td>
-        <td>${loc.clicks}</td>
+        <td>${formatDate(row.created_at)}</td>
+        <td>${escapeHtml(row.stamp_name || row.stamp_id || '-')}</td>
+        <td>${row.eventType === 'visit' ? '1' : ''}</td>
+        <td>${row.eventType === 'click' ? '1' : ''}</td>
+        <td>${escapeHtml(formatAttributes(row.attributes))}</td>
       </tr>
     `).join('');
 
@@ -1207,6 +1234,28 @@ function escapeHtml(text) {
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleString('ja-JP');
+}
+
+function formatAttributes(rawAttributes) {
+  if (rawAttributes === null || rawAttributes === undefined || rawAttributes === '') {
+    return 'null';
+  }
+
+  if (typeof rawAttributes === 'object') {
+    const pairs = Object.entries(rawAttributes);
+    if (!pairs.length) return 'null';
+    return pairs.map(([key, value]) => `${key}: ${value}`).join(' / ');
+  }
+
+  try {
+    const parsed = JSON.parse(String(rawAttributes));
+    if (!parsed || typeof parsed !== 'object') return 'null';
+    const pairs = Object.entries(parsed);
+    if (!pairs.length) return 'null';
+    return pairs.map(([key, value]) => `${key}: ${value}`).join(' / ');
+  } catch (e) {
+    return String(rawAttributes);
+  }
 }
 
 // ====================================================================
