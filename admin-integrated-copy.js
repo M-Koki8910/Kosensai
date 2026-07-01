@@ -1,5 +1,5 @@
 // ============================================================================
-// 統合管理ページ - ログイン＆認証処理 admin-integrated.js 【修正版】
+// 統合管理ページ - ログイン＆認証処理 admin-integrated.js
 // ============================================================================
 
 let currentUser = null;
@@ -161,9 +161,50 @@ function showAdminScreen() {
   // （ログインハンドラ内で呼ぶため）
 }
 
-// ============================================================================
-// ★【修正】showPage 関数: ページ表示とデータロード
-// ============================================================================
+/*function showPage(page) {
+
+
+
+  if (page === 'publish') {
+  loadPublish();
+  }
+  // ダッシュボードとアカウント設定は常に許可
+  if (page === 'dashboard' || page === 'account') {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page).classList.add('active');
+    if (page === 'account') {
+      document.getElementById('accountUsername').value = currentUser.username;
+    }
+    return;
+  }
+ 
+  // その他のページは権限チェック
+  const pageMap = {
+    posts: 'announcement.manage',      // ★修正：posts管理
+    'ng-rules': 'announcement.manage',  // ★修正：NGルール管理
+    announcements: 'announcement.manage', // ★修正：アナウンス管理
+    analytics: 'analytics.read',
+    users: 'users.read',
+    logs: 'logs.read'
+  };
+ 
+  const requiredPerm = pageMap[page];
+  if (requiredPerm && !can(requiredPerm)) {
+    showMessage('このページへのアクセス権限がありません', 'error');
+    return;
+  }
+ 
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+ 
+  // 各ページの読み込み処理
+  if (page === 'posts') loadPosts();
+  if (page === 'ng-rules') loadRules();
+  if (page === 'announcements') loadAnnouncements();
+  if (page === 'analytics') loadAnalytics();
+  if (page === 'users') loadUsers();
+  if (page === 'logs') loadLogs();
+}*/
 function showPage(page) {
  
   // publish / site-control ページは administrator のみ
@@ -178,16 +219,12 @@ function showPage(page) {
     return;
   }
  
-  // ★【修正】ダッシュボードとアカウント設定は常に許可＋データロード
+  // ダッシュボードとアカウント設定は常に許可
   if (page === 'dashboard' || page === 'account') {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(page).classList.add('active');
     if (page === 'account') {
       document.getElementById('accountUsername').value = currentUser.username;
-    }
-    // ★【修正】: ダッシュボード時はデータをロード
-    if (page === 'dashboard') {
-      loadDashboard();
     }
     return;
   }
@@ -211,7 +248,6 @@ function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(page).classList.add('active');
  
-  // ★【修正】: 各ページのロード処理を showPage 内で実行
   if (page === 'posts') loadPosts();
   if (page === 'ng-rules') loadRules();
   if (page === 'announcements') loadAnnouncements();
@@ -220,9 +256,6 @@ function showPage(page) {
   if (page === 'logs') loadLogs();
 }
 
-// ============================================================================
-// ★【修正】applyUIAccessControl: nav-item の表示制御のみに集中
-// ============================================================================
 function applyUIAccessControl() {
   document.querySelectorAll('.nav-item').forEach(btn => {
     const page = btn.dataset.page;
@@ -235,9 +268,9 @@ function applyUIAccessControl() {
  
     // その他のページは権限に基づいて表示・非表示
     const map = {
-      posts: 'announcement.manage',
-      'ng-rules': 'announcement.manage',
-      announcements: 'announcement.manage',
+      posts: 'announcement.manage',      // ★修正
+      'ng-rules': 'announcement.manage', // ★修正
+      announcements: 'announcement.manage', // ★修正
       users: 'users.read',
       logs: 'logs.read',
       analytics: 'analytics.read'
@@ -262,7 +295,7 @@ if (addUserForm) {
     
     const scope = Array.from(
   document.querySelectorAll(
-    '#scope-list input:checked'
+    '#scope-container input:checked'
   )
 ).map(cb => cb.value);
  
@@ -320,9 +353,10 @@ if (roleSelect) {
   updateRoleUI();
 }
 
-async function updateRoleUI() {
+function updateRoleUI() {
 
-  const role = roleSelect.value;
+  const role =
+    roleSelect.value;
 
   scopeContainer.style.display =
     role === 'company'
@@ -333,45 +367,18 @@ async function updateRoleUI() {
     ROLE_DEFAULTS[role] || [];
 
   document
-    .querySelectorAll('.permission-checkbox')
+    .querySelectorAll(
+      '.permission-checkbox'
+    )
     .forEach(cb => {
-      cb.checked = defaults.includes(cb.value);
+
+      cb.checked =
+        defaults.includes(
+          cb.value
+        );
+
     });
 
-  // company のときだけ企業一覧を読み込む
-  if (role === 'company') {
-    await loadCompanyScopes();
-  }
-
-}
-
-let companyScopesLoaded = false;
-
-async function loadCompanyScopes() {
-
-  if (companyScopesLoaded) return;
-
-  const list = document.getElementById('scope-list');
-
-  try {
-    const response = await fetch('companies.json');
-    if (!response.ok) throw new Error();
-
-    const companies = await response.json();
-
-    list.innerHTML = companies.map(company => `
-      <label>
-        <input type="checkbox" value="${company.id}">
-        ${company.name}
-      </label>
-    `).join('');
-
-    companyScopesLoaded = true;
-
-  } catch (error) {
-    console.error(error);
-    list.innerHTML = '企業一覧の取得に失敗しました';
-  }
 }
 
 // ============================================================================
@@ -406,8 +413,10 @@ async function checkSession() {
       showAdminScreen();
       applyUIAccessControl();
       
-      // ★修正：showPage() を呼ぶだけで loadDashboard() もカバー
+      // ★修正：ダッシュボードに遷移
       showPage('dashboard');
+      
+      loadDashboard();
  
     } else {
       showLoginScreen();
@@ -702,6 +711,17 @@ async function loadRules() {
   }
 }
 
+/*function openRuleModal() {
+  document.getElementById('ruleModalPattern').value = '';
+  document.getElementById('ruleModalType').value = '0';
+  document.getElementById('ruleModalRiskScore').value = '10';
+  document.getElementById('ruleModalDescription').value = '';
+
+  currentRule = null;
+
+  document.getElementById('ruleModal').classList.add('show');
+}*/
+
 async function saveRule() {
 
   console.log(document.getElementById('ruleType'));
@@ -810,6 +830,47 @@ async function deleteRule(ruleId) {
     showMessage('ルールの削除に失敗しました', 'error');
   }
 }
+async function saveRule() {
+  const pattern = document.getElementById('rulePattern').value.trim();
+  const isRegex = parseInt(document.getElementById('ruleType').value);
+  const riskScore = parseInt(document.getElementById('ruleRiskScore').value);
+  const description = document.getElementById('ruleDescription').value.trim();
+
+  if (!pattern) {
+    showMessage('パターンを入力してください', 'error');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/admin/ng-rules', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        pattern,
+        is_regex: isRegex,
+        risk_score: riskScore,
+        description: description || null
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      showMessage('ルールを追加しました', 'success');
+
+      document.getElementById('ruleModal').classList.remove('show');
+
+      loadRules();
+    } else {
+      showMessage(data.error || '追加に失敗しました', 'error');
+    }
+  } catch (e) {
+    console.error('ルール追加エラー', e);
+    showMessage('ルールの追加に失敗しました', 'error');
+  }
+}
 
 // ============================================================================
 // アナウンス管理
@@ -876,6 +937,53 @@ async function deleteAnnouncement(annId) {
 // アナリティクス
 // ============================================================================
 
+/*async function loadAnalytics() {
+  try {
+    const response = await fetch('/api/admin/summary');
+    const data = await response.json();
+
+    if (!data.locations) {
+      showMessage('アナリティクスを読み込めませんでした', 'error');
+      return;
+    }
+
+    const summary = data;
+    const statsHtml = `
+      <div class="stat-item">
+        <div class="stat-number">${summary.totals?.visits || 0}</div>
+        <div class="stat-label">訪問数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">${summary.totals?.clicks || 0}</div>
+        <div class="stat-label">クリック数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">${summary.totals?.companyCount || 0}</div>
+        <div class="stat-label">出展企業数</div>
+      </div>
+    `;
+    document.getElementById('analyticsStats').innerHTML = statsHtml;
+
+    const locations = summary.locations || [];
+    const tbody = document.getElementById('analyticsTableBody');
+
+    if (locations.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty-state">データなし</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = locations.map(loc => `
+      <tr>
+        <td>${loc.stamp_name}</td>
+        <td>${loc.visits}</td>
+        <td>${loc.clicks}</td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    console.error('アナリティクス読み込みエラー', e);
+    showMessage('アナリティクスを読み込めませんでした', 'error');
+  }
+}*/
 async function loadAnalytics() {
   try {
     const [summaryRes, eventsRes] = await Promise.all([
@@ -960,7 +1068,6 @@ cards.innerHTML = locations.map(loc => `
     showMessage('アナリティクスを読み込めませんでした', 'error');
   }
 }
-
 // ============================================================================
 // ユーザー管理
 // ============================================================================
@@ -1164,6 +1271,7 @@ function formatAttributes(rawAttributes) {
 // 権限管理レイヤー（追加）
 // ====================================================================
 
+//let currentUser = null;
 let permissions = new Set();
 
 function applyPermissions(user) {

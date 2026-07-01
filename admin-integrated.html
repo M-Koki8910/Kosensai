@@ -1,11 +1,14 @@
+<!--admin-integrated.html-->
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>管理画面 - 高専祭</title>
   <link rel="stylesheet" href="./style.css">
   <style>
+   
     * {
       margin: 0;
       padding: 0;
@@ -29,7 +32,7 @@
       background: white;
       border-radius: 12px;
       padding: 40px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       width: 100%;
       max-width: 400px;
     }
@@ -261,7 +264,7 @@
       padding: 20px;
       border-radius: 8px;
       border-left: 4px solid #007bff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .stat-number {
@@ -346,7 +349,7 @@
       border-collapse: collapse;
       border-radius: 4px;
       overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       margin-top: 15px;
     }
 
@@ -389,7 +392,7 @@
       top: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
     }
 
     .modal.show {
@@ -483,15 +486,53 @@
       font-size: 13px;
       word-wrap: break-word;
     }
+
+    .page {
+      display: none;
+      padding: 20px;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
   </style>
 </head>
 
 <div class="topbar">
-    <a href="/" class="home-link">高専祭TOP</a>
-    <button class="menu-toggle" aria-label="メニューを開く">☰</button>
-</div>
+  <a href="/" class="home-link">
+    <img src="/logo.png" alt="高専祭TOP" class="logo">
+</a>
+   <!--  <a href="/" class="home-link">高専祭TOP-開発用ページ</a>
+     <p>ページの再読み込みを行わないでください</p>
+     <button class="menu-toggle" aria-label="メニューを開く"></button>
+ --> </div>
 
-<nav id="nav">
+<!-- <nav id="nav">
     <ul>
         <li><a href="./about.html">高専祭とは</a></li>
         <li><a href="./guest.html">ゲスト紹介</a></li>
@@ -514,7 +555,7 @@
             <img src="./insta.png" alt="Instagram" class="nav-social-icon">実行委員会
         </a>
     </div>
-</nav>
+</nav> -->
 
 <body>
   <!-- ログイン画面 -->
@@ -522,7 +563,7 @@
     <div class="login-card">
       <h1>🛠 管理画面</h1>
       <p class="subtitle">割り当てられたアカウントでログインしてください</p>
-      
+
       <form id="loginForm">
         <div class="form-group">
           <label for="loginUsername">ユーザー名</label>
@@ -550,12 +591,15 @@
         <li><button class="nav-item" data-page="analytics">📈 アナリティクス</button></li>
         <li><button class="nav-item" data-page="users">👥 ユーザー管理</button></li>
         <li><button class="nav-item" data-page="logs">📋 ログ</button></li>
+        <li><button class="nav-item" data-page="publish">🌐 公開管理</button></li>
         <li><button class="nav-item" data-page="account">⚙️ アカウント</button></li>
+        <li><button class="nav-item" onclick="location.href='./index.html'">🏠 TOPへ戻る</button></li>
       </ul>
     </div>
 
     <div style="flex: 1; display: flex; flex-direction: column;">
       <div class="header-bar" id="headerBar">
+       
         <div style="flex: 1;"></div>
         <div class="user-info">
           <span id="userDisplayName">ユーザー</span>
@@ -626,7 +670,9 @@
               </tr>
             </thead>
             <tbody id="postsTableBody">
-              <tr><td colspan="6" class="empty-state">投稿がありません</td></tr>
+              <tr>
+                <td colspan="6" class="empty-state">投稿がありません</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -639,33 +685,33 @@
           </div>
 
           <div class="rule-form">
-  <div class="form-group">
-    <label>パターン</label>
-    <input type="text" id="rulePattern">
-  </div>
+            <div class="form-group">
+              <label>パターン</label>
+              <input type="text" id="rulePattern">
+            </div>
 
-  <div class="form-group">
-    <label>種類</label>
-    <select id="ruleType">
-      <option value="0">テキスト</option>
-      <option value="1">正規表現</option>
-    </select>
-  </div>
+            <div class="form-group">
+              <label>種類</label>
+              <select id="ruleType">
+                <option value="0">テキスト</option>
+                <option value="1">正規表現</option>
+              </select>
+            </div>
 
-  <div class="form-group">
-    <label>危険度</label>
-    <input type="number" id="ruleRiskScore" value="10">
-  </div>
+            <div class="form-group">
+              <label>危険度</label>
+              <input type="number" id="ruleRiskScore" value="10">
+            </div>
 
-  <div class="form-group">
-    <label>説明</label>
-    <input type="text" id="ruleDescription">
-  </div>
+            <div class="form-group">
+              <label>説明</label>
+              <input type="text" id="ruleDescription">
+            </div>
 
-  <button class="btn btn-success" id="addRuleBtn">
-    ルール追加
-  </button>
-</div>
+            <button class="btn btn-success" id="addRuleBtn">
+              ルール追加
+            </button>
+          </div>
 
           <table id="rulesTable">
             <thead>
@@ -680,7 +726,9 @@
               </tr>
             </thead>
             <tbody id="rulesTableBody">
-              <tr><td colspan="7" class="empty-state">ルールがありません</td></tr>
+              <tr>
+                <td colspan="7" class="empty-state">ルールがありません</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -704,7 +752,9 @@
               </tr>
             </thead>
             <tbody id="announcementsTableBody">
-              <tr><td colspan="6" class="empty-state">アナウンスがありません</td></tr>
+              <tr>
+                <td colspan="6" class="empty-state">アナウンスがありません</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -713,21 +763,26 @@
         <div id="analytics" class="page">
           <div class="page-header">
             <div class="page-title">アナリティクス</div>
-            <div class="page-subtitle">スタンプラリーの統計情報</div>
+            <div class="page-subtitle">日時・場所・訪問・遷移・属性のイベント一覧</div>
           </div>
 
           <div class="stat-row" id="analyticsStats"></div>
+          <div class="stat-row" id="analyticsLocationCards"></div>
 
           <table id="analyticsTable">
             <thead>
               <tr>
+                <th>日時</th>
                 <th>場所</th>
                 <th>訪問</th>
-                <th>クリック</th>
+                <th>遷移</th>
+                <th>属性</th>
               </tr>
             </thead>
             <tbody id="analyticsTableBody">
-              <tr><td colspan="3" class="empty-state">データなし</td></tr>
+              <tr>
+                <td colspan="5" class="empty-state">データなし</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -741,32 +796,55 @@
           </div>
 
           <div id="userMessage">
-           
+
           </div>
 
 
           <div class="user-create-panel">
-  <form id="add-user-form" class="stamp-controls">
-    <input id="new-user" type="text" placeholder="新しいユーザ名" required />
-    <input id="new-password" type="password" placeholder="パスワード" required />
+            <form id="add-user-form" class="stamp-controls">
+              <input id="new-user" type="text" placeholder="新しいユーザ名" required />
+              <input id="new-password" type="password" placeholder="パスワード" required />
 
-    <label>ロール</label>
-    <select id="role">
-      <option value="visitor">visitor</option>
-      <option value="senior">senior</option>
-      <option value="administrator">administrator</option>
-    </select>
+              <label>ロール</label>
+              <select id="role">
+                <option value="administrator">Administrator</option>
+                <option value="executivestaff">Executive Staff</option>
+                <option value="staff">Staff</option>
+                <option value="company">Company</option>
+              </select>
 
-    <label>参照範囲</label>
-    <label><input type="checkbox" value="entrance"> 正門</label>
-    <label><input type="checkbox" value="museum"> 展示ホール</label>
-    <label><input type="checkbox" value="stage"> ステージ</label>
-    <label><input type="checkbox" value="shop"> 模擬店</label>
-    <label><input type="checkbox" value="all"> 全て</label>
+              <h3>権限</h3>
 
-    <button type="submit" class="btn btn-success">ユーザ追加</button>
-  </form>
-</div>
+              <label>
+                <input type="checkbox" class="permission-checkbox" value="analytics.view">
+                Analytics
+              </label>
+
+              <label>
+                <input type="checkbox" class="permission-checkbox" value="logs.view">
+                Logs
+              </label>
+
+              <div id="scope-container" style="display:none;">
+                <!--   <label>参照範囲</label> -->
+
+                <!-- <label><input type="checkbox" value="entrance"> 正門</label>
+                <label><input type="checkbox" value="museum"> 展示ホール</label>
+                <label><input type="checkbox" value="stage"> ステージ</label>
+                <label><input type="checkbox" value="shop"> 模擬店</label> -->
+
+                <label>参照範囲</label>
+
+                <div id="scope-list">
+                  読み込み中...
+                </div>
+
+              </div>
+
+
+              <button type="submit" class="btn btn-success">ユーザ追加</button>
+            </form>
+          </div>
 
           <table id="usersTable">
             <thead>
@@ -779,7 +857,9 @@
               </tr>
             </thead>
             <tbody id="usersTableBody">
-              <tr><td colspan="5" class="empty-state">ユーザーがありません</td></tr>
+              <tr>
+                <td colspan="5" class="empty-state">ユーザーがありません</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -801,10 +881,35 @@
               </tr>
             </thead>
             <tbody id="logsTableBody">
-              <tr><td colspan="4" class="empty-state">ログなし</td></tr>
+              <tr>
+                <td colspan="4" class="empty-state">ログなし</td>
+              </tr>
             </tbody>
           </table>
         </div>
+
+        <!-- 公開管理 -->
+        <section id="site-control" class="page">
+
+          <h1> 公開管理</h1>
+
+          <button class="btn" onclick="loadPublish()">
+            状態更新
+          </button>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ページ</th>
+                <th>公開状態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+
+            <tbody id="publish-table-body"></tbody>
+          </table>
+
+        </section>
 
         <!-- アカウント -->
         <div id="account" class="page">
@@ -836,4 +941,5 @@
   <script src="admin-integrated.js"></script>
   <script src="./script.js"></script>
 </body>
+
 </html>

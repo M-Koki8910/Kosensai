@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高専祭 抽選システム｜参加する</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    /* ヘッダー */
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+      animation: slideDown 0.6s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header h1 {
+      font-size: 3em;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .header .subtitle {
+      font-size: 1.2em;
+      opacity: 0.95;
+      margin-bottom: 20px;
+    }
+
+    .header .emoji {
+      font-size: 2.5em;
+      margin-right: 10px;
+    }
+
+    /* メインコンテンツ */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 768px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 2em;
+      }
+    }
+
+    /* カード */
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    .card-title {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title .icon {
+      font-size: 1.5em;
+    }
+
+    .card-description {
+      color: #718096;
+      font-size: 1.05em;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    /* ボタン */
+    .btn {
+      display: inline-block;
+      padding: 14px 40px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      text-align: center;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: #f7fafc;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+
+    .btn-secondary:hover {
+      background: #edf2f7;
+    }
+
+    /* フィーチャー */
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .feature {
+      display: flex;
+      gap: 15px;
+      align-items: flex-start;
+      padding: 15px;
+      background: #f7fafc;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .feature:hover {
+      background: #edf2f7;
+      transform: translateX(5px);
+    }
+
+    .feature-icon {
+      font-size: 1.5em;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .feature-text {
+      flex: 1;
+    }
+
+    .feature-title {
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 5px;
+    }
+
+    .feature-desc {
+      font-size: 0.95em;
+      color: #718096;
+      line-height: 1.5;
+    }
+
+    /* ルール説明 */
+    .rules-section {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: fadeInUp 0.6s ease-out 0.4s both;
+      margin-bottom: 40px;
+    }
+
+    .rules-title {
+      font-size: 2em;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 768px) {
+      .rules-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .rule-item {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 25px;
+      border-radius: 15px;
+      text-align: center;
+    }
+
+    .rule-number {
+      font-size: 2.5em;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .rule-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+
+    .rule-desc {
+      font-size: 0.95em;
+      color: #4a5568;
+      line-height: 1.6;
+    }
+
+    /* タイムライン */
+    .timeline {
+      position: relative;
+      padding: 40px 0;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-left: 60px;
+      padding-bottom: 30px;
+    }
+
+    .timeline-item:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 50px;
+      width: 2px;
+      height: 50px;
+      background: #cbd5e0;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1em;
+    }
+
+    .timeline-content {
+      background: #f7fafc;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .timeline-time {
+      font-weight: 600;
+      color: #667eea;
+      font-size: 0.95em;
+    }
+
+    .timeline-desc {
+      color: #4a5568;
+      margin-top: 5px;
+      font-size: 0.95em;
+    }
+
+    /* FAQ */
+    .faq-section {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: fadeInUp 0.6s ease-out 0.6s both;
+    }
+
+    .faq-title {
+      font-size: 2em;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 20px 0;
+      transition: all 0.3s ease;
+    }
+
+    .faq-item:last-child {
+      border-bottom: none;
+    }
+
+    .faq-question {
+      font-weight: 600;
+      color: #2d3748;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #f7fafc;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .faq-question:hover {
+      background: #edf2f7;
+    }
+
+    .faq-toggle {
+      font-size: 1.2em;
+      color: #667eea;
+      transition: transform 0.3s ease;
+    }
+
+    .faq-item.active .faq-toggle {
+      transform: rotate(180deg);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      color: #4a5568;
+      padding: 0 10px;
+      transition: all 0.3s ease;
+      font-size: 0.95em;
+      line-height: 1.6;
+    }
+
+    .faq-item.active .faq-answer {
+      max-height: 500px;
+      padding: 15px 10px;
+    }
+
+    /* フッター */
+    .footer {
+      text-align: center;
+      color: white;
+      padding: 30px;
+      opacity: 0.9;
+      animation: fadeInUp 0.6s ease-out 0.8s both;
+    }
+
+    .footer p {
+      margin-bottom: 10px;
+      font-size: 0.95em;
+    }
+
+    /* ステータス表示 */
+    .status-banner {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      animation: fadeInUp 0.6s ease-out 0.1s both;
+    }
+
+    .status-icon {
+      font-size: 2em;
+    }
+
+    .status-text {
+      flex: 1;
+    }
+
+    .status-title {
+      font-weight: 700;
+      color: #2d3748;
+      font-size: 1.1em;
+    }
+
+    .status-desc {
+      color: #718096;
+      font-size: 0.9em;
+      margin-top: 3px;
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.5em;
+      }
+
+      .card {
+        padding: 25px;
+      }
+
+      .btn {
+        padding: 12px 30px;
+        font-size: 1em;
+      }
+
+      .rules-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* アニメーション */
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    /* ローディング状態 */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: white;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* エラー表示 */
+    .alert {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .alert.show {
+      display: block;
+    }
+
+    .alert-error {
+      background: #fed7d7;
+      color: #c53030;
+      border-left: 4px solid #c53030;
+    }
+
+    .alert-success {
+      background: #c6f6d5;
+      color: #22543d;
+      border-left: 4px solid #22543d;
+    }
+
+    .alert-info {
+      background: #bee3f8;
+      color: #2c5282;
+      border-left: 4px solid #2c5282;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ステータス表示 -->
+    <div class="status-banner">
+      <div class="status-icon">📍</div>
+      <div class="status-text">
+        <div class="status-title">抽選受付中</div>
+        <div class="status-desc">参加トークンを入力して参加登録しよう</div>
+      </div>
+    </div>
+
+    <!-- ヘッダー -->
+    <div class="header">
+      <h1><span class="emoji">🎰</span>高専祭 抽選システム</h1>
+      <p class="subtitle">あなたの運を試してみませんか？</p>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="main">
+      <!-- 参加登録カード -->
+      <div class="card">
+        <h2 class="card-title">
+          <span class="icon">🎫</span>
+          参加登録
+        </h2>
+        <p class="card-description">
+          トークンを入力して参加登録します。抽選番号が発行されます。
+        </p>
+
+        <div class="alert alert-error" id="errorAlert"></div>
+        <div class="alert alert-success" id="successAlert"></div>
+
+        <form id="registerForm">
+          <input
+            type="text"
+            id="tokenInput"
+            placeholder="トークンを入力してください"
+            style="
+              width: 100%;
+              padding: 14px;
+              border: 2px solid #e2e8f0;
+              border-radius: 10px;
+              font-size: 1em;
+              margin-bottom: 20px;
+              transition: all 0.3s ease;
+            "
+            required
+          >
+          <!--<input
+            type="text"
+            id="tokenInput"
+            placeholder="トークンを入力してください"
+            style="
+              width: 100%;
+              padding: 14px;
+              border: 2px solid #e2e8f0;
+              border-radius: 10px;
+              font-size: 1em;
+              margin-bottom: 20px;
+              transition: all 0.3s ease;
+            "
+            onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102, 126, 234, 0.1)';"
+            onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
+            required
+          >-->
+
+          <button type="submit" class="btn btn-primary">
+            参加を確定
+          </button>
+        </form>
+
+        <div class="loading" id="registerLoading">
+          <div class="spinner"></div>
+          <p>登録中...</p>
+        </div>
+      </div>
+
+      <!-- ルール説明カード -->
+      <div class="card">
+        <h2 class="card-title">
+          <span class="icon">📋</span>
+          ルール
+        </h2>
+        <p class="card-description">
+          参加して景品をゲットしよう
+        </p>
+
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">1️⃣</div>
+            <div class="feature-text">
+              <div class="feature-title">登録</div>
+              <div class="feature-desc">トークンを入力</div>
+            </div>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">2️⃣</div>
+            <div class="feature-text">
+              <div class="feature-title">スタンプ</div>
+              <div class="feature-desc">イベントに参加</div>
+            </div>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">3️⃣</div>
+            <div class="feature-text">
+              <div class="feature-title">抽選</div>
+              <div class="feature-desc">結果を確認</div>
+            </div>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">4️⃣</div>
+            <div class="feature-text">
+              <div class="feature-title">受取</div>
+              <div class="feature-desc">当選しても景品受け取り</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ルール詳細セクション -->
+    <div class="rules-section">
+      <h2 class="rules-title">⭐ スタンプでチャンスアップ</h2>
+
+      <div class="rules-grid">
+        <div class="rule-item">
+          <div class="rule-number">0個</div>
+          <div class="rule-title">スタンプなし</div>
+          <div class="rule-desc">通常通り参加できます</div>
+        </div>
+
+        <div class="rule-item">
+          <div class="rule-number">3個</div>
+          <div class="rule-title">スタンプあり</div>
+          <div class="rule-desc">当選確率が上がります</div>
+        </div>
+
+        <div class="rule-item">
+          <div class="rule-number">5個</div>
+          <div class="rule-title">スタンプ5個</div>
+          <div class="rule-desc">最高クラスの確率で当選</div>
+        </div>
+      </div>
+
+      <div style="
+        background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        color: #c05621;
+        font-weight: 600;
+      ">
+        💡 ポイント: 祭りのブースに参加してスタンプをもらおう！スタンプが多いほど当選確率がアップします。
+      </div>
+    </div>
+
+    <!-- タイムラインセクション -->
+    <div class="rules-section">
+      <h2 class="rules-title">📅 当日のスケジュール</h2>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot">1</div>
+          <div class="timeline-content">
+            <div class="timeline-time">参加受付</div>
+            <div class="timeline-desc">今からトークンで登録できます。スタンプを集めておくと有利です。</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot">2</div>
+          <div class="timeline-content">
+            <div class="timeline-time">13:00 - 抽選準備</div>
+            <div class="timeline-desc">システムが抽選準備に入ります。新規参加はできなくなります。</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot">3</div>
+          <div class="timeline-content">
+            <div class="timeline-time">14:00 - 抽選開始 🎲</div>
+            <div class="timeline-desc">抽選が実行され、結果が公開されます。結果ページで確認してください。</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot">4</div>
+          <div class="timeline-content">
+            <div class="timeline-time">14:00 - 景品受け取り</div>
+            <div class="timeline-desc">当選者は指定の場所でQRコードを提示して景品を受け取ります。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h2 class="faq-title">❓ よくある質問</h2>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>トークンはどこから入手できますか？</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          トークンは高専祭のスタッフから配布されています。Forms で入力して取得してください。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>スタンプはどこで貰えますか？</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          祭りの各ブースに参加するとスタンプをもらえます。スタンプが多いほど当選確率がアップします。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>参加登録後の景品受け取り方法は？</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          当選した場合、結果ページで表示されるQRコードを運営スタッフに提示してください。確認後、景品を受け取ります。二重受け取りは防止されているのでご安心ください。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>ハズレだった場合は？</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          ハズレでした。来年の高専祭での参加をお待ちしています。次回の運を試してください！
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>複数回登録できますか？</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          1つのトークンに対して1回の登録のみとなります。複数のトークンを持っている場合は複数登録できます。
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>景品の種類は？</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          MacBook Pro、iPad、AirPods Pro、Apple Watch など、豪華な景品が用意されています。詳細は結果ページで確認できます。
+        </div>
+      </div>
+    </div>
+
+    <!-- フッター -->
+    <div class="footer">
+      <p>🎉 高専祭にご参加ください！</p>
+      <p style="font-size: 0.85em; opacity: 0.8;">
+        抽選システムについてのご質問は、高専祭実行委員会までお問い合わせください。
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // DOM要素
+    const registerForm = document.getElementById('registerForm');
+    const tokenInput = document.getElementById('tokenInput');
+    const errorAlert = document.getElementById('errorAlert');
+    const successAlert = document.getElementById('successAlert');
+    const registerLoading = document.getElementById('registerLoading');
+
+    // フォーム送信
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const token = tokenInput.value.trim();
+      if (!token) {
+        showError('トークンを入力してください');
+        return;
+      }
+
+      showLoading(true);
+      clearAlerts();
+
+      try {
+        const response = await fetch('http://localhost:3001/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showSuccess(`✓ 登録完了！抽選番号: #${data.ticket_no}`);
+          tokenInput.value = '';
+          
+          setTimeout(() => {
+            window.location.href = `/participant/result.html?ticket=${data.ticket_no}&token=${token}`;
+          }, 2000);
+        } else {
+          showError(data.message || 'エラーが発生しました');
+        }
+      } catch (err) {
+        showError('サーバーエラー: ' + err.message);
+      } finally {
+        showLoading(false);
+      }
+    });
+
+    // ヘルパー関数
+    function showError(message) {
+      errorAlert.textContent = message;
+      errorAlert.classList.add('show');
+    }
+
+    function showSuccess(message) {
+      successAlert.textContent = message;
+      successAlert.classList.add('show');
+    }
+
+    function showLoading(show) {
+      registerLoading.classList.toggle('show', show);
+      registerForm.style.display = show ? 'none' : 'block';
+    }
+
+    function clearAlerts() {
+      errorAlert.classList.remove('show');
+      successAlert.classList.remove('show');
+    }
+
+    // FAQ アコーディオン
+    document.querySelectorAll('.faq-question').forEach(question => {
+      question.addEventListener('click', function() {
+        const item = this.parentElement;
+        item.classList.toggle('active');
+      });
+    });
+
+    // ページ読み込み時のチェック
+    window.addEventListener('load', async () => {
+      try {
+        const response = await fetch('http://localhost:3001/health');
+        const data = await response.json();
+        console.log('✅ Lottery system connected:', data);
+      } catch (err) {
+        console.error('❌ Cannot connect to lottery system:', err.message);
+      }
+    });
+  </script>
+</body>
+</html>
