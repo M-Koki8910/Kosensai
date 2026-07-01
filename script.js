@@ -28,8 +28,14 @@ function initStampRally() {
     const analyticsKey = "kosensai-stamp-rally-analytics";
     let locations = [];
     let stampCards = [];
+    let stampSheetSlots = [];
     const statusEl = document.getElementById("scan-status");
     const summaryEl = document.getElementById("stamp-summary");
+    const stampSheetEl = document.getElementById("stamp-sheet");
+    const stampSheetCountEl = document.getElementById("stamp-sheet-count");
+    const stampSheetTotalEl = document.getElementById("stamp-sheet-total");
+    const stampSheetRateEl = document.getElementById("stamp-sheet-rate");
+    const stampSheetFillEl = document.getElementById("stamp-sheet-fill");
     const startBtn = document.getElementById("start-scan");
     const startRallyBtn = document.getElementById("begin-rally");
     const rallyIntroSection = document.getElementById("stamp-rally-start");
@@ -40,6 +46,17 @@ function initStampRally() {
     const surveyGroupTypeEl = document.getElementById("survey-group-type");
 
     let scanner = null;
+
+    const stampThemes = [
+        { primary: "#dc2626", secondary: "#f59e0b", surface: "#fff7ed" },
+        { primary: "#c2410c", secondary: "#fb7185", surface: "#fff7ed" },
+        { primary: "#2563eb", secondary: "#22c55e", surface: "#eff6ff" },
+        { primary: "#7c3aed", secondary: "#f97316", surface: "#f5f3ff" },
+        { primary: "#0f766e", secondary: "#38bdf8", surface: "#f0fdfa" },
+        { primary: "#be185d", secondary: "#f43f5e", surface: "#fff1f2" },
+        { primary: "#0f172a", secondary: "#2563eb", surface: "#f8fafc" },
+        { primary: "#166534", secondary: "#84cc16", surface: "#f0fdf4" },
+    ];
 
     /*
     旧・会場スポット版の定義は将来の再利用用に残しています。
@@ -77,6 +94,43 @@ function initStampRally() {
         }
     }
 
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function hashString(value) {
+        return String(value).split('').reduce((hash, character) => {
+            return ((hash << 5) - hash + character.charCodeAt(0)) | 0;
+        }, 0);
+    }
+
+    function getStampTheme(index, seedValue) {
+        const seed = Math.abs(hashString(`${seedValue}:${index}`));
+        return stampThemes[seed % stampThemes.length];
+    }
+
+    function createStampSvg(index, label, seedValue) {
+        const theme = getStampTheme(index, seedValue);
+        const safeLabel = escapeHtml(label);
+
+        return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="${safeLabel}のスタンプ">
+                <rect width="240" height="240" rx="28" fill="${theme.surface}"/>
+                <circle cx="120" cy="120" r="86" fill="none" stroke="${theme.primary}" stroke-width="10"/>
+                <circle cx="120" cy="120" r="66" fill="none" stroke="${theme.secondary}" stroke-width="8" stroke-dasharray="12 10"/>
+                <path d="M54 120h132" stroke="${theme.primary}" stroke-width="8" stroke-linecap="round"/>
+                <path d="M120 54v132" stroke="${theme.primary}" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="120" cy="120" r="22" fill="${theme.secondary}" opacity="0.18"/>
+                <text x="120" y="132" text-anchor="middle" fill="${theme.primary}" font-family="Arial, sans-serif" font-size="36" font-weight="800" transform="rotate(-8 120 120)">STAMP</text>
+            </svg>
+        `)}`;
+    }
+
     function renderStampCards() {
         const stampGrid = document.getElementById('stamp-grid');
         if (!stampGrid) return;
@@ -102,6 +156,37 @@ function initStampRally() {
         });
 
         generateQrCodes();
+    }
+
+    function renderStampSheet() {
+        if (!stampSheetEl) return;
+
+        const total = locations.length || 0;
+
+        if (!total) {
+            stampSheetEl.innerHTML = '<p class="stamp-note">出展企業情報を読み込んでいます。</p>';
+            stampSheetSlots = [];
+            return;
+        }
+
+        stampSheetEl.innerHTML = locations.map((location, index) => {
+            const theme = getStampTheme(index, location.id);
+
+            return `
+                <article class="stamp-sheet-slot" data-slot-index="${index}" style="--stamp-slot-color:${theme.primary}; --stamp-slot-color-soft:${theme.secondary}; --stamp-slot-surface:${theme.surface};">
+                    <div class="stamp-sheet-slot-visual">
+                        <span class="stamp-sheet-empty">空き枠</span>
+                        <img class="stamp-sheet-badge" src="${createStampSvg(index, location.name, location.id)}" alt="${escapeHtml(location.name)}のスタンプ" loading="lazy">
+                    </div>
+                    <div class="stamp-sheet-slot-meta">
+                        <span class="stamp-sheet-step">STAMP ${String(index + 1).padStart(2, '0')}</span>
+                        <strong>${escapeHtml(location.name)}</strong>
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+        stampSheetSlots = Array.from(stampSheetEl.querySelectorAll('.stamp-sheet-slot'));
     }
 
     function loadVisited() {
@@ -180,9 +265,15 @@ function initStampRally() {
         if (!stampCards.length) {
             stampCards = Array.from(document.querySelectorAll('.stamp-card'));
         }
+        if (!stampSheetSlots.length) {
+            stampSheetSlots = Array.from(document.querySelectorAll('.stamp-sheet-slot'));
+        }
 
-        const visited = loadVisited();
+        const visited = Array.from(new Set(loadVisited()));
         const analytics = loadAnalytics();
+        const total = locations.length || 0;
+        const visitedCount = Math.min(visited.length, total);
+        const progress = total ? Math.round((visitedCount / total) * 100) : 0;
 
         stampCards.forEach(card => {
             const id = card.dataset.stampId;
@@ -204,10 +295,25 @@ function initStampRally() {
             }
         });
 
-        const total = locations.length || 0;
-        const progress = total ? Math.round((visited.length / total) * 100) : 0;
+        stampSheetSlots.forEach((slot, index) => {
+            slot.classList.toggle('filled', index < visitedCount);
+        });
+
+        if (stampSheetCountEl) {
+            stampSheetCountEl.textContent = String(visitedCount);
+        }
+        if (stampSheetTotalEl) {
+            stampSheetTotalEl.textContent = String(total);
+        }
+        if (stampSheetRateEl) {
+            stampSheetRateEl.textContent = `${progress}%`;
+        }
+        if (stampSheetFillEl) {
+            stampSheetFillEl.style.width = total ? `${(visitedCount / total) * 100}%` : '0%';
+        }
+
         summaryEl.textContent = total
-            ? `現在 ${visited.length} / ${total} 件の出展企業を訪問済みです（${progress}%）。この端末の履歴と集計は localStorage に保存されます。`
+            ? `現在 ${visitedCount} / ${total} 件の出展企業を訪問済みです（${progress}%）。スタンプシートは先頭から順に埋まり、この端末の履歴と集計は localStorage に保存されます。`
             : '出展企業情報を読み込んでいます。';
     }
 
@@ -359,6 +465,7 @@ if (typeof Html5Qrcode.getCameras === "function") {
     loadCompanyMaster().then(master => {
         locations = master;
         renderStampCards();
+        renderStampSheet();
         renderStampState();
     });
 }

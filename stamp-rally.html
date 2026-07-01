@@ -108,6 +108,24 @@
 
         <div class="stamp-grid" id="stamp-grid"></div>
 
+        <div class="stamp-sheet-panel" aria-label="スタンプラリーシート">
+            <div class="stamp-sheet-head">
+                <div>
+                    <p class="stamp-label">STAMP SHEET</p>
+                    <h3>達成した分だけ、先頭から順に押されます</h3>
+                </div>
+                <p class="stamp-sheet-progress">
+                    <span id="stamp-sheet-count">0</span>/<span id="stamp-sheet-total">0</span>
+                    <span id="stamp-sheet-rate">0%</span>
+                </p>
+            </div>
+            <div class="stamp-sheet-bar" aria-hidden="true">
+                <div id="stamp-sheet-fill" class="stamp-sheet-bar-fill"></div>
+            </div>
+            <p class="stamp-note">空き枠は全スポット分を最初から用意し、達成率は埋まった枠数で表します。巡る順番に関係なく、達成した数だけ左から埋まります。</p>
+            <div id="stamp-sheet" class="stamp-sheet-grid"></div>
+        </div>
+
         <!--
         以前の会場スポット版スタンプカードは、将来の再利用に備えて残しています。
         <div class="stamp-grid" id="stamp-grid-legacy">
@@ -124,11 +142,11 @@
 
         <p id="scan-status" class="scan-status">カメラを起動すると、読み取ったQRコードの場所を記録できます。</p>
         <div id="reader" class="reader-box" aria-live="polite"></div>
-        <div class="stamp-map-panel">
+        <!-- <div class="stamp-map-panel">
             <h3>会場マップ</h3>
             <p class="stamp-note">現在の巡回ルートと各スポットの位置を確認できます。</p>
             <iframe id="stamp-map-frame" src="/map.html" title="会場マップ" class="stamp-map-frame"></iframe>
-        </div>
+        </div> -->
         <div id="stamp-summary" class="stamp-summary"></div>
     </section>
 

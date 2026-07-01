@@ -498,15 +498,15 @@ function parseNGRulesJsonSafely(rawValue) {
 // 2. .env 内の NG_RULES ブロックをパース
 // 3. 環境変数 NG_RULES_FILE または ./scripts/ng-rules.json を試す
 const envVarRules = parseNGRulesJsonSafely(process.env.NG_RULES);
-if (envVarRules) {
-  applyNGRulesArray(envVarRules);
-} else {
-  const envArr = parseNGRulesFromEnvFile();
-  if (envArr) {
-    applyNGRulesArray(envArr);
-  } else {
-    loadExternalNGRules(process.env.NG_RULES_FILE || './scripts/ng-rules.json');
-  }
+  if (envVarRules) {
+    applyNGRulesArray(envVarRules);
+  }  else {
+    const envArr = parseNGRulesFromEnvFile();
+    if (envArr) {
+      applyNGRulesArray(envArr);
+    } else {
+      loadExternalNGRules(process.env.NG_RULES_FILE || './scripts/ng-rules.json');
+    }
 }
 
 
@@ -1175,11 +1175,18 @@ function getAnnouncementsSub() {
   return db.prepare(`
     SELECT id, title, content, importance, published_at, expires_at, created_at
     FROM announcements
-    WHERE published_at <= ?
-    AND expires_at > ?
-    ORDER BY importance DESC, published_at DESC
-  `).all(now, now);
+    ORDER BY
+      CASE importance
+        WHEN 'urgent' THEN 3
+        WHEN 'important' THEN 2
+        ELSE 1
+      END DESC,
+      created_at DESC
+  `).all();
 }
+/* WHERE published_at <= ?
+    AND expires_at > ?
+    ORDER BY importance DESC, published_at DESC */
 
 // モデレーションログ記録
 function logModerationAction(postId, admin, action, oldStatus, newStatus, reason = null) {
@@ -1300,6 +1307,7 @@ let page = pathname
 
       const username = String(payload.username || '').trim();
       const password = String(payload.password || '');
+      const purpose = String(payload.purpose || '');
 
       const user = db.prepare(`
         SELECT id, username, password_hash, role, scope
@@ -1318,7 +1326,22 @@ let page = pathname
         return sendJson(res, 401, { ok: false, error: 'Invalid credentials' });
       }
 
-      if (user.role === 'staff') {
+      if (purpose === 'admin' && user.role === 'staff') {
+
+    logEvent('login_blocked_staff', {
+        username: user.username,
+        userAgent: req.headers['user-agent'] || '',
+        page: pathname,
+    });
+
+    return sendJson(res, 403, {
+        ok: false,
+        error: 'Staff users cannot access admin panel'
+    });
+
+}
+
+     /*  if (user.role === 'staff') {
         logEvent('login_blocked_staff', {
           username: user.username,
           userAgent: req.headers['user-agent'] || '',
@@ -1329,7 +1352,7 @@ let page = pathname
     ok: false,
     error: 'Staff users cannot log in'
   });
-}
+} */
 
       clearRateLimit(rateLimitKey);
 
@@ -1430,6 +1453,24 @@ let page = pathname
     });
     return;
   }
+
+  //アナウンス認証状態
+  if (
+    pathname === "/api/auth/check-announcement-access" &&
+    req.method === "GET"
+) {
+    requirePermission(req, res, "announcement.create", (user) => {
+
+        return sendJson(res, 200, {
+            ok: true,
+            username: user.username,
+            role: user.role
+        });
+
+    });
+
+    return;
+}
 
   // API: ユーザー一覧取得 (GET)
   if (pathname === '/api/auth/users' && req.method === 'GET') {

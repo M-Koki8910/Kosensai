@@ -333,6 +333,240 @@ function startTicker(messages) {
 
     showNext();
 }
+// =========================
+// アナウンス投稿機能
+// =========================
+
+const AnnouncementPost = (() => {
+
+  const API = "/api/announcements";
+  const ADMIN_API = "/api/admin/announcements";
+
+  function init() {
+
+    const form = document.getElementById("announcementForm");
+    if (!form) return;
+
+    const content = document.getElementById("announcementContent");
+
+    content?.addEventListener("input", () => {
+      document.getElementById("charCount").textContent =
+        content.value.length;
+    });
+
+    form.addEventListener("submit", submitAnnouncement);
+
+    loadAnnouncements();
+  }
+
+  async function submitAnnouncement(e) {
+
+    e.preventDefault();
+
+    const title =
+      document.getElementById("announcementTitle").value.trim();
+
+    const content =
+      document.getElementById("announcementContent").value.trim();
+
+    const importance =
+      document.getElementById("announcementImportance").value;
+
+    const published_at =
+      document.getElementById("announcementPublishedAt").value;
+
+    const expires_at =
+      document.getElementById("announcementExpiresAt").value;
+
+    if (
+      !title ||
+      !content ||
+      !published_at ||
+      !expires_at
+    ) {
+
+      showMessage(
+        "すべて入力してください",
+        "error"
+      );
+
+      return;
+    }
+
+    try {
+
+      const res = await fetch(API, {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+          title,
+          content,
+          importance,
+          published_at,
+          expires_at
+
+        })
+
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+
+        showMessage(
+          data.error || "投稿に失敗しました",
+          "error"
+        );
+
+        return;
+      }
+
+      showMessage(
+        "投稿しました",
+        "success"
+      );
+
+      e.target.reset();
+
+      document.getElementById("charCount").textContent = "0";
+
+      loadAnnouncements();
+
+    }
+
+    catch {
+
+      showMessage(
+        "通信エラー",
+        "error"
+      );
+
+    }
+
+  }
+
+  async function loadAnnouncements() {
+
+    const container =
+      document.getElementById(
+        "announcementManageContainer"
+      );
+
+    if (!container) return;
+
+    try {
+
+      const res =
+        await fetch(ADMIN_API);
+
+      const data =
+        await res.json();
+
+      if (!data.ok) {
+
+        container.innerHTML =
+          "<p>読み込み失敗</p>";
+
+        return;
+      }
+
+      const list =
+        data.announcements || [];
+
+      if (!list.length) {
+
+        container.innerHTML =
+          "<p>投稿はありません</p>";
+
+        return;
+      }
+
+      container.innerHTML = "";
+
+      list.forEach(a => {
+
+        const div =
+          document.createElement("div");
+
+        div.className = "manage-item";
+
+        div.innerHTML = `
+          <h4>${escapeHtml(a.title)}</h4>
+
+          <div class="manage-meta">
+            ${formatDate(a.published_at)}
+            ～ ${formatDate(a.expires_at)}
+          </div>
+
+          <p>${escapeHtml(a.content)}</p>
+
+          <div class="manage-actions">
+
+            <button
+              class="btn btn-edit"
+              data-id="${a.id}">
+              編集
+            </button>
+
+            <button
+              class="btn btn-delete"
+              data-id="${a.id}">
+              削除
+            </button>
+
+          </div>
+        `;
+
+        container.appendChild(div);
+
+      });
+
+    }
+
+    catch {
+
+      container.innerHTML =
+        "<p>通信エラー</p>";
+
+    }
+
+  }
+
+  function showMessage(text, type) {
+
+    const el =
+      document.getElementById("message");
+
+    if (!el) return;
+
+    el.textContent = text;
+
+    el.className =
+      `message show ${type}`;
+
+    if (type === "success") {
+
+      setTimeout(() => {
+
+        el.classList.remove("show");
+
+      }, 3000);
+
+    }
+
+  }
+
+  return {
+    init
+  };
+
+})();
 
 // =========================
 // 初期化
@@ -341,4 +575,5 @@ function startTicker(messages) {
 document.addEventListener("DOMContentLoaded", () => {
   BulletinBoard.init();
   Announcements.init();
+  AnnouncementPost.init();
 });

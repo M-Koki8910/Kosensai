@@ -8,76 +8,201 @@
 <title>スケジュール</title>
 
 <style>
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
+    /* ==========================
+   Schedule Page
+========================== */
+
+.schedule-page{
+    width:100%;
+    max-width:500px;
+    margin:20px auto;
 }
 
-body{
-    font-family:sans-serif;
-    padding:16px;
-    background:#f5f5f5;
+.schedule-tabs{
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
 }
 
-.day{
-    margin-bottom:40px;
+.schedule-tabs button{
+    flex:1;
+    border:none;
+    border-radius:999px;
+    padding:12px;
+
+    font-size:1rem;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    background:#ddd;
 }
 
-.day h2{
-    margin-bottom:10px;
+.schedule-tabs button.active{
+    background:#1aa4e8;
+    color:#fff;
 }
 
-.timetable{
-    display:grid;
-    grid-template-columns:60px 1fr 1fr;
-    grid-template-rows:40px repeat(10, 80px);
-    background:white;
-    border:1px solid #ccc;
-    position:relative;
+/* タイムテーブル */
+
+.schedule-board{
+    background:#8fd0ee;
+    border-radius:40px;
+    padding:20px;
 }
 
-.header{
+.schedule-title{
+    font-size:1.8rem;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+.schedule-layout{
+    display:flex;
+    align-items:flex-start;
+}
+
+/* 時間列 */
+
+.schedule-times{
+    width:65px;
+    margin-top:80px;
+}
+
+.schedule-hour{
+    width:55px;
+    height:55px;
+
     display:flex;
     justify-content:center;
     align-items:center;
+
+    background:#1aa4e8;
+    color:white;
+
+    border-radius:50%;
+    border:2px solid white;
+
+    font-size:1.4rem;
     font-weight:bold;
-    border-bottom:1px solid #ccc;
-    border-right:1px solid #ccc;
-    background:#fafafa;
+
+    margin-bottom:25px;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
 }
 
-.time{
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-    padding-top:4px;
-    font-size:0.9rem;
-    border-right:1px solid #ccc;
-    border-bottom:1px solid #ccc;
-}
+/* メイン */
 
-.cell{
-    border-right:1px solid #ccc;
-    border-bottom:1px solid #ccc;
+.schedule-main{
+    flex:1;
+
+    background:white;
+
+    border:2px solid #18354a;
+
+    border-radius:40px;
+
+    overflow:hidden;
+
     position:relative;
 }
 
-.cell:nth-child(3n){
-    border-right:none;
+.schedule-header{
+    height:80px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }
 
-.event{
-    position:absolute;
-    left:4px;
-    right:4px;
-    background:#4a90e2;
-    color:white;
-    border-radius:6px;
-    padding:6px;
-    font-size:0.8rem;
-    overflow:hidden;
+.schedule-place{
+    padding:14px 24px;
+
+    border-radius:14px;
+
+    font-size:1.1rem;
+    font-weight:bold;
 }
+
+.schedule-place.gym{
+    background:#f7b58f;
+}
+
+.schedule-place.garden{
+    background:#aad494;
+}
+
+.schedule-grid{
+    position:relative;
+}
+
+.schedule-row{
+    height:80px;
+
+    border-top:2px solid #222;
+
+    position:relative;
+}
+
+.schedule-row::after{
+    content:"";
+
+    position:absolute;
+
+    left:0;
+    right:0;
+    top:50%;
+
+    border-top:1px dashed #555;
+}
+
+/* イベント */
+
+.schedule-event{
+    position:absolute;
+
+    left:10px;
+    right:10px;
+
+    border-radius:12px;
+
+    padding:10px;
+
+    color:white;
+
+    text-decoration:none;
+    font-weight:bold;
+
+    display:flex;
+    align-items:center;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+
+    z-index:10;
+}
+
+.schedule-event.gym{
+    background:#ff9966;
+}
+
+.schedule-event.garden{
+    background:#5ebd6c;
+}
+
+.event-detail{
+    margin:18px auto;
+    padding:16px;
+    max-width:760px;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.08);
+    border:1px solid rgba(0,0,0,0.04);
+}
+
+.event-detail h3{ margin:0 0 8px; }
+.event-detail .event-meta{ color:#475569; font-size:0.95rem; margin-bottom:8px; }
+.event-detail p{ margin:0 0 12px; color:#273043; }
+.btn-close{ display:inline-block; padding:8px 12px; background:#1aa4e8; color:#fff; border-radius:8px; text-decoration:none; font-weight:700; }
 </style>
 
 </head>
@@ -110,109 +235,222 @@ body{
     </div>
 </nav>
 
-<div class="day">
-    <h2>1日目</h2>
+<main class="schedule-page">
 
-    <div class="timetable">
+    <div class="schedule-tabs">
+        <button class="schedule-day-tab active" data-day="1">
+            1日目
+        </button>
 
-        <div class="header">時間</div>
-        <div class="header">体育館</div>
-        <div class="header">中庭</div>
-
-        <div class="time">09:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="09:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="09:00"></div>
-
-        <div class="time">10:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="10:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="10:00"></div>
-
-        <div class="time">11:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="11:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="11:00"></div>
-
-        <div class="time">12:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="12:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="12:00"></div>
-
-        <div class="time">13:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="13:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="13:00"></div>
-
-        <div class="time">14:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="14:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="14:00"></div>
-
-        <div class="time">15:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="15:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="15:00"></div>
-
-        <div class="time">16:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="16:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="16:00"></div>
-
-        <div class="time">17:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="17:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="17:00"></div>
-
-        <div class="time">18:00</div>
-        <div class="cell" data-day="1" data-place="gym" data-time="18:00"></div>
-        <div class="cell" data-day="1" data-place="yard" data-time="18:00"></div>
-
+        <button class="schedule-day-tab" data-day="2">
+            2日目
+        </button>
     </div>
-</div>
 
-<div class="day">
-    <h2>2日目</h2>
+    <div class="schedule-tabs">
+        <button class="schedule-place-tab active" data-place="gym">
+            体育館
+        </button>
 
-    <div class="timetable">
-
-        <div class="header">時間</div>
-        <div class="header">体育館</div>
-        <div class="header">中庭</div>
-
-        <div class="time">09:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">10:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">11:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">12:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">13:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">14:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">15:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">16:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">17:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
-        <div class="time">18:00</div>
-        <div class="cell"></div>
-        <div class="cell"></div>
-
+        <button class="schedule-place-tab" data-place="garden">
+            中庭
+        </button>
     </div>
-</div>
+
+    <div id="schedule-view"></div>
+
+</main>
+<script>
+
+const EVENTS = [
+
+    {
+        day:1,
+        place:"gym",
+        title:"吹奏楽演奏",
+        start:10,
+        end:12,
+        href:"#event-0",
+    },
+
+    {
+        day:1,
+        place:"garden",
+        title:"ダンス",
+        start:13,
+        end:15
+    },
+
+    {
+        day:2,
+        place:"gym",
+        title:"軽音ライブ",
+        start:11,
+        end:13
+    }
+
+];
+
+let currentDay = 1;
+let currentPlace = "gym";
+
+document.querySelectorAll(".schedule-day-tab").forEach(button=>{
+
+    button.addEventListener("click",()=>{
+
+        document
+            .querySelectorAll(".schedule-day-tab")
+            .forEach(b=>b.classList.remove("active"));
+
+        button.classList.add("active");
+
+        currentDay = Number(button.dataset.day);
+
+        render();
+    });
+
+});
+
+document.querySelectorAll(".schedule-place-tab").forEach(button=>{
+
+    button.addEventListener("click",()=>{
+
+        document
+            .querySelectorAll(".schedule-place-tab")
+            .forEach(b=>b.classList.remove("active"));
+
+        button.classList.add("active");
+
+        currentPlace = button.dataset.place;
+
+        render();
+    });
+
+});
+
+function render(){
+
+    
+
+    const view =
+        document.getElementById("schedule-view");
+
+    const placeName =
+        currentPlace === "gym"
+        ? "体育館"
+        : "中庭";
+
+   let html = `
+<div class="schedule-board">
+
+    <div class="schedule-title">
+        ${currentDay}日目
+    </div>
+
+    <div class="schedule-layout">
+
+        <div class="schedule-times">
+`;
+
+    for(let i=9;i<=19;i++){
+
+    html += `
+        <div class="schedule-hour">
+            ${i}
+        </div>
+    `;
+}
+
+    html += `
+        </div>
+
+        <div class="schedule-main">
+
+            <div class="schedule-header">
+                <div class="schedule-place ${currentPlace}">
+                    ${placeName}
+                </div>
+            </div>
+
+            <div class="schedule-grid">
+`;
+
+    for(let i=9;i<=19;i++){
+
+        html += `<div class="schedule-row"></div>`;
+    }
+
+    const filtered =
+        EVENTS.filter(event=>
+            event.day === currentDay &&
+            event.place === currentPlace
+        );
+
+    filtered.forEach(event=>{
+
+        const top =
+            (event.start - 9) * 80;
+
+        const height =
+            (event.end - event.start) * 80;
+
+        const gid = EVENTS.findIndex(e => e === event);
+        const targetId = `event-${gid}`;
+        const hrefTarget = event.href ? event.href : `#${targetId}`;
+
+        html += `
+            <a
+                href="${hrefTarget}"
+                class="schedule-event ${event.place}"
+                style="
+                    top:${top}px;
+                    height:${height}px;
+                "
+            >
+                ${event.title}
+            </a>
+        `;
+    });
+
+    html += `
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    view.innerHTML = html;
+}
+// 補助: イベント詳細セクション生成（同じページ内リンク先）
+function renderEventDetails(){
+    const container = document.getElementById('schedule-view');
+    if(!container) return;
+
+    let details = '<div id="event-details">';
+
+    EVENTS.forEach((event, idx) => {
+        details += `
+            <section id="event-${idx}" class="event-detail">
+                <h3>${event.title}</h3>
+                <div class="event-meta">${event.day}日目・${event.place}・${event.start}:00〜${event.end}:00</div>
+                <p>${event.description || ''}</p>
+                <a href="#schedule-view" class="btn-close">スケジュールに戻る</a>
+            </section>
+        `;
+    });
+
+    details += '</div>';
+
+    container.insertAdjacentHTML('beforeend', details);
+}
+
+// 初回描画後に詳細を追加
+render();
+renderEventDetails();
+</script>
 
 </body>
 </html>
