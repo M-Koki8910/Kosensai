@@ -1,0 +1,9 @@
+stamp.db
+stamp1.db
+master_stamp.db
+stamp.db-shm
+stamp.db-wal
+node_modules
+.env
+*.txt
+*.db

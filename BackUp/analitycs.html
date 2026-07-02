@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理画面へリダイレクト中...</title>
+  <script>
+    // 新しい統合管理ページへリダイレクト
+    window.location.replace('/admin-integrated.html');
+  </script>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="authentication.css" />
+</head>
+<body>
+<div class="topbar">
+  <a href="/" class="home-link">高専祭TOP</a>
+</div>
+
+<main class="analytics-page container-section">
+  <div class="analytics-header">
+
+  <div>
+    <p class="analytics-eyebrow">運営用</p>
+
+    <h2>管理画面へリダイレクト中...</h2>
+
+    <p class="analytics-intro">
+      新しい管理画面に移動しています。<br>
+      <a href="/admin-integrated.html">ここをクリック</a>してください。
+    </p>
+  </div>
+
+  <div
+    style="
+      display:flex;
+      align-items:center;
+      gap:14px;
+    "
+  >
+
+    <div
+      id="header-session-info"
+      hidden
+      style="
+        display:flex;
+        align-items:center;
+        gap:8px;
+        font-size:14px;
+        color:#334155;
+      "
+    >
+      <span id="header-login-status">
+        ログイン中
+      </span>
+
+      <strong id="header-username">
+      </strong>
+
+      <span id="header-role">
+      </span>
+    </div>
+
+    <button
+      class="analytics-back"
+      id="header-logout-btn"
+      type="button"
+      hidden
+    >
+      ログアウト
+    </button>
+
+  </div>
+
+</div>
+</div>
+
+  <section id="login-panel" class="analytics-grid" style="display:flex;justify-content:center;align-items:center;min-height:320px;">
+    <article class="analytics-card stamp-card">
+      <p class="stamp-label">ログイン</p>
+      <h3>運営アカウントで認証</h3>
+      <form id="login-form" class="stamp-controls">
+        <input id="login-username" type="text" placeholder="ユーザ名" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" required />
+        <input id="login-password" type="password" placeholder="パスワード" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" required />
+        <button type="submit" class="stamp-btn">ログイン</button>
+      </form>
+      <p id="login-message" class="scan-status"></p>
+    </article>
+  </section>
+
+  <section id="analytics-panel" class="analytics-grid" hidden>
+    <div class="analytics-layout" style="display:flex;gap:20px;align-items:flex-start;">
+      <nav id="admin-sidebar" style="min-width:200px;" hidden>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;">
+          <li><button id="menu-analytics" class="stamp-btn" type="button">アナリティクス表示</button></li>
+          <li><button id="menu-user-register" class="stamp-btn" type="button">ユーザ登録</button></li>
+          <li><button id="menu-user-list" class="stamp-btn" type="button">ユーザ管理（一覧）</button></li>
+          <li><button id="menu-logs" class="stamp-btn" type="button">ログ</button></li>
+          <li><button id="menu-admin-account" class="stamp-btn" type="button" hidden>管理者アカウント情報変更</button></li>
+        </ul>
+      </nav>
+
+      <div id="admin-content" style="flex:1;">
+        <article class="analytics-card stamp-card">
+      <p class="stamp-label">ログイン中</p>
+      <h3 id="welcome-text">ようこそ</h3>
+      <p id="session-text" class="stamp-note"></p>
+    </article>
+
+      <article class="analytics-card stamp-card admin-only-card" data-section="user-register">
+      <p class="stamp-label">ユーザ追加</p>
+      <h3>運営ユーザを追加</h3>
+      <form id="add-user-form" class="stamp-controls">
+        <input id="new-user" type="text" placeholder="新しいユーザ名" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" required />
+        <input id="new-password" type="password" placeholder="パスワード" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" required />
+       <label>ロール</label>
+        <select id="role">
+          <option value="visitor">visitor</option>
+          <option value="senior">senior</option>
+          <option value="administrator">administrator</option>
+        </select>
+        <label>参照範囲</label>
+          <label><input type="checkbox" value="entrance"> 正門</label>
+          <label><input type="checkbox" value="museum"> 展示ホール</label>
+          <label><input type="checkbox" value="stage"> ステージ</label>
+          <label><input type="checkbox" value="shop"> 模擬店</label>
+          <label><input type="checkbox" value="all"> 全て</label>
+          
+        <button type="submit" class="stamp-btn">ユーザ追加</button>
+      </form>
+      <p id="user-message" class="scan-status"></p>
+    </article>
+
+      <article class="analytics-card stamp-card admin-only-card" data-section="user-update">
+      <p class="stamp-label">権限変更</p>
+      <h3>ユーザの役割と範囲を更新</h3>
+      <form id="update-user-form" class="stamp-controls">
+        <input id="update-user-name" type="text" placeholder="対象ユーザ名" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" required />
+        <input id="update-user-role" type="text" placeholder="role (senior/administrator)" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:160px;" />
+        <input id="update-user-scope" type="text" placeholder="scope (entrance,museum)" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" />
+        <input id="update-user-password" type="password" placeholder="新しいパスワード（任意）" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" />
+        <button type="submit" class="stamp-btn">更新</button>
+      </form>
+      <p id="update-user-message" class="scan-status"></p>
+    </article>
+
+      <article class="analytics-card stamp-card admin-only-card" data-section="password-change">
+      <p class="stamp-label">パスワード変更</p>
+      <h3>自分のパスワードを変更</h3>
+      <form id="password-form" class="stamp-controls">
+        <input id="current-password" type="password" placeholder="現在のパスワード" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" required />
+        <input id="new-password-own" type="password" placeholder="新しいパスワード" style="padding:10px;border-radius:10px;border:1px solid #cbd5e1;min-width:220px;" required />
+        <button type="submit" class="stamp-btn">変更</button>
+      </form>
+      <p id="password-message" class="scan-status"></p>
+    </article>
+
+        <div id="user-list" class="stamp-summary" data-section="user-list">ユーザ一覧を読み込み中...</div>
+        <div id="analytics-table-container" data-section="analytics">
+          <div class="stamp-summary" id="analytics-summary">集計を読み込み中...</div>
+          <div id="analytics-controls" style="margin:8px 0; display:flex; gap:8px; align-items:center;">
+            <label>表示モード:
+              <select id="analytics-view-mode">
+                <option value="summary">場所別集計</option>
+                <option value="chronological">全履歴（時系列）</option>
+                <option value="by-location">場所別詳細</option>
+              </select>
+            </label>
+            <label>場所フィルタ:
+              <select id="analytics-location-filter">
+                <option value="all">全て</option>
+                <option value="entrance">entrance</option>
+                <option value="museum">museum</option>
+                <option value="stage">stage</option>
+                <option value="shop">shop</option>
+              </select>
+            </label>
+            <button id="analytics-refresh" class="stamp-btn">更新</button>
+            <button id="analytics-delete-visits" class="stamp-btn admin-only-card" type="button">訪問履歴を削除</button>
+            <button id="analytics-delete-clicks" class="stamp-btn admin-only-card" type="button">遷移履歴を削除</button>
+            <button id="analytics-delete-events" class="stamp-btn admin-only-card" type="button">訪問/遷移履歴を削除</button>
+          </div>
+          <div class="analytics-table-wrapper">
+            <h3>場所別集計</h3>
+            <table id="analytics-locations" class="analytics-table"></table>
+          </div>
+          <div class="analytics-table-wrapper">
+            <h3>最新ログ</h3>
+            <table id="analytics-events-table" class="analytics-table"></table>
+          </div>
+        </div>
+      </div>
+      <div class="analytics-table-wrapper" data-section="logs" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <h3>システムログ</h3>
+          <button id="analytics-delete-logs" class="stamp-btn admin-only-card" type="button">ログを削除</button>
+        </div>
+        <table id="analytics-logs-table" class="analytics-table"></table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="authentication.js"></script>
+</body>
+</html>

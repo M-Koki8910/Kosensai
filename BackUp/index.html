@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高専祭特設WEBページ</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.7.0/minified/html5-qrcode.min.js"></script>
+    <script src="./script.js" defer></script>
+    <script src="./tweet.js" ></script>
+</head>
+<body>
+
+<div class="announcement-ticker">
+    <div class="ticker-label">
+        お知らせ
+    </div>
+
+    <div class="ticker-container">
+        <div id="ticker-content" class="ticker-content"></div>
+    </div>
+</div>
+
+<div class="topbar">
+    <a href="/" class="home-link">高専祭TOP</a>
+    <button class="menu-toggle" aria-label="メニューを開く">☰</button>
+</div>
+
+
+<nav id="nav">
+    <ul>
+        <li><a href="./about.html">高専祭とは</a></li>
+        <li><a href="./guest.html">ゲスト紹介</a></li>
+        <li><a href="./shop.html">模擬店紹介</a></li>
+        <li><a href="./event.html">イベント紹介</a></li>
+        <li><a href="./stamp-rally.html">スタンプラリー</a></li>
+        <li><a href="./schedule.html">スケジュール</a></li>
+        <li><a href="./company.html">ご協賛企業紹介</a></li>
+        <li><a href="./map.html">会場マップ</a></li>
+        <li><a href="./about-kosen.html">松江高専とは</a></li>
+        <li><a href="./announcements.html">お知らせ</a></li>
+        <li><a href="./bulletin.html">掲示板</a></li>
+        <li><a href="./access.html">アクセス</a></li>
+    </ul>
+    <div class="nav-footer">
+        <a class="nav-social" href="https://www.instagram.com/official_school/" target="_blank" rel="noopener noreferrer">
+            <img src="./insta.png" alt="Instagram" class="nav-social-icon">学校公式
+        </a>
+        <a class="nav-social" href="https://www.instagram.com/official_committee/" target="_blank" rel="noopener noreferrer">
+            <img src="./insta.png" alt="Instagram" class="nav-social-icon">実行委員会
+        </a>
+    </div>
+</nav>
+
+<main>
+
+    <!-- ヒーロー -->
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Welcome 高専祭!!</h1>
+            <p>10月10日～10月11日 開催</p>
+        </div>
+    </section>
+
+<!-- ゲストセクション -->
+<section class="guest">
+    <h2>今年のゲスト</h2>
+
+    <section class="guest-highlight">
+    <div class="container guest-box">
+
+        <div class="guest-image">
+            <img id="guest-img" src="./guest.jpg" alt="ゲスト">
+        </div>
+
+        <div class="guest-text">
+            <p class="guest-label">SPECIAL GUEST</p>
+            <h2 id="guest-name">ゲスト名</h2>
+            <p id="guest-desc">
+               紹介文 紹介文 紹介文 紹介文 紹介文 紹介文 紹介文 紹介文
+            </p>
+
+            <a href="./guest.html" class="guest-btn">詳しく見る →</a>
+        </div>
+
+    </div>
+</section>
+
+<section class ="cards container">
+    <h2>体験型コンテンツ</h2>
+     <a href="./stamp-rally.html" class="card">
+        <img src="./header_ed.jpg" alt="スタンプラリー">
+        <div class="card-body">
+            <h3>スタンプラリー</h3>
+            <p>会場を巡ってQRコードを読み取り、スタンプを集めましょう。</p>
+        </div>
+    </a>
+</section>
+
+<section class="cards container">
+    <h2>気になる情報をチェック</h2>
+
+    <a href="./about.html" class="card">
+        <img src="/about.jpg" alt="高専祭とは">
+        <div class="card-body">
+            <h3>高専祭とは</h3>
+            <p>高専祭の概要や見どころを紹介します。</p>
+        </div>
+    </a>
+
+    <a href="./map.html" class="card">
+        <img src="./shop.jpg" alt="模擬店紹介">
+        <div class="card-body">
+            <h3>模擬店紹介</h3>
+            <p>飲食や販売ブースの情報はこちら。</p>
+        </div>
+    </a>
+
+    <a href="./event.html" class="card">
+        <img src="./event.jpg" alt="イベント紹介">
+        <div class="card-body">
+            <h3>イベント紹介</h3>
+            <p>ステージイベントなどをチェック。</p>
+        </div>
+    </a>
+
+    <a href="./schedule.html" class="card">
+        <img src="./schedule.jpg" alt="イベントスケジュール">
+        <div class="card-body">
+            <h3>イベントスケジュール</h3>
+            <p>当日の流れを確認できます。</p>
+        </div>
+    </a>
+
+    
+
+   
+
+</section>
+
+<!-- アクセス -->
+
+<section class="access" id="access">
+    <h2>アクセス</h2>
+
+    <div class="access-container">
+
+        <!-- 左：文字情報 -->
+        <div class="access-info">
+            <h3>国立松江工業高等専門学校</h3>
+            <p>〒690-0865 島根県松江市西生馬町14-4</p>
+            <p>JR松江駅から一畑バス恵曇行き 30分</p>
+
+            <a class="map-link" 
+               href="https://www.google.com/maps/search/?api=1&query=島根県松江市西生馬町14-4" 
+               target="_blank">
+               Google Mapで開く
+            </a>
+        </div>
+
+        <!-- 右：マップ -->
+        <div class="map">
+            <iframe 
+                src="https://www.google.com/maps?q=島根県松江市西生馬町14-4&z=15&output=embed"
+                width="100%" 
+                height="300" 
+                style="border:0;" 
+                loading="lazy">
+            </iframe>
+        </div>
+
+    </div>
+</section>
+</main>
+
+<footer>
+    <p>© 2026 松江高専 高専祭実行委員</p>
+</footer>
+
+</body>
+</html>
