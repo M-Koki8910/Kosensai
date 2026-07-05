@@ -56,6 +56,7 @@ function initStampRally() {
     let scanStatusTimer = null;
     let modalCloseTimer = null;
     let scannerStartToken = 0;
+    let scanLineAnimationId = null;
 
     const stampThemes = [
         { primary: "#dc2626", secondary: "#f59e0b", surface: "#fff7ed" },
@@ -210,386 +211,6 @@ function initStampRally() {
 
     function saveVisited(visited) {
         localStorage.setItem(storageKey, JSON.stringify(visited));
-    }
-
-    // sessionId はサーバー発行の Cookie を利用します（クライアント生成は廃止）
-
-    async function acquireStamp(companyId) {
-        try {
-            const response = await fetch('/api/stamp/acquire', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ company_id: companyId }),
-            });
-
-            const result = await response.json().catch(() => ({}));
-
-            if (response.ok) {
-                return { ok: true, result };
-            }
-
-            if (String(result.error || '').includes('already acquired')) {
-                return { ok: true, already: true, result };
-            }
-
-            console.warn('スタンプ取得の記録に失敗しました', result);
-            return { ok: false, result };
-        } catch (error) {
-            console.warn('スタンプ取得の送信に失敗しました', error);
-            return { ok: false, error };
-        }
-    }
-
-    async function sendStampEvent(type, stampId) {
-        try {
-            await fetch('/api/stamp-event', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type,
-                    stampId,
-                    page: window.location.pathname,
-                }),
-            });
-        } catch (error) {
-            console.warn('サーバーへの送信に失敗しました', error);
-        }
-    }
-
-    function collectSurveyAttributes() {
-        const attributes = {
-            ageGroup: surveyAgeEl ? surveyAgeEl.value : '',
-            visitorType: surveyVisitorTypeEl ? surveyVisitorTypeEl.value : '',
-            groupType: surveyGroupTypeEl ? surveyGroupTypeEl.value : '',
-        };
-
-        const filtered = Object.fromEntries(
-            Object.entries(attributes).filter(([, value]) => String(value || '').trim() !== '')
-        );
-
-        return Object.keys(filtered).length ? filtered : null;
-    }
-
-    async function sendSurveyAttributes() {
-        const attributes = collectSurveyAttributes();
-
-        try {
-            await fetch('/api/stamp-survey', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ attributes }),
-            });
-        } catch (error) {
-            console.warn('アンケート属性の送信に失敗しました', error);
-        }
-    }
-
-    function loadAnalytics() {
-        try {
-            return JSON.parse(localStorage.getItem(analyticsKey) || "{\"visits\":{},\"jumps\":{}}")
-        } catch (error) {
-            console.warn("集計データの読み込みに失敗しました", error);
-            return { visits: {}, jumps: {} };
-        }
-    }
-
-    function saveAnalytics(analytics) {
-        localStorage.setItem(analyticsKey, JSON.stringify(analytics));
-    }
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function setScanMessage(message) {
-        if (statusEl) {
-            statusEl.textContent = message;
-        }
-    }
-
-    function setScanModalState(state) {
-        if (!scanModalEl) return;
-
-        scanModalEl.classList.remove("is-scanning", "is-success", "is-loading", "is-error", "is-closing");
-        if (state) {
-            scanModalEl.classList.add(state);
-        }
-    }
-
-    function setScanRetryVisible(visible) {
-        if (!scanModalRetryBtn) return;
-        scanModalRetryBtn.classList.toggle("hidden", !visible);
-    }
-
-    function setScanCloseEnabled(enabled) {
-        if (!scanModalCloseBtn) return;
-        scanModalCloseBtn.disabled = !enabled;
-    }
-
-    function setScanBusy(isBusy) {
-        scanBusy = isBusy;
-        setScanCloseEnabled(!isBusy);
-        if (scanModalRetryBtn) {
-            scanModalRetryBtn.disabled = isBusy;
-        }
-    }
-
-    function resetScanVisuals() {
-        if (scanSuccessEl) {
-            scanSuccessEl.classList.remove("is-visible");
-        }
-        setScanRetryVisible(false);
-        setScanCloseEnabled(true);
-        setScanModalState("is-scanning");
-    }
-
-    function openScanModal() {
-        if (!scanModalEl || scanModalOpen) {
-            return;
-        }
-
-        scanModalOpen = true;
-        scanModalEl.classList.remove("hidden");
-        scanModalEl.setAttribute("aria-hidden", "false");
-        document.body.classList.add("scan-modal-open");
-        resetScanVisuals();
-        setScanMessage("カメラを起動しています…");
-
-        requestAnimationFrame(() => {
-            scanModalEl.classList.add("is-open");
-        });
-    }
-
-    async function closeScanModal(force = false) {
-        if (!scanModalEl || !scanModalOpen) {
-            return;
-        }
-
-        if (scanBusy && !force) {
-            return;
-        }
-
-        const closeToken = ++scannerStartToken;
-
-        if (scanStatusTimer) {
-            clearTimeout(scanStatusTimer);
-            scanStatusTimer = null;
-        }
-        if (modalCloseTimer) {
-            clearTimeout(modalCloseTimer);
-            modalCloseTimer = null;
-        }
-
-        scanModalOpen = false;
-        scanModalEl.classList.remove("is-open", "is-scanning", "is-success", "is-loading", "is-error");
-        scanModalEl.classList.add("is-closing");
-        setScanCloseEnabled(false);
-        setScanRetryVisible(false);
-
-        await stopScanner();
-        scanner = null;
-
-        if (closeToken !== scannerStartToken) {
-            return;
-        }
-
-        modalCloseTimer = window.setTimeout(() => {
-            scanModalEl.classList.remove("is-closing");
-            scanModalEl.classList.add("hidden");
-            scanModalEl.setAttribute("aria-hidden", "true");
-            document.body.classList.remove("scan-modal-open");
-            setScanMessage("カメラを起動すると、読み取ったQRコードの場所を記録できます。");
-            setScanCloseEnabled(true);
-            setScanRetryVisible(false);
-        }, 220);
-    }
-
-    async function playSuccessTone() {
-        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextCtor) {
-            return;
-        }
-
-        try {
-            const context = playSuccessTone.context || (playSuccessTone.context = new AudioContextCtor());
-            if (context.state === "suspended") {
-                await context.resume();
-            }
-
-            const oscillator = context.createOscillator();
-            const gain = context.createGain();
-            oscillator.type = "sine";
-            oscillator.frequency.setValueAtTime(880, context.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(660, context.currentTime + 0.14);
-            gain.gain.setValueAtTime(0.0001, context.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.18);
-            oscillator.connect(gain).connect(context.destination);
-            oscillator.start();
-            oscillator.stop(context.currentTime + 0.2);
-        } catch (error) {
-            console.warn("成功音の再生に失敗しました", error);
-        }
-    }
-
-    function parseStampCode(code) {
-        const match = String(code || "").match(/^kosen-stamp:([^\s:]+)$/i);
-
-        if (!match) {
-            return { ok: false, message: "このQRコードはスタンプラリー用ではありません。" };
-        }
-
-        const id = match[1];
-        const location = locations.find(item => item.id === id);
-
-        if (!location) {
-            return { ok: false, message: "登録されていない場所のQRコードです。" };
-        }
-
-        return { ok: true, id, location };
-    }
-
-    function applySuccessfulStamp(id, location) {
-        const visited = loadVisited().filter(item => item !== id);
-        visited.push(id);
-        saveVisited(visited);
-
-        const analytics = loadAnalytics();
-        analytics.visits[id] = (analytics.visits[id] || 0) + 1;
-        saveAnalytics(analytics);
-
-        renderStampState();
-        setScanMessage(`${location.name} のスタンプを記録しました。`);
-    }
-
-    async function finishSuccessfulScan(id, location) {
-        setScanBusy(true);
-        setScanModalState("is-success");
-        setScanRetryVisible(false);
-        setScanMessage("読み取り完了。スタンプを記録しています…");
-
-        if (scanSuccessEl) {
-            scanSuccessEl.classList.remove("is-visible");
-            void scanSuccessEl.offsetWidth;
-            scanSuccessEl.classList.add("is-visible");
-        }
-
-        await playSuccessTone();
-        await sleep(420);
-        await stopScanner();
-        scanner = null;
-
-        setScanModalState("is-loading");
-        setScanMessage("スタンプを記録しています…");
-
-        const recordResult = await acquireStamp(id);
-
-        if (recordResult.ok) {
-            applySuccessfulStamp(id, location);
-            setScanBusy(false);
-            await sleep(180);
-            await closeScanModal(true);
-            return;
-        }
-
-        setScanBusy(false);
-        setScanModalState("is-error");
-        setScanRetryVisible(true);
-        setScanCloseEnabled(true);
-        setScanMessage("スタンプの記録に失敗しました。通信状況を確認して、再試行してください。");
-    }
-    //スタンプラリー開始履歴復元---------------------------------------
-    function loadStartState() {
-        try {
-            const explicitState = localStorage.getItem(startStateKey);
-            if (explicitState === "true") {
-                return true;
-            }
-            if (explicitState === "false") {
-                return false;
-            }
-        } catch (error) {
-            console.warn("開始状態の読み込みに失敗しました", error);
-        }
-
-        const visited = loadVisited();
-        const analytics = loadAnalytics();
-
-        return visited.length > 0
-            || Object.keys(analytics.visits || {}).length > 0
-            || Object.keys(analytics.jumps || {}).length > 0;
-    }
-
-    function saveStartState() {
-        localStorage.setItem(startStateKey, "true");
-    }
-
-    function applyStartState(started) {
-        if (rallyIntroSection) {
-            rallyIntroSection.classList.toggle("hidden", started);
-        }
-        if (stampSection) {
-            stampSection.classList.toggle("hidden", !started);
-        }
-    }
-
-    const started = loadStartState();
-    applyStartState(started);
-//---------------------------------------------------------------------------
-    function renderStampState() {
-        if (!stampCards.length) {
-            stampCards = Array.from(document.querySelectorAll('.stamp-card'));
-        }
-        if (!stampSheetSlots.length) {
-            stampSheetSlots = Array.from(document.querySelectorAll('.stamp-sheet-slot'));
-        }
-
-        const visited = Array.from(new Set(loadVisited()));
-        const analytics = loadAnalytics();
-        const total = locations.length || 0;
-        const visitedCount = Math.min(visited.length, total);
-        const progress = total ? Math.round((visitedCount / total) * 100) : 0;
-
-        stampCards.forEach(card => {
-            const id = card.dataset.stampId;
-            const visitedNow = visited.includes(id);
-            card.classList.toggle("visited", visitedNow);
-            const status = card.querySelector(".stamp-status");
-            if (status) {
-                if (visitedNow) {
-                    status.innerHTML = `<span class="visited-icon">✔︎</span>`;
-                } else {
-                    status.textContent = "未訪問";
-                }
-            }
-
-            const metrics = card.querySelector(".stamp-metrics");
-            if (metrics) {
-                // 値の表示は廃止：将来的に画像で済アイコンを差し替え予定
-                metrics.textContent = '';
-            }
-        });
-
-        stampSheetSlots.forEach((slot, index) => {
-            slot.classList.toggle('filled', index < visitedCount);
-        });
-
-        if (stampSheetCountEl) {
-            stampSheetCountEl.textContent = String(visitedCount);
-        }
-        if (stampSheetTotalEl) {
-            stampSheetTotalEl.textContent = String(total);
-        }
-        if (stampSheetRateEl) {
-            stampSheetRateEl.textContent = `${progress}%`;
-        }
-        if (stampSheetFillEl) {
-            stampSheetFillEl.style.width = total ? `${(visitedCount / total) * 100}%` : '0%';
-        }
-
-        summaryEl.textContent = total
-            ? `現在 ${visitedCount} / ${total} 件の出展企業を訪問済みです（${progress}%）。スタンプシートは先頭から順に埋まり、この端末の履歴と集計は localStorage に保存されます。`
-            : '出展企業情報を読み込んでいます。';
     }
 
     // サーバー側の訪問履歴は管理者向けに限定するため、公開ページでは取得しません。
@@ -782,6 +403,502 @@ function initStampRally() {
             closeScanModal();
         }
     });
+
+    // ============================================
+    // 新しい演出関連の関数群
+    // ============================================
+
+    /**
+     * スキャンラインアニメーションを開始
+     * @param {HTMLElement} container - モーダルのコンテナ要素
+     * @returns {void}
+     */
+    function startScanLineAnimation(container) {
+        // 既存アニメーションをクリア
+        if (scanLineAnimationId) {
+            cancelAnimationFrame(scanLineAnimationId);
+        }
+
+        const reader = container.querySelector('#reader');
+        if (!reader) return;
+
+        // スキャンラインを作成
+        let scanLine = container.querySelector('.scan-line');
+        if (!scanLine) {
+            scanLine = document.createElement('div');
+            scanLine.className = 'scan-line';
+            reader.appendChild(scanLine);
+        }
+
+        let progress = 0;
+        const duration = 1800; // 1.8秒で一往復
+        let startTime = Date.now();
+        let direction = 1; // 1: 下向き, -1: 上向き
+
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            progress = (elapsed % duration) / duration;
+
+            // 往復アニメーション（0→1→0）
+            let position;
+            if (progress < 0.5) {
+                position = progress * 2; // 0→1（下へ）
+            } else {
+                position = (1 - progress) * 2; // 1→0（上へ）
+            }
+
+            scanLine.style.top = `${position * 100}%`;
+
+            if (scanModalOpen && scanLineAnimationId !== null) {
+                scanLineAnimationId = requestAnimationFrame(animate);
+            }
+        };
+
+        scanLineAnimationId = requestAnimationFrame(animate);
+    }
+
+    /**
+     * スキャンラインアニメーションを停止
+     */
+    function stopScanLineAnimation() {
+        if (scanLineAnimationId) {
+            cancelAnimationFrame(scanLineAnimationId);
+            scanLineAnimationId = null;
+        }
+
+        const scanLine = document.querySelector('.scan-line');
+        if (scanLine) {
+            scanLine.remove();
+        }
+    }
+
+    /**
+     * スキャン完了の演出（段階的に実行）
+     */
+    async function playScanCompletionSequence() {
+        // 1. スキャンラインを停止
+        stopScanLineAnimation();
+
+        // 2. チェックマークを表示（100ms）
+        if (scanSuccessEl) {
+            scanSuccessEl.classList.remove("is-visible");
+            void scanSuccessEl.offsetWidth; // reflow を強制
+            scanSuccessEl.classList.add("is-visible");
+        }
+
+        // 3. 効果音再生（同時実行）
+        await playSuccessTone();
+
+        // 4. チェックマーク表示の余韻（200ms）
+        await sleep(500);
+    }
+
+    async function acquireStamp(companyId) {
+        try {
+            const response = await fetch('/api/stamp/acquire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ company_id: companyId }),
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (response.ok) {
+                return { ok: true, result };
+            }
+
+            if (String(result.error || '').includes('already acquired')) {
+                return { ok: true, already: true, result };
+            }
+
+            console.warn('スタンプ取得の記録に失敗しました', result);
+            return { ok: false, result };
+        } catch (error) {
+            console.warn('スタンプ取得の送信に失敗しました', error);
+            return { ok: false, error };
+        }
+    }
+
+    async function sendStampEvent(type, stampId) {
+        try {
+            await fetch('/api/stamp-event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type,
+                    stampId,
+                    page: window.location.pathname,
+                }),
+            });
+        } catch (error) {
+            console.warn('サーバーへの送信に失敗しました', error);
+        }
+    }
+
+    function collectSurveyAttributes() {
+        const attributes = {
+            ageGroup: surveyAgeEl ? surveyAgeEl.value : '',
+            visitorType: surveyVisitorTypeEl ? surveyVisitorTypeEl.value : '',
+            groupType: surveyGroupTypeEl ? surveyGroupTypeEl.value : '',
+        };
+
+        const filtered = Object.fromEntries(
+            Object.entries(attributes).filter(([, value]) => String(value || '').trim() !== '')
+        );
+
+        return Object.keys(filtered).length ? filtered : null;
+    }
+
+    async function sendSurveyAttributes() {
+        const attributes = collectSurveyAttributes();
+
+        try {
+            await fetch('/api/stamp-survey', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ attributes }),
+            });
+        } catch (error) {
+            console.warn('アンケート属性の送信に失敗しました', error);
+        }
+    }
+
+    function loadAnalytics() {
+        try {
+            return JSON.parse(localStorage.getItem(analyticsKey) || "{\"visits\":{},\"jumps\":{}}")
+        } catch (error) {
+            console.warn("集計データの読み込みに失敗しました", error);
+            return { visits: {}, jumps: {} };
+        }
+    }
+
+    function saveAnalytics(analytics) {
+        localStorage.setItem(analyticsKey, JSON.stringify(analytics));
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function setScanMessage(message) {
+        if (statusEl) {
+            statusEl.textContent = message;
+        }
+    }
+
+    function setScanModalState(state) {
+        if (!scanModalEl) return;
+
+        scanModalEl.classList.remove("is-scanning", "is-success", "is-loading", "is-error", "is-closing");
+        if (state) {
+            scanModalEl.classList.add(state);
+        }
+    }
+
+    function setScanRetryVisible(visible) {
+        if (!scanModalRetryBtn) return;
+        scanModalRetryBtn.classList.toggle("hidden", !visible);
+    }
+
+    function setScanCloseEnabled(enabled) {
+        if (!scanModalCloseBtn) return;
+        scanModalCloseBtn.disabled = !enabled;
+    }
+
+    function setScanBusy(isBusy) {
+        scanBusy = isBusy;
+        setScanCloseEnabled(!isBusy);
+        if (scanModalRetryBtn) {
+            scanModalRetryBtn.disabled = isBusy;
+        }
+    }
+
+    function resetScanVisuals() {
+        if (scanSuccessEl) {
+            scanSuccessEl.classList.remove("is-visible");
+        }
+        setScanRetryVisible(false);
+        setScanCloseEnabled(true);
+        setScanModalState("is-scanning");
+    }
+
+    function openScanModal() {
+        if (!scanModalEl || scanModalOpen) {
+            return;
+        }
+
+        scanModalOpen = true;
+        scanModalEl.classList.remove("hidden");
+        scanModalEl.setAttribute("aria-hidden", "false");
+        document.body.classList.add("scan-modal-open");
+        resetScanVisuals();
+        setScanMessage("カメラを起動しています…");
+
+        requestAnimationFrame(() => {
+            scanModalEl.classList.add("is-open");
+        });
+    }
+
+    async function closeScanModal(force = false) {
+        if (!scanModalEl || !scanModalOpen) {
+            return;
+        }
+
+        if (scanBusy && !force) {
+            return;
+        }
+
+        const closeToken = ++scannerStartToken;
+
+        // スキャンラインアニメーション停止
+        stopScanLineAnimation();
+
+        if (scanStatusTimer) {
+            clearTimeout(scanStatusTimer);
+            scanStatusTimer = null;
+        }
+        if (modalCloseTimer) {
+            clearTimeout(modalCloseTimer);
+            modalCloseTimer = null;
+        }
+
+        scanModalOpen = false;
+        scanModalEl.classList.remove("is-open", "is-scanning", "is-success", "is-loading", "is-error");
+        scanModalEl.classList.add("is-closing");
+        setScanCloseEnabled(false);
+        setScanRetryVisible(false);
+
+        await stopScanner();
+        scanner = null;
+
+        if (closeToken !== scannerStartToken) {
+            return;
+        }
+
+        modalCloseTimer = window.setTimeout(() => {
+            scanModalEl.classList.remove("is-closing");
+            scanModalEl.classList.add("hidden");
+            scanModalEl.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("scan-modal-open");
+            setScanMessage("カメラを起動すると、読み取ったQRコードの場所を記録できます。");
+            setScanCloseEnabled(true);
+            setScanRetryVisible(false);
+        }, 500);
+    }
+
+    async function playSuccessTone() {
+    try {
+        const audio = new Audio("readsound.mp3");
+        audio.volume = 0.8;
+        await audio.play();
+    } catch (error) {
+        console.warn("成功音の再生に失敗しました", error);
+    }
+}
+
+    /* async function playSuccessTone() {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) {
+            return;
+        }
+
+        try {
+            const context = playSuccessTone.context || (playSuccessTone.context = new AudioContextCtor());
+            if (context.state === "suspended") {
+                await context.resume();
+            }
+
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = "sine";
+            oscillator.frequency.setValueAtTime(880, context.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(660, context.currentTime + 1);
+            gain.gain.setValueAtTime(0.1, context.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.5, context.currentTime + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+            oscillator.connect(gain).connect(context.destination);
+            oscillator.start();
+            oscillator.stop(context.currentTime + 1);
+        } catch (error) {
+            console.warn("成功音の再生に失敗しました", error);
+        }
+    } */
+
+    function parseStampCode(code) {
+        const match = String(code || "").match(/^kosen-stamp:([^\s:]+)$/i);
+
+        if (!match) {
+            return { ok: false, message: "このQRコードはスタンプラリー用ではありません。" };
+        }
+
+        const id = match[1];
+        const location = locations.find(item => item.id === id);
+
+        if (!location) {
+            return { ok: false, message: "登録されていない場所のQRコードです。" };
+        }
+
+        return { ok: true, id, location };
+    }
+
+    function applySuccessfulStamp(id, location) {
+        const visited = loadVisited().filter(item => item !== id);
+        visited.push(id);
+        saveVisited(visited);
+
+        const analytics = loadAnalytics();
+        analytics.visits[id] = (analytics.visits[id] || 0) + 1;
+        saveAnalytics(analytics);
+
+        renderStampState();
+        setScanMessage(`${location.name} のスタンプを記録しました。`);
+    }
+
+    /**
+     * 改良されたfinishSuccessfulScan関数
+     * スキャンライン、段階的な演出、最適化されたタイミング
+     */
+    async function finishSuccessfulScan(id, location) {
+        setScanBusy(true);
+        setScanModalState("is-success");
+        setScanRetryVisible(false);
+        setScanMessage("読み取り中…");
+
+        // 1. スキャンラインアニメーション開始（200ms間隔）
+        // モーダルがDOM内に存在することを確認してから開始
+        await sleep(200);
+        startScanLineAnimation(scanModalEl);
+
+        // 2. スキャンラインを流す（1200ms）
+        await sleep(1200);
+
+        // 3. チェックマーク表示 → 効果音再生の演出（合計400ms）
+        await playScanCompletionSequence();
+
+        // 4. カメラ停止 + ローディング状態へ遷移（素早く）
+        await stopScanner();
+        scanner = null;
+
+        setScanModalState("is-loading");
+        setScanMessage("スタンプを記録しています…");
+
+        // 5. サーバー通信（時間は変動）
+        const recordResult = await acquireStamp(id);
+
+        if (recordResult.ok) {
+            // 6. スタンプ反映（ローカルストレージ更新）
+            applySuccessfulStamp(id, location);
+            setScanBusy(false);
+
+            // 7. モーダル閉じる前に少し余韻（300ms）
+            await sleep(300);
+            await closeScanModal(true);
+            return;
+        }
+
+        // エラー時の処理
+        setScanBusy(false);
+        setScanModalState("is-error");
+        setScanRetryVisible(true);
+        setScanCloseEnabled(true);
+        setScanMessage("スタンプの記録に失敗しました。通信状況を確認して、再試行してください。");
+    }
+
+    //スタンプラリー開始履歴復元---------------------------------------
+    function loadStartState() {
+        try {
+            const explicitState = localStorage.getItem(startStateKey);
+            if (explicitState === "true") {
+                return true;
+            }
+            if (explicitState === "false") {
+                return false;
+            }
+        } catch (error) {
+            console.warn("開始状態の読み込みに失敗しました", error);
+        }
+
+        const visited = loadVisited();
+        const analytics = loadAnalytics();
+
+        return visited.length > 0
+            || Object.keys(analytics.visits || {}).length > 0
+            || Object.keys(analytics.jumps || {}).length > 0;
+    }
+
+    function saveStartState() {
+        localStorage.setItem(startStateKey, "true");
+    }
+
+    function applyStartState(started) {
+        if (rallyIntroSection) {
+            rallyIntroSection.classList.toggle("hidden", started);
+        }
+        if (stampSection) {
+            stampSection.classList.toggle("hidden", !started);
+        }
+    }
+
+    const started = loadStartState();
+    applyStartState(started);
+//---------------------------------------------------------------------------
+    function renderStampState() {
+        if (!stampCards.length) {
+            stampCards = Array.from(document.querySelectorAll('.stamp-card'));
+        }
+        if (!stampSheetSlots.length) {
+            stampSheetSlots = Array.from(document.querySelectorAll('.stamp-sheet-slot'));
+        }
+
+        const visited = Array.from(new Set(loadVisited()));
+        const analytics = loadAnalytics();
+        const total = locations.length || 0;
+        const visitedCount = Math.min(visited.length, total);
+        const progress = total ? Math.round((visitedCount / total) * 100) : 0;
+
+        stampCards.forEach(card => {
+            const id = card.dataset.stampId;
+            const visitedNow = visited.includes(id);
+            card.classList.toggle("visited", visitedNow);
+            const status = card.querySelector(".stamp-status");
+            if (status) {
+                if (visitedNow) {
+                    status.innerHTML = `<span class="visited-icon">✔︎</span>`;
+                } else {
+                    status.textContent = "未訪問";
+                }
+            }
+
+            const metrics = card.querySelector(".stamp-metrics");
+            if (metrics) {
+                // 値の表示は廃止：将来的に画像で済アイコンを差し替え予定
+                metrics.textContent = '';
+            }
+        });
+
+        stampSheetSlots.forEach((slot, index) => {
+            slot.classList.toggle('filled', index < visitedCount);
+        });
+
+        if (stampSheetCountEl) {
+            stampSheetCountEl.textContent = String(visitedCount);
+        }
+        if (stampSheetTotalEl) {
+            stampSheetTotalEl.textContent = String(total);
+        }
+        if (stampSheetRateEl) {
+            stampSheetRateEl.textContent = `${progress}%`;
+        }
+        if (stampSheetFillEl) {
+            stampSheetFillEl.style.width = total ? `${(visitedCount / total) * 100}%` : '0%';
+        }
+
+        summaryEl.textContent = total
+            ? `現在 ${visitedCount} / ${total} 件の出展企業を訪問済みです（${progress}%）。スタンプシートは先頭から順に埋まり、この端末の履歴と集計は localStorage に保存されます。`
+            : '出展企業情報を読み込んでいます。';
+    }
+
+    // サーバー側の訪問履歴は管理者向けに限定するため、公開ページでは取得しません。
 
     loadCompanyMaster().then(master => {
         locations = master;
