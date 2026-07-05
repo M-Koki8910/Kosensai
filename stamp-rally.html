@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スタンプラリー｜高専祭特設WEBページ</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.7.0/minified/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="./script.js" defer></script>
+</head>
+<body>
+
+<div class="topbar">
+    <a href="./index.html" class="home-link">高専祭TOP</a>
+    <button class="menu-toggle" aria-label="メニューを開く">☰</button>
+</div>
+
+<nav id="nav">
+    <ul>
+        <li><a href="./about.html">高専祭とは</a></li>
+        <li><a href="./guest.html">ゲスト紹介</a></li>
+        <li><a href="./shop.html">模擬店紹介</a></li>
+        <li><a href="./event.html">イベント紹介</a></li>
+        <li><a href="./stamp-rally.html">スタンプラリー</a></li>
+        <li><a href="./schedule.html">スケジュール</a></li>
+        <li><a href="./company.html">ご協賛企業紹介</a></li>
+        <li><a href="./map.html">会場マップ</a></li>
+        <li><a href="./about-kosen.html">松江高専とは</a></li>
+        <li><a href="./announcements.html">お知らせ</a></li>
+        <li><a href="./bulletin.html">掲示板</a></li>
+        <li><a href="./admin-integrated.html">管理ページ</a></li>
+    </ul>
+    <div class="nav-footer">
+        <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank" rel="noopener noreferrer">
+            <img src="./insta.png" alt="Instagram" class="nav-social-icon">学校広報
+        </a>
+        <a class="nav-social" href="https://www.instagram.com/mct_gakuseikai/" target="_blank" rel="noopener noreferrer">
+            <img src="./insta.png" alt="Instagram" class="nav-social-icon">学生会
+        </a>
+    </div>
+</nav>
+
+<main>
+    <section class="hero" style="background-image: linear-gradient(rgba(15,23,42,0.55), rgba(15,23,42,0.55)), url('header_ed.jpg'); height: 72vh; min-height: 420px;">
+        <div class="hero-text">
+            <p class="guest-label">KOSENSAI STAMP RALLY</p>
+            <h1>会場を巡ってスタンプを集めよう</h1>
+            <p>各ブースのQRコードを読み取ると、訪問履歴が保存されます。</p>
+        </div>
+    </section>
+
+    <section class="container-section">
+        <h2>スタンプラリーとは</h2>
+        <p class="stamp-intro">高専祭会場の出展企業を巡って、QRコードを読み取るとスタンプが増えていく体験型コンテンツです。スマートフォンで読み取れば、会場の見どころを巡りながら楽しく参加できます。</p>
+        <p class="stamp-intro">このページでは、スタンプの集め方と会場マップの確認から、実際のQR読み取りまで一つながりで体験できます。</p>
+    </section>
+
+    <section class="container-section" id="stamp-rally-start">
+        <h2>スタンプラリーを始める</h2>
+        <p class="stamp-intro">まずは説明を確認してから、下のボタンでスタンプラリーを開始してください。開始後に巡る場所のカード、QR読み取りボタン、会場マップが表示されます。</p>
+
+        <div class="stamp-survey" id="stamp-survey" aria-label="任意アンケート">
+            <h3>開始前アンケート（任意）</h3>
+            <p class="stamp-note">未回答のまま開始できます。未回答の場合、属性は null として記録されます。</p>
+            <div class="stamp-survey-grid">
+                <label>
+                    年代
+                    <select id="survey-age-group">
+                        <option value="">回答しない</option>
+                        <option value="under-13">13歳未満</option>
+                        <option value="13-18">13-18歳</option>
+                        <option value="19-29">19-29歳</option>
+                        <option value="30-49">30-49歳</option>
+                        <option value="50-plus">50歳以上</option>
+                    </select>
+                </label>
+                <label>
+                    来場区分
+                    <select id="survey-visitor-type">
+                        <option value="">回答しない</option>
+                        <option value="student">学生</option>
+                        <option value="guardian">保護者</option>
+                        <option value="alumni">卒業生</option>
+                        <option value="community">地域来場者</option>
+                        <option value="other">その他</option>
+                    </select>
+                </label>
+                <label>
+                    同伴
+                    <select id="survey-group-type">
+                        <option value="">回答しない</option>
+                        <option value="alone">1人</option>
+                        <option value="family">家族</option>
+                        <option value="friends">友人</option>
+                        <option value="school-group">学校関係者グループ</option>
+                        <option value="other">その他</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <button id="begin-rally" class="stamp-btn" type="button">スタンプラリーを始める</button>
+    </section>
+
+    <section class="stamp-rally container-section hidden" id="stamp-rally">
+        <h2>スタンプを集める</h2>
+        <p class="stamp-intro">会場のQRコードを読み取ると、訪問履歴がこの端末に保存されます。各場所のカードを見ながら、QRコードを読み取ってスタンプを集めましょう。</p>
+
+        <div class="stamp-grid" id="stamp-grid"></div>
+
+        <div class="stamp-sheet-panel" aria-label="スタンプラリーシート">
+            <div class="stamp-sheet-head">
+                <div>
+                    <p class="stamp-label">STAMP SHEET</p>
+                    <h3>達成した分だけ、先頭から順に押されます</h3>
+                </div>
+                <p class="stamp-sheet-progress">
+                    <span id="stamp-sheet-count">0</span>/<span id="stamp-sheet-total">0</span>
+                    <span id="stamp-sheet-rate">0%</span>
+                </p>
+            </div>
+            <div class="stamp-sheet-bar" aria-hidden="true">
+                <div id="stamp-sheet-fill" class="stamp-sheet-bar-fill"></div>
+            </div>
+            <p class="stamp-note">空き枠は全スポット分を最初から用意し、達成率は埋まった枠数で表します。巡る順番に関係なく、達成した数だけ左から埋まります。</p>
+            <div id="stamp-sheet" class="stamp-sheet-grid"></div>
+        </div>
+
+        <!--
+        以前の会場スポット版スタンプカードは、将来の再利用に備えて残しています。
+        <div class="stamp-grid" id="stamp-grid-legacy">
+            <article class="stamp-card" data-stamp-id="entrance">...</article>
+            <article class="stamp-card" data-stamp-id="museum">...</article>
+            <article class="stamp-card" data-stamp-id="stage">...</article>
+            <article class="stamp-card" data-stamp-id="shop">...</article>
+        </div>
+        -->
+
+        <div class="stamp-controls">
+            <button id="start-scan" class="stamp-btn" type="button">カメラでQRを読み取る</button>
+        </div>
+
+        <p id="scan-status" class="scan-status">カメラを起動すると、読み取ったQRコードの場所を記録できます。</p>
+        <div id="reader" class="reader-box" aria-live="polite"></div>
+        <!-- <div class="stamp-map-panel">
+            <h3>会場マップ</h3>
+            <p class="stamp-note">現在の巡回ルートと各スポットの位置を確認できます。</p>
+            <iframe id="stamp-map-frame" src="/map.html" title="会場マップ" class="stamp-map-frame"></iframe>
+        </div> -->
+        <div id="stamp-summary" class="stamp-summary"></div>
+    </section>
+
+    <section class="container-section">
+        <h2>スタンプラリーをさらに楽しむ</h2>
+        <div class="cards">
+            <a href="./event.html" class="card">
+                <img src="event.jpg" alt="イベント紹介">
+                <div class="card-body">
+                    <h3>イベント紹介</h3>
+                    <p>ステージや体験企画のタイムテーブルを確認できます。</p>
+                </div>
+            </a>
+            <a href="./shop.html" class="card">
+                <img src="shop.jpg" alt="模擬店紹介">
+                <div class="card-body">
+                    <h3>模擬店紹介</h3>
+                    <p>会場で人気の模擬店やお食事スポットをチェック。
+                </div>
+            </a>
+            <a href="./about.html" class="card">
+                <img src="about.jpg" alt="高専祭とは">
+                <div class="card-body">
+                    <h3>高専祭とは</h3>
+                    <p>開催の目的や見どころを知って、巡り方をイメージしよう。</p>
+                </div>
+            </a>
+            <a href="./map.html" class="card">
+                <img src="header_ed.jpg" alt="会場マップ">
+                <div class="card-body">
+                    <h3>会場マップ</h3>
+                    <p>各ブースの場所と移動ルートを確認して、効率よく回れます。</p>
+                </div>
+            </a>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <p>© 2026 松江高専 高専祭実行委員</p>
+    </footer>
+
+</body>
+</html>
