@@ -227,7 +227,6 @@
         <li><a href="./about-kosen.html">松江高専とは</a></li>
         <li><a href="./announcements.html">お知らせ</a></li>
         <li><a href="./bulletin.html">掲示板</a></li>
-        <li><a href="./admin-integrated.html">管理ページ</a></li>
     </ul>
     <div class="nav-footer">
         <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank" rel="noopener noreferrer">
@@ -257,7 +256,7 @@
         </button>
 
         <button class="schedule-place-tab" data-place="garden">
-            中庭
+            学びの庭
         </button>
     </div>
 
@@ -271,26 +270,106 @@ const EVENTS = [
     {
         day:1,
         place:"gym",
-        title:"吹奏楽演奏",
-        start:10,
+        title:"ゲストライブ",
+        start:11,
         end:12,
-        href:"#event-0",
+        href:"./event.html",
     },
-
     {
         day:1,
-        place:"garden",
-        title:"ダンス",
+        place:"gym",
+        title:"吹奏楽部コンサート",
         start:13,
-        end:15
+        end:14,
+        href:"./event.html",
     },
-
+    {
+        day:1,
+        place:"gym",
+        title:"学生ライブ",
+        start:15,
+        end:19,
+        href:"./event.html",
+    },
     {
         day:2,
         place:"gym",
-        title:"軽音ライブ",
+        title:"カラオケ大会",
+        start:10,
+        end:11,
+        href:"./event.html",
+    },
+    {
+        day:2,
+        place:"gym",
+        title:"ダンス部パフォーマンス",
+        start:12,
+        end:13,
+        href:"./event.html",
+    },
+    {
+        day:2,
+        place:"gym",
+        title:"抽選会　(※学生のみ参加可)",
+        start:15,
+        end:19,
+        href:"./event.html",
+    },
+    {
+        day:1,
+        place:"garden",
+        title:"模擬店紹介",
+        start:9,
+        end:10,
+        href:"./event.html",
+    },
+    {
+        day:1,
+        place:"garden",
+        title:"大食い",
+        start:10,
+        end:11,
+        href:"./event.html",
+    },
+    {
+        day:1,
+        place:"garden",
+        title:"フィジーク",
+        start:12,
+        end:13,
+        href:"./event.html",
+    },
+    {
+        day:1,
+        place:"garden",
+        title:"クイズ",
+        start:14,
+        end:15,
+        href:"./event.html",
+    },
+    {
+        day:2,
+        place:"garden",
+        title:"パフォーマンス書道",
+        start:9,
+        end:10,
+        href:"./event.html",
+    },
+    {
+        day:2,
+        place:"garden",
+        title:"誰が一位でしょう？",
         start:11,
-        end:13
+        end:12,
+        href:"./event.html",
+    },
+     {
+        day:2,
+        place:"garden",
+        title:"腕相撲",
+        start:13,
+        end:14,
+        href:"./event.html",
     }
 
 ];
@@ -342,7 +421,7 @@ function render(){
     const placeName =
         currentPlace === "gym"
         ? "体育館"
-        : "中庭";
+        : "学びの庭";
 
    let html = `
 <div class="schedule-board">
@@ -453,7 +532,7 @@ function renderEventDetails(){
 
 // 初回描画後に詳細を追加
 render();
-renderEventDetails();
+//renderEventDetails();
 </script>
 
 </body>
