@@ -143,8 +143,34 @@
             <button id="start-scan" class="stamp-btn" type="button">カメラでQRを読み取る</button>
         </div>
 
-        <p id="scan-status" class="scan-status">カメラを起動すると、読み取ったQRコードの場所を記録できます。</p>
-        <div id="reader" class="reader-box" aria-live="polite"></div>
+        <div id="scan-modal" class="stamp-scan-modal hidden" aria-hidden="true">
+            <div class="stamp-scan-modal-backdrop" data-scan-close="backdrop"></div>
+            <section class="stamp-scan-modal-panel" role="dialog" aria-modal="true" aria-labelledby="scan-modal-title">
+                <div class="stamp-scan-modal-head">
+                    <div>
+                        <p class="stamp-label">SCAN MODE</p>
+                        <h3 id="scan-modal-title">QRコードを読み取る</h3>
+                    </div>
+                    <button id="scan-modal-close" class="stamp-btn secondary" type="button">閉じる</button>
+                </div>
+
+                <div class="stamp-scan-stage">
+                    <div class="stamp-scan-reader-wrap">
+                        <div id="reader" class="reader-box stamp-scan-reader" aria-live="polite"></div>
+                        <div class="stamp-scan-frame" aria-hidden="true">
+                            <span class="stamp-scan-line"></span>
+                        </div>
+                        <div id="scan-success" class="stamp-scan-success" aria-hidden="true">✓</div>
+                    </div>
+                </div>
+
+                <p id="scan-status" class="scan-status">カメラを起動すると、読み取ったQRコードの場所を記録できます。</p>
+
+                <div class="stamp-scan-actions">
+                    <button id="scan-modal-retry" class="stamp-btn secondary hidden" type="button">再試行</button>
+                </div>
+            </section>
+        </div>
         <!-- <div class="stamp-map-panel">
             <h3>会場マップ</h3>
             <p class="stamp-note">現在の巡回ルートと各スポットの位置を確認できます。</p>

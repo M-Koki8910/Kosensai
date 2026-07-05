@@ -45,8 +45,17 @@ function initStampRally() {
     const surveyAgeEl = document.getElementById("survey-age-group");
     const surveyVisitorTypeEl = document.getElementById("survey-visitor-type");
     const surveyGroupTypeEl = document.getElementById("survey-group-type");
+    const scanModalEl = document.getElementById("scan-modal");
+    const scanModalCloseBtn = document.getElementById("scan-modal-close");
+    const scanModalRetryBtn = document.getElementById("scan-modal-retry");
+    const scanSuccessEl = document.getElementById("scan-success");
 
     let scanner = null;
+    let scanModalOpen = false;
+    let scanBusy = false;
+    let scanStatusTimer = null;
+    let modalCloseTimer = null;
+    let scannerStartToken = 0;
 
     const stampThemes = [
         { primary: "#dc2626", secondary: "#f59e0b", surface: "#fff7ed" },
@@ -287,6 +296,208 @@ function initStampRally() {
     function saveAnalytics(analytics) {
         localStorage.setItem(analyticsKey, JSON.stringify(analytics));
     }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function setScanMessage(message) {
+        if (statusEl) {
+            statusEl.textContent = message;
+        }
+    }
+
+    function setScanModalState(state) {
+        if (!scanModalEl) return;
+
+        scanModalEl.classList.remove("is-scanning", "is-success", "is-loading", "is-error", "is-closing");
+        if (state) {
+            scanModalEl.classList.add(state);
+        }
+    }
+
+    function setScanRetryVisible(visible) {
+        if (!scanModalRetryBtn) return;
+        scanModalRetryBtn.classList.toggle("hidden", !visible);
+    }
+
+    function setScanCloseEnabled(enabled) {
+        if (!scanModalCloseBtn) return;
+        scanModalCloseBtn.disabled = !enabled;
+    }
+
+    function setScanBusy(isBusy) {
+        scanBusy = isBusy;
+        setScanCloseEnabled(!isBusy);
+        if (scanModalRetryBtn) {
+            scanModalRetryBtn.disabled = isBusy;
+        }
+    }
+
+    function resetScanVisuals() {
+        if (scanSuccessEl) {
+            scanSuccessEl.classList.remove("is-visible");
+        }
+        setScanRetryVisible(false);
+        setScanCloseEnabled(true);
+        setScanModalState("is-scanning");
+    }
+
+    function openScanModal() {
+        if (!scanModalEl || scanModalOpen) {
+            return;
+        }
+
+        scanModalOpen = true;
+        scanModalEl.classList.remove("hidden");
+        scanModalEl.setAttribute("aria-hidden", "false");
+        document.body.classList.add("scan-modal-open");
+        resetScanVisuals();
+        setScanMessage("カメラを起動しています…");
+
+        requestAnimationFrame(() => {
+            scanModalEl.classList.add("is-open");
+        });
+    }
+
+    async function closeScanModal(force = false) {
+        if (!scanModalEl || !scanModalOpen) {
+            return;
+        }
+
+        if (scanBusy && !force) {
+            return;
+        }
+
+        const closeToken = ++scannerStartToken;
+
+        if (scanStatusTimer) {
+            clearTimeout(scanStatusTimer);
+            scanStatusTimer = null;
+        }
+        if (modalCloseTimer) {
+            clearTimeout(modalCloseTimer);
+            modalCloseTimer = null;
+        }
+
+        scanModalOpen = false;
+        scanModalEl.classList.remove("is-open", "is-scanning", "is-success", "is-loading", "is-error");
+        scanModalEl.classList.add("is-closing");
+        setScanCloseEnabled(false);
+        setScanRetryVisible(false);
+
+        await stopScanner();
+        scanner = null;
+
+        if (closeToken !== scannerStartToken) {
+            return;
+        }
+
+        modalCloseTimer = window.setTimeout(() => {
+            scanModalEl.classList.remove("is-closing");
+            scanModalEl.classList.add("hidden");
+            scanModalEl.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("scan-modal-open");
+            setScanMessage("カメラを起動すると、読み取ったQRコードの場所を記録できます。");
+            setScanCloseEnabled(true);
+            setScanRetryVisible(false);
+        }, 220);
+    }
+
+    async function playSuccessTone() {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) {
+            return;
+        }
+
+        try {
+            const context = playSuccessTone.context || (playSuccessTone.context = new AudioContextCtor());
+            if (context.state === "suspended") {
+                await context.resume();
+            }
+
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = "sine";
+            oscillator.frequency.setValueAtTime(880, context.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(660, context.currentTime + 0.14);
+            gain.gain.setValueAtTime(0.0001, context.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.18);
+            oscillator.connect(gain).connect(context.destination);
+            oscillator.start();
+            oscillator.stop(context.currentTime + 0.2);
+        } catch (error) {
+            console.warn("成功音の再生に失敗しました", error);
+        }
+    }
+
+    function parseStampCode(code) {
+        const match = String(code || "").match(/^kosen-stamp:([^\s:]+)$/i);
+
+        if (!match) {
+            return { ok: false, message: "このQRコードはスタンプラリー用ではありません。" };
+        }
+
+        const id = match[1];
+        const location = locations.find(item => item.id === id);
+
+        if (!location) {
+            return { ok: false, message: "登録されていない場所のQRコードです。" };
+        }
+
+        return { ok: true, id, location };
+    }
+
+    function applySuccessfulStamp(id, location) {
+        const visited = loadVisited().filter(item => item !== id);
+        visited.push(id);
+        saveVisited(visited);
+
+        const analytics = loadAnalytics();
+        analytics.visits[id] = (analytics.visits[id] || 0) + 1;
+        saveAnalytics(analytics);
+
+        renderStampState();
+        setScanMessage(`${location.name} のスタンプを記録しました。`);
+    }
+
+    async function finishSuccessfulScan(id, location) {
+        setScanBusy(true);
+        setScanModalState("is-success");
+        setScanRetryVisible(false);
+        setScanMessage("読み取り完了。スタンプを記録しています…");
+
+        if (scanSuccessEl) {
+            scanSuccessEl.classList.remove("is-visible");
+            void scanSuccessEl.offsetWidth;
+            scanSuccessEl.classList.add("is-visible");
+        }
+
+        await playSuccessTone();
+        await sleep(420);
+        await stopScanner();
+        scanner = null;
+
+        setScanModalState("is-loading");
+        setScanMessage("スタンプを記録しています…");
+
+        const recordResult = await acquireStamp(id);
+
+        if (recordResult.ok) {
+            applySuccessfulStamp(id, location);
+            setScanBusy(false);
+            await sleep(180);
+            await closeScanModal(true);
+            return;
+        }
+
+        setScanBusy(false);
+        setScanModalState("is-error");
+        setScanRetryVisible(true);
+        setScanCloseEnabled(true);
+        setScanMessage("スタンプの記録に失敗しました。通信状況を確認して、再試行してください。");
+    }
     //スタンプラリー開始履歴復元---------------------------------------
     function loadStartState() {
         try {
@@ -398,35 +609,31 @@ function initStampRally() {
     }
 
     async function markVisited(code) {
-        const match = String(code || "").match(/^kosen-stamp:([^\s:]+)$/i);
-
-        if (!match) {
-            statusEl.textContent = "このQRコードはスタンプラリー用ではありません。";
+        if (scanBusy) {
             return;
         }
 
-        const id = match[1];
-        const location = locations.find(item => item.id === id);
+        const parsed = parseStampCode(code);
 
-        if (!location) {
-            statusEl.textContent = "登録されていない場所のQRコードです。";
+        if (!parsed.ok) {
+            setScanModalState("is-error");
+            setScanRetryVisible(false);
+            setScanMessage(parsed.message);
+
+            if (scanStatusTimer) {
+                clearTimeout(scanStatusTimer);
+            }
+
+            scanStatusTimer = window.setTimeout(() => {
+                if (!scanBusy && scanModalOpen) {
+                    setScanModalState("is-scanning");
+                    setScanMessage("QRコードを枠内に合わせてください。");
+                }
+            }, 1200);
             return;
         }
 
-        const visited = loadVisited().filter(item => item !== id);
-        visited.push(id);
-        saveVisited(visited);
-
-        const analytics = loadAnalytics();
-        analytics.visits[id] = (analytics.visits[id] || 0) + 1;
-        saveAnalytics(analytics);
-
-        const recordResult = await acquireStamp(id);
-
-        renderStampState();
-        statusEl.textContent = recordResult.ok
-            ? `${location.name} を訪問済みに保存しました。`
-            : `${location.name} を訪問済みに保存しました。サーバー記録は失敗しました。`;
+        await finishSuccessfulScan(parsed.id, parsed.location);
     }
 
     function recordJump(id) {
@@ -450,8 +657,11 @@ function initStampRally() {
     }
 
     async function startScanner() {
+        openScanModal();
+
         if (!window.Html5Qrcode) {
-            statusEl.textContent = "カメラ機能を読み込めませんでした。";
+            setScanMessage("カメラ機能を読み込めませんでした。");
+            setScanModalState("is-error");
             return;
         }
 
@@ -460,45 +670,65 @@ function initStampRally() {
             scanner = null;
         }
 
-        readerEl.innerHTML = "";
+        const startToken = ++scannerStartToken;
+        if (readerEl) {
+            readerEl.innerHTML = "";
+        }
         scanner = new Html5Qrcode("reader");
 
         try {
-            statusEl.textContent = "カメラを起動しています...";
+            setScanBusy(false);
+            setScanRetryVisible(false);
+            setScanModalState("is-scanning");
+            setScanMessage("カメラを起動しています…");
+
+            await sleep(50);
+
+            if (!scanModalOpen || startToken !== scannerStartToken) {
+                await stopScanner();
+                scanner = null;
+                return;
+            }
+
             let cameraConfig = { facingMode: "environment" };
 
-if (typeof Html5Qrcode.getCameras === "function") {
-    try {
-        const cameras = await Html5Qrcode.getCameras();
-        if (cameras && cameras.length) {
-            const backCamera = cameras.find(cam => 
-                /(back|rear|environment)/i.test(cam.label)
-            );
-            // ✅ deviceId をオブジェクトで渡す
-            if (backCamera || cameras[0]) {
-                const selectedCamera = backCamera || cameras[0];
-                cameraConfig = { deviceId: selectedCamera.id };
+            if (typeof Html5Qrcode.getCameras === "function") {
+                try {
+                    const cameras = await Html5Qrcode.getCameras();
+                    if (cameras && cameras.length) {
+                        const backCamera = cameras.find(cam => /(back|rear|environment)/i.test(cam.label));
+                        if (backCamera || cameras[0]) {
+                            const selectedCamera = backCamera || cameras[0];
+                            cameraConfig = { deviceId: selectedCamera.id };
+                        }
+                    }
+                } catch (error) {
+                    console.warn("カメラ一覧の取得に失敗しました", error);
+                }
             }
-        }
-    } catch (error) {
-        console.warn("カメラ一覧の取得に失敗しました", error);
-    }
-}
 
             await scanner.start(
                 cameraConfig,
                 { fps: 10, qrbox: { width: 260, height: 260 } },
                 (decodedText) => {
                     markVisited(decodedText);
-                    stopScanner().finally(() => {
-                        scanner = null;
-                    });
                 },
                 () => {}
             );
+
+            if (startToken !== scannerStartToken) {
+                await stopScanner();
+                scanner = null;
+                return;
+            }
+
+            setScanMessage("QRコードを枠内に合わせてください。");
         } catch (error) {
             console.error("カメラ起動に失敗しました", error);
-            statusEl.textContent = "カメラを起動できませんでした。端末のカメラ利用権限を許可するか、対応ブラウザで再度お試しください。";
+            setScanModalState("is-error");
+            setScanMessage("カメラを起動できませんでした。端末のカメラ利用権限を許可するか、対応ブラウザで再度お試しください。");
+            setScanRetryVisible(true);
+            setScanBusy(false);
             scanner = null;
         }
     }
@@ -526,6 +756,32 @@ if (typeof Html5Qrcode.getCameras === "function") {
             startScanner();
         });
     }
+
+    if (scanModalCloseBtn) {
+        scanModalCloseBtn.addEventListener("click", () => {
+            closeScanModal();
+        });
+    }
+
+    if (scanModalRetryBtn) {
+        scanModalRetryBtn.addEventListener("click", () => {
+            startScanner();
+        });
+    }
+
+    if (scanModalEl) {
+        scanModalEl.addEventListener("click", event => {
+            if (event.target && event.target.dataset && event.target.dataset.scanClose === "backdrop") {
+                closeScanModal();
+            }
+        });
+    }
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && scanModalOpen) {
+            closeScanModal();
+        }
+    });
 
     loadCompanyMaster().then(master => {
         locations = master;
