@@ -55,6 +55,12 @@
       background: #fff;
     }
 
+    .post-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     .post-header {
       display: flex;
       justify-content: space-between;
@@ -93,6 +99,43 @@
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
+    }
+
+    .post-reactions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .reaction-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #d0d7de;
+      background: #f8f9fb;
+      color: #334155;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .reaction-btn:hover {
+      transform: translateY(-1px);
+      border-color: #94a3b8;
+      background: #fff;
+    }
+
+    .reaction-btn.active {
+      background: #e8f2ff;
+      border-color: #4f86ff;
+      color: #174ea6;
+    }
+
+    .reaction-btn.heart.active {
+      background: #ffe8ef;
+      border-color: #ff6b91;
+      color: #b4235d;
     }
   </style>
 </head>

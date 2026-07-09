@@ -2,6 +2,7 @@
 const API = {
   posts: '/api/admin/posts',
   postStatus: (id) => `/api/admin/posts/${id}/status`,
+  post: (id) => `/api/admin/posts/${id}`,
   rules: '/api/admin/ng-rules',
   rule: (id) => `/api/admin/ng-rules/${id}`,
   ruleToggle: (id) => `/api/admin/ng-rules/${id}/toggle`,
@@ -31,6 +32,7 @@ function showPage(page) {
   document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
 
+  if (page === 'home') return;
   if (page === 'posts') loadPosts();
   if (page === 'ng-rules') loadRules();
   if (page === 'announcements') loadAnnouncements();
@@ -94,6 +96,8 @@ async function loadPosts() {
         <td>${new Date(post.created_at).toLocaleString('ja-JP')}</td>
         <td>
           <button class="btn" onclick="openPostModal(${post.id})">詳細</button>
+          <button class="btn btn-warning" onclick="hidePost(${post.id})">非表示</button>
+          <button class="btn btn-danger" onclick="deletePost(${post.id})">削除</button>
         </td>
       </tr>
     `).join('');
@@ -177,6 +181,71 @@ async function savePostStatus() {
   } catch (e) {
     console.error('投稿更新エラー', e);
     showMessage('投稿の更新に失敗しました', 'error');
+  }
+}
+
+function hideCurrentPost() {
+  if (!currentPost) return;
+  hidePost(currentPost.id);
+}
+
+function deleteCurrentPost() {
+  if (!currentPost) return;
+  deletePost(currentPost.id);
+}
+
+async function hidePost(postId) {
+  if (!confirm('投稿を非表示にしますか？')) return;
+
+  try {
+    const response = await fetch(API.postStatus(postId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: 'hidden'
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      showMessage('投稿を非表示にしました', 'success');
+      if (currentPost && currentPost.id === postId) {
+        closeModal('postModal');
+      }
+      loadPosts();
+    } else {
+      showMessage(data.error || '非表示に失敗しました', 'error');
+    }
+  } catch (e) {
+    console.error('投稿非表示エラー', e);
+    showMessage('投稿の非表示に失敗しました', 'error');
+  }
+}
+
+async function deletePost(postId) {
+  if (!confirm('投稿を削除しますか？ この操作は取り消せません。')) return;
+
+  try {
+    const response = await fetch(API.post(postId), {
+      method: 'DELETE'
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      showMessage('投稿を削除しました', 'success');
+      if (currentPost && currentPost.id === postId) {
+        currentPost = null;
+        closeModal('postModal');
+      }
+      loadPosts();
+    } else {
+      showMessage(data.error || '削除に失敗しました', 'error');
+    }
+  } catch (e) {
+    console.error('投稿削除エラー', e);
+    showMessage('投稿の削除に失敗しました', 'error');
   }
 }
 
@@ -491,6 +560,7 @@ async function deleteUser(userId) {
 
 function getStatusLabel(status) {
   const labels = {
+    'home': 'ホーム',
     'published': '公開済み',
     'pending': '確認中',
     'review': '要確認',

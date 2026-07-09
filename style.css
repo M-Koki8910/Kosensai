@@ -1373,6 +1373,40 @@ h2::after {
         flex-direction: column;
     }
 
+    .stamp-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .stamp-grid .stamp-card {
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    .stamp-grid .stamp-label {
+        font-size: 0.7rem;
+    }
+
+    .stamp-grid .stamp-thumb {
+        height: 80px;
+        margin: 6px 0;
+        border-radius: 10px;
+    }
+
+    .stamp-grid .stamp-card h3 {
+        font-size: 0.9rem;
+        margin: 4px 0 6px;
+    }
+
+    .stamp-grid .stamp-link,
+    .stamp-grid .stamp-status {
+        font-size: 0.8rem;
+    }
+
+    .stamp-grid .stamp-link {
+        margin-bottom: 6px;
+    }
+
     .stamp-btn {
         width: 100%;
     }

@@ -142,6 +142,9 @@ function initStampRally() {
         `)}`;
     }
 
+    //               <canvas class="stamp-qr" width="160" height="160" aria-label="${location.name}のQRコード"></canvas>
+//                <p class="stamp-note">${location.note}</p>
+
     function renderStampCards() {
         const stampGrid = document.getElementById('stamp-grid');
         if (!stampGrid) return;
@@ -151,9 +154,7 @@ function initStampRally() {
                 <p class="stamp-label">STEP ${index + 1}</p>
                 <img class="stamp-thumb" src="${location.image || '/header_ed.jpg'}" alt="${location.name}のサムネイル">
                 <h3>${location.name}</h3>
-                <p class="stamp-note">${location.note}</p>
-                <canvas class="stamp-qr" width="160" height="160" aria-label="${location.name}のQRコード"></canvas>
-                <a class="stamp-link" href="${location.href || '/company.html'}" data-stamp-id="${location.id}">${location.linkText || '企業紹介へ'}</a>
+               <a class="stamp-link" href="${location.href || '/company.html'}" data-stamp-id="${location.id}">${location.linkText || '企業紹介へ'}</a>
                 <p class="stamp-status">未訪問</p>
             </article>
         `).join('');
@@ -190,8 +191,7 @@ function initStampRally() {
                         <img class="stamp-sheet-badge" src="${createStampSvg(index, location.name, location.id)}" alt="${escapeHtml(location.name)}のスタンプ" loading="lazy">
                     </div>
                     <div class="stamp-sheet-slot-meta">
-                        <span class="stamp-sheet-step">STAMP ${String(index + 1).padStart(2, '0')}</span>
-                        <strong>${escapeHtml(location.name)}</strong>
+                        <span class="stamp-sheet-step">SLOT ${String(index + 1).padStart(2, '0')}</span>
                     </div>
                 </article>
             `;
@@ -199,6 +199,7 @@ function initStampRally() {
 
         stampSheetSlots = Array.from(stampSheetEl.querySelectorAll('.stamp-sheet-slot'));
     }
+//                        <strong>${escapeHtml(location.name)}</strong>
 
     function loadVisited() {
         try {

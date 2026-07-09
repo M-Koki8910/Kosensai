@@ -339,6 +339,18 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS post_reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL,
+    session_id TEXT NOT NULL,
+    reaction_type TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    UNIQUE(post_id, session_id, reaction_type)
+  );
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS ng_rules (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     pattern TEXT NOT NULL,
@@ -1208,11 +1220,48 @@ function getSummary(user) {
 // 投稿一覧クエリサブルーチン
 function getPostsSub(filters = {}) {
   let query = `
-    SELECT id, content, status, risk_score, created_at, updated_at
-    FROM posts
-    WHERE 1=1
+    SELECT
+      p.id,
+      p.content,
+      p.status,
+      p.risk_score,
+      p.created_at,
+      p.updated_at,
+      COALESCE((
+        SELECT COUNT(*)
+        FROM post_reactions pr
+        WHERE pr.post_id = p.id AND pr.reaction_type = 'thumbs_up'
+      ), 0) AS thumbs_up_count,
+      COALESCE((
+        SELECT COUNT(*)
+        FROM post_reactions pr
+        WHERE pr.post_id = p.id AND pr.reaction_type = 'heart'
+      ), 0) AS heart_count
   `;
   const params = [];
+
+  if (filters.sessionId) {
+    query += `,
+      CASE WHEN EXISTS(
+        SELECT 1
+        FROM post_reactions pr
+        WHERE pr.post_id = p.id AND pr.session_id = ? AND pr.reaction_type = 'thumbs_up'
+      ) THEN 1 ELSE 0 END AS reacted_thumbs_up,
+      CASE WHEN EXISTS(
+        SELECT 1
+        FROM post_reactions pr
+        WHERE pr.post_id = p.id AND pr.session_id = ? AND pr.reaction_type = 'heart'
+      ) THEN 1 ELSE 0 END AS reacted_heart
+    `;
+    params.push(filters.sessionId, filters.sessionId);
+  } else {
+    query += `, 0 AS reacted_thumbs_up, 0 AS reacted_heart `;
+  }
+
+  query += `
+    FROM posts p
+    WHERE 1=1
+  `;
 
   if (filters.status) {
     query += ` AND status = ?`;
@@ -1232,6 +1281,30 @@ function getPostsSub(filters = {}) {
   }
 
   return db.prepare(query).all(...params);
+}
+
+function getPostReactionSummary(postId, sessionId = null) {
+  const counts = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN reaction_type = 'thumbs_up' THEN 1 ELSE 0 END), 0) AS thumbs_up_count,
+      COALESCE(SUM(CASE WHEN reaction_type = 'heart' THEN 1 ELSE 0 END), 0) AS heart_count
+    FROM post_reactions
+    WHERE post_id = ?
+  `).get(postId) || { thumbs_up_count: 0, heart_count: 0 };
+
+  const reacted = sessionId ? db.prepare(`
+    SELECT reaction_type
+    FROM post_reactions
+    WHERE post_id = ? AND session_id = ?
+  `).all(postId, sessionId) : [];
+
+  return {
+    thumbs_up_count: counts.thumbs_up_count || 0,
+    heart_count: counts.heart_count || 0,
+    reacted_reaction_type: reacted[0] ? reacted[0].reaction_type : null,
+    reacted_thumbs_up: reacted.some(item => item.reaction_type === 'thumbs_up') ? 1 : 0,
+    reacted_heart: reacted.some(item => item.reaction_type === 'heart') ? 1 : 0,
+  };
 }
 
 // 公開中アナウンス一覧取得サブルーチン
@@ -2160,9 +2233,82 @@ let page = pathname
     return;
   }
 
+  // POST /api/posts/:id/reactions
+  // 投稿へのリアクション追加（匿名可・Cookieセッション単位で各種1回まで）
+  if (pathname.match(/^\/api\/posts\/(\d+)\/reactions$/) && req.method === 'POST') {
+    const match = pathname.match(/^\/api\/posts\/(\d+)\/reactions$/);
+    const postId = parseInt(match[1], 10);
+
+    parseBody(req, (err, payload) => {
+      if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+
+      const reactionType = String(payload.reaction_type || payload.reactionType || '').toLowerCase();
+      if (!['thumbs_up', 'heart'].includes(reactionType)) {
+        return sendJson(res, 400, { ok: false, error: 'Invalid reaction type' });
+      }
+
+      let sessionId = String(getCookies(req)[SESSION_COOKIE_NAME] || '').trim();
+      if (!sessionId) {
+        sessionId = createVisitorSession(req, res) || '';
+      }
+
+      if (!sessionId) {
+        return sendJson(res, 500, { ok: false, error: 'Failed to create session' });
+      }
+
+      const post = db.prepare(`SELECT id, status FROM posts WHERE id = ?`).get(postId);
+      if (!post || post.status !== 'published') {
+        return sendJson(res, 404, { ok: false, error: 'Post not found' });
+      }
+
+      const existingReaction = db.prepare(`
+        SELECT reaction_type
+        FROM post_reactions
+        WHERE post_id = ? AND session_id = ?
+      `).get(postId, sessionId);
+
+      if (existingReaction) {
+        if (existingReaction.reaction_type === reactionType) {
+          const summary = getPostReactionSummary(postId, sessionId);
+          return sendJson(res, 200, {
+            ok: true,
+            added: false,
+            alreadyReacted: true,
+            reaction_type: reactionType,
+            ...summary
+          });
+        }
+
+        return sendJson(res, 409, {
+          ok: false,
+          error: 'Already reacted',
+          reaction_type: existingReaction.reaction_type
+        });
+      }
+
+      const result = db.prepare(`
+        INSERT OR IGNORE INTO post_reactions
+        (post_id, session_id, reaction_type, created_at, updated_at)
+        VALUES (?, ?, ?, datetime('now', '+9 hours'), datetime('now', '+9 hours'))
+      `).run(postId, sessionId, reactionType);
+
+      const summary = getPostReactionSummary(postId, sessionId);
+
+      return sendJson(res, 200, {
+        ok: true,
+        added: result.changes > 0,
+        alreadyReacted: result.changes === 0,
+        reaction_type: reactionType,
+        ...summary
+      });
+    });
+    return;
+  }
+
   // GET /api/posts
   // 投稿一覧（公開済みのみ・認証不要）
   if (pathname === '/api/posts' && req.method === 'GET') {
+    const sessionId = String(getCookies(req)[SESSION_COOKIE_NAME] || '').trim() || null;
     const status = url.searchParams.get('status') || 'published';
     const search = url.searchParams.get('search') || '';
     const limit = parseInt(url.searchParams.get('limit') || '50', 10);
@@ -2170,7 +2316,8 @@ let page = pathname
     const posts = getPostsSub({
       status: status === 'all' ? null : status,
       search,
-      limit
+      limit,
+      sessionId
     });
 
     return sendJson(res, 200, { ok: true, posts });
@@ -2224,19 +2371,11 @@ let page = pathname
       const search = url.searchParams.get('search') || '';
       const limit = parseInt(url.searchParams.get('limit') || '100', 10);
 
-      let query = `
-        SELECT id, content, status, risk_score, created_at, updated_at
-        FROM posts WHERE 1=1
-      `;
-      const params = [];
-
-      if (status) { query += ` AND status = ?`; params.push(status); }
-      if (search) { query += ` AND content LIKE ?`; params.push(`%${search}%`); }
-
-      query += ` ORDER BY created_at DESC LIMIT ?`;
-      params.push(limit);
-
-      const posts = db.prepare(query).all(...params);
+      const posts = getPostsSub({
+        status: status || null,
+        search,
+        limit
+      });
 
       logEvent('admin_access', {
         username: user.username,
@@ -2247,6 +2386,36 @@ let page = pathname
       });
 
       return sendJson(res, 200, { ok: true, posts });
+    });
+    return;
+  }
+
+  // DELETE /api/admin/posts/:id
+  // 投稿の物理削除（announcement.manage 権限）
+  if (pathname.match(/^\/api\/admin\/posts\/(\d+)$/) && req.method === 'DELETE') {
+    requirePermission(req, res, 'announcement.manage', (user) => {
+      const match = pathname.match(/^\/api\/admin\/posts\/(\d+)$/);
+      const postId = parseInt(match[1], 10);
+
+      const post = db.prepare(`SELECT id, status FROM posts WHERE id = ?`).get(postId);
+      if (!post) {
+        return sendJson(res, 404, { ok: false, error: 'Post not found' });
+      }
+
+      db.prepare(`DELETE FROM post_reactions WHERE post_id = ?`).run(postId);
+      db.prepare(`DELETE FROM moderation_logs WHERE post_id = ?`).run(postId);
+      db.prepare(`DELETE FROM post_aggregations WHERE representative_post_id = ?`).run(postId);
+      db.prepare(`DELETE FROM posts WHERE id = ?`).run(postId);
+
+      logEvent('post_deleted', {
+        username: user.username,
+        sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+        userAgent: req.headers['user-agent'] || '',
+        page: pathname,
+        detail: JSON.stringify({ postId, oldStatus: post.status })
+      });
+
+      return sendJson(res, 200, { ok: true });
     });
     return;
   }

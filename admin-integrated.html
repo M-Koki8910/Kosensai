@@ -698,6 +698,26 @@
       word-wrap: break-word;
     }
 
+    .home-panel {
+      background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);
+      border: 1px solid #d8e3ff;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 10px 30px rgba(37, 78, 144, 0.08);
+    }
+
+    .home-panel h2 {
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: #1f2d3d;
+    }
+
+    .home-panel p {
+      font-size: 18px;
+      color: #3c4a5d;
+      line-height: 1.8;
+    }
+
     .page {
       display: none;
       padding: 20px;
@@ -862,6 +882,7 @@
     <div class="sidebar" id="sidebar">
       <div class="sidebar-title">🛠 管理画面</div>
       <ul class="sidebar-menu">
+        <li><button class="nav-item" data-page="home">🏠 ホーム</button></li>
         <li><button class="nav-item active" data-page="dashboard">📊 ダッシュボード</button></li>
         <li><button class="nav-item" data-page="posts">📝 投稿管理</button></li>
         <li><button class="nav-item" data-page="ng-rules">🚫 NG判定ルール</button></li>
@@ -889,12 +910,25 @@
       <div class="main-content" id="mainContent">
         <div id="message" class="message"></div>
 
+        <div id="home" class="page">
+          <div class="page-header">
+            <div class="page-title">ホーム</div>
+<!--             <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
+ -->          </div>
+
+          <div class="home-panel">
+            <h2>管理画面へようこそ</h2>
+            <p>左上☰からメニューを展開できます。</p>
+            <p>ページの再読み込みは避けてください。</p>
+          </div>
+        </div>
+
         <!-- ダッシュボード -->
-        <div id="dashboard" class="page active">
+        <div id="dashboard" class="page">
           <div class="page-header">
             <div class="page-title">ダッシュボード</div>
-            <div class="page-subtitle">管理画面へようこそ</div>
-          </div>
+<!--             <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
+ -->          </div>
           <div class="stat-row">
             <div class="stat-item">
               <div class="stat-number" id="dashboardPosts">0</div>

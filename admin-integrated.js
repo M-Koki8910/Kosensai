@@ -103,10 +103,8 @@ loginForm.addEventListener('submit', async (e) => {
       showAdminScreen();
       applyUIAccessControl();
       
-      // ★修正：ダッシュボードに強制遷移
-      showPage('dashboard');
-      
-      loadDashboard();
+      // ★修正：初回表示はホームへ
+      showPage('home');
     } else {
       showLoginMessage(data.error || 'ログインに失敗しました', 'error');
     }
@@ -165,6 +163,14 @@ function showAdminScreen() {
 // ★【修正】showPage 関数: ページ表示とデータロード
 // ============================================================================
 function showPage(page) {
+
+  if (page === 'home') {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('home').classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('[data-page="home"]').classList.add('active');
+    return;
+  }
  
   // publish / site-control ページは administrator のみ
   if (page === 'publish' || page === 'site-control') {
@@ -407,7 +413,7 @@ async function checkSession() {
       applyUIAccessControl();
       
       // ★修正：showPage() を呼ぶだけで loadDashboard() もカバー
-      showPage('dashboard');
+      //showPage('dashboard');
  
     } else {
       showLoginScreen();
@@ -498,6 +504,7 @@ async function loadPosts() {
  onclick="hidePost(${post.id})">
  非表示
 </button>
+          <button class="btn btn-danger" onclick="deletePost(${post.id})">削除</button>
         </td>
       </tr>
     `).join('');
@@ -651,6 +658,54 @@ async function hidePost(postId) {
 
     showMessage(
       '非表示に失敗しました',
+      'error'
+    );
+  }
+}
+
+async function deletePost(postId) {
+
+  if (!confirm('投稿を削除しますか？ この操作は取り消せません。')) {
+    return;
+  }
+
+  try {
+
+    const response =
+      await securefetch(
+        `/api/admin/posts/${postId}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+    if (!response) return;
+
+    const data = await response.json();
+
+    if (data.ok) {
+
+      showMessage(
+        '投稿を削除しました',
+        'success'
+      );
+
+      loadPosts();
+
+    } else {
+
+      showMessage(
+        data.error,
+        'error'
+      );
+    }
+
+  } catch (e) {
+
+    console.error(e);
+
+    showMessage(
+      '削除に失敗しました',
       'error'
     );
   }
