@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高専祭 抽選会｜参加受付</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.7.0/minified/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="./script.js"></script>
+  <style>
+    :root {
+
+      --bg: #f5f9ff;
+
+      --panel: #ffffff;
+
+      --border: #dbeafe;
+
+      --primary: #2563eb;
+
+      --primary-dark: #1d4ed8;
+
+      --text: #1e293b;
+
+      --sub: #64748b;
+
+    }
+
+    body {
+
+      margin: 0;
+
+      background: var(--bg);
+
+      font-family: "Yu Gothic", sans-serif;
+
+    }
+
+    .page {
+
+      width: min(700px, 90%);
+
+      margin: auto;
+
+      padding: 40px 0;
+
+    }
+
+    .card {
+
+      background: var(--panel);
+
+      border: 1px solid var(--border);
+
+      border-radius: 20px;
+
+      padding: 32px;
+
+      text-align: center;
+
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .05);
+
+    }
+
+    .eyebrow {
+
+      color: var(--primary);
+
+      font-weight: bold;
+
+      letter-spacing: .1em;
+
+    }
+
+    .description {
+
+      color: var(--sub);
+
+      margin-bottom: 30px;
+
+    }
+
+    .reader-shell {
+
+      border-radius: 16px;
+
+      overflow: hidden;
+
+      background: #e5eefc;
+
+    }
+
+    #cameraView {
+
+      width: 100%;
+
+      display: block;
+
+    }
+
+    .scan-frame {
+
+      position: absolute;
+
+      top: 50%;
+
+      left: 50%;
+
+      transform: translate(-50%, -50%);
+
+      width: 240px;
+
+      height: 240px;
+
+      border: 4px solid var(--primary);
+
+      border-radius: 20px;
+
+    }
+
+    #reader {
+
+      position: relative;
+
+    }
+
+    .scanner-state {
+
+      margin: 20px 0;
+
+      color: var(--sub);
+
+    }
+
+    .primary-btn {
+
+      border: none;
+
+      background: var(--primary);
+
+      color: white;
+
+      padding: 14px 30px;
+
+      border-radius: 999px;
+
+      cursor: pointer;
+
+      font-size: 1rem;
+
+    }
+
+    .primary-btn:hover {
+
+      background: var(--primary-dark);
+
+    }
+
+    .result-card {
+
+      margin-top: 40px;
+
+    }
+
+    .complete {
+
+      color: #0f766e;
+
+      font-weight: bold;
+
+    }
+
+    .lottery-number {
+
+      font-size: 5rem;
+
+      font-weight: 900;
+
+      color: var(--primary);
+
+      margin: 20px 0;
+
+    }
+
+    .result-text {
+
+      color: var(--sub);
+
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <a href="./index.html" class="home-link" aria-label="ホームに戻る">
+      <img src="./logo.png" alt="高専祭TOP" class="logo">
+    </a>
+    <button class="menu-toggle" aria-label="メニューを開く">☰</button>
+  </div>
+
+  <nav id="nav" aria-label="ページ移動">
+    <ul>
+      <li><a href="./about.html">高専祭とは</a></li>
+      <li><a href="./guest.html">ゲスト紹介</a></li>
+      <li><a href="./shop.html">模擬店紹介</a></li>
+      <li><a href="./event.html">イベント紹介</a></li>
+      <li><a href="./stamp-rally.html">スタンプラリー</a></li>
+      <li><a href="./lottery-guide.html">抽選会の説明</a></li>
+      <li><a href="./lottery-entry.html">抽選会参加受付</a></li>
+      <li><a href="./lottery-prizes.html">景品紹介</a></li>
+      <li><a href="./schedule.html">スケジュール</a></li>
+      <li><a href="./company.html">ご協賛企業紹介</a></li>
+      <li><a href="./map.html">会場マップ</a></li>
+      <li><a href="./about-kosen.html">松江高専とは</a></li>
+      <li><a href="./announcements.html">お知らせ</a></li>
+      <li><a href="./bulletin.html">掲示板</a></li>
+      <li><a href="./admin-integrated.html">管理ページ</a></li>
+    </ul>
+    <div class="nav-footer">
+      <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank" rel="noopener noreferrer">
+        <img src="./insta.png" alt="Instagram" class="nav-social-icon">学校広報
+      </a>
+      <a class="nav-social" href="https://www.instagram.com/mct_gakuseikai/" target="_blank" rel="noopener noreferrer">
+        <img src="./insta.png" alt="Instagram" class="nav-social-icon">学生会
+      </a>
+    </div>
+  </nav>
+
+  <main class="page">
+
+    <!-- 読み取り画面 -->
+    <section class="card" id="readerCard">
+
+      <p class="eyebrow">LOTTERY ENTRY</p>
+
+      <h1>抽選会参加受付</h1>
+
+      <p class="description">
+        QRコードを読み取ると抽選番号を発行します。
+      </p>
+
+      <div class="reader-shell">
+        <div id="reader">
+          <video id="cameraView" playsinline muted></video>
+          <div class="scan-frame"></div>
+        </div>
+      </div>
+
+      <p id="scannerState" class="scanner-state">
+        「受付QRコード」を読み取ってください
+      </p>
+
+      <button class="primary-btn" id="startScanBtn">
+        カメラを起動
+      </button>
+
+    </section>
+
+    <!-- 結果画面 -->
+    <section class="card result-card" id="resultCard" hidden>
+
+      <p class="complete">受付完了</p>
+
+      <h2>あなたの抽選番号</h2>
+
+      <div id="lotteryNumber" class="lottery-number">
+        0000
+      </div>
+
+      <p class="result-text">
+        抽選会まで番号を保存してください。
+      </p>
+
+    </section>
+
+  </main>
+
+  <script>
+    const startScanBtn = document.getElementById('startScanBtn');
+    //const resetBtn = document.getElementById('resetBtn');
+    //const manualInput = document.getElementById('manualInput');
+    //const manualSubmitBtn = document.getElementById('manualSubmitBtn');
+    const scannerState = document.getElementById('scannerState');
+    const lotteryNumberEl = document.getElementById('lotteryNumber');
+    //const lotteryMetaEl = document.getElementById('lotteryMeta');
+    //const visitorIdEl = document.getElementById('visitorId');
+    //const stampCountEl = document.getElementById('stampCount');
+    //const stampMetaEl = document.getElementById('stampMeta');
+    //const eventHistory = document.getElementById('eventHistory');
+
+    let cameraStream = null;
+    let barcodeDetector = null;
+    let scannerActive = false;
+    let isProcessing = false;
+    let scanFrameId = null;
+    const cameraView = document.getElementById('cameraView');
+
+    function setState(message, kind = '') {
+      scannerState.className = `scanner-state ${kind}`.trim();
+      scannerState.textContent = message;
+    }
+
+    function appendHistory(title, body) {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `<strong>${title}</strong><br>${body}`;
+      eventHistory.prepend(item);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function parseVisitorId(rawValue) {
+      const value = String(rawValue || '').trim();
+      if (!value) return null;
+
+      const patterns = [
+        /^kosen-entry:([0-9a-fA-F-]{8,})$/,
+        /^visitor:([0-9a-fA-F-]{8,})$/,
+      ];
+
+      for (const pattern of patterns) {
+        const match = value.match(pattern);
+        if (match) return match[1];
+      }
+
+      try {
+        const url = new URL(value);
+        const candidate = url.searchParams.get('visitor_id') || url.searchParams.get('visitor') || url.searchParams.get('uuid');
+        if (candidate) return candidate.trim();
+      } catch (error) {
+        // URL ではない入力はそのまま判定する
+      }
+
+      const uuidMatch = value.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}/);
+      if (uuidMatch) return uuidMatch[0];
+
+      return null;
+    }
+
+    function isLotteryQR(rawValue) {
+      return rawValue === "Kosensai-LotteryCode";
+    }
+
+    async function registerAndIssue(visitorId) {
+      if (!visitorId || isProcessing) return;
+      isProcessing = true;
+      setState('受付中です。スタンプ履歴と連携しています…');
+
+      try {
+        const registerResponse = await fetch('/api/visitor/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ visitor_id: visitorId })
+        });
+        const registerData = await registerResponse.json().catch(() => ({}));
+
+        if (!registerResponse.ok && !registerData.ok) {
+          throw new Error(registerData.error || '訪問者登録に失敗しました');
+        }
+
+        const entryResponse = await fetch('/api/lottery/entry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ visitor_id: visitorId })
+        });
+        const entryData = await entryResponse.json().catch(() => ({}));
+
+        if (!entryResponse.ok && !entryData.ok) {
+          throw new Error(entryData.error || '抽選番号の発行に失敗しました');
+        }
+
+        const stampCount = Number(entryData.acquired_stamps || 0);
+        const lotteryNumber = String(entryData.lottery_number || '---');
+
+        //visitorIdEl.textContent = visitorId;
+        //lotteryNumberEl.textContent = lotteryNumber;
+        //stampCountEl.textContent = `${stampCount} 件`;
+        //lotteryMetaEl.textContent = entryData.existing ? '既に発行済みの抽選番号を再表示しました。' : '新しく抽選番号を発行しました。';
+        //stampMetaEl.textContent = `スタンプ取得数 ${stampCount} 件 / 総ブース数 ${entryData.total_companies || 0}`;
+
+
+        const statusLabel = entryData.existing ? '再表示' : '発行完了';
+        setState(`受付完了: ${lotteryNumber} を発行しました。`, 'is-success');
+        showLotteryResult(lotteryNumber);
+        /*  appendHistory(statusLabel, `UUID <strong>${escapeHtml(visitorId)}</strong> に対して抽選番号 <strong>${escapeHtml(lotteryNumber)}</strong> を保存しました。`);
+         localStorage.setItem('lottery-last-issued', JSON.stringify({
+           visitor_id: visitorId,
+           lottery_number: lotteryNumber,
+           stamp_count: stampCount,
+           issued_at: new Date().toISOString() */
+        //}));
+      } catch (error) {
+        console.error(error);
+        setState(error.message || '受付に失敗しました。', 'is-error');
+        appendHistory('エラー', error.message || '処理に失敗しました。');
+      } finally {
+        isProcessing = false;
+      }
+    }
+
+    async function stopScanner() {
+      scannerActive = false;
+      if (scanFrameId !== null) {
+        cancelAnimationFrame(scanFrameId);
+        scanFrameId = null;
+      }
+
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+      }
+
+      if (cameraView) {
+        cameraView.srcObject = null;
+      }
+    }
+
+    async function startScanner() {
+      if (scannerActive || isProcessing) return;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.BarcodeDetector) {
+        setState('この環境では自動読み取りが使えません。手動入力を使ってください。', 'is-error');
+        return;
+      }
+
+      try {
+        barcodeDetector = barcodeDetector || new BarcodeDetector({ formats: ['qr_code'] });
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+
+        cameraView.srcObject = cameraStream;
+        await cameraView.play();
+        scannerActive = true;
+        setState('カメラを起動しました。参加用QRをかざしてください。');
+
+        const scanTick = async () => {
+          if (!scannerActive || !cameraView || cameraView.readyState < 2) {
+            scanFrameId = requestAnimationFrame(scanTick);
+            return;
+          }
+
+          try {
+            const codes = await barcodeDetector.detect(cameraView);
+            if (isLotteryQR(codes[0].rawValue)) {
+
+              let visitorId = localStorage.getItem("visitor_uuid");
+
+              if (!visitorId) {
+
+                visitorId = crypto.randomUUID();
+
+                localStorage.setItem(
+                  "visitor_uuid",
+                  visitorId
+                );
+
+              }
+
+              await stopScanner();
+
+              await registerAndIssue(visitorId);
+
+              return;
+            }
+          } catch (error) {
+            console.warn('QR scan failed', error);
+          }
+
+          scanFrameId = requestAnimationFrame(scanTick);
+        };
+
+        scanFrameId = requestAnimationFrame(scanTick);
+      } catch (error) {
+        console.error(error);
+        await stopScanner();
+        setState('カメラの起動に失敗しました。手動入力を使ってください。', 'is-error');
+      }
+    }
+
+    startScanBtn.addEventListener('click', startScanner);
+    resetBtn.addEventListener('click', async () => {
+      await stopScanner();
+      eventHistory.innerHTML = '';
+      visitorIdEl.textContent = '未取得';
+      lotteryNumberEl.textContent = '未発行';
+      stampCountEl.textContent = '0 件';
+      lotteryMetaEl.textContent = 'QRを読み取るとここに表示されます。';
+      stampMetaEl.textContent = '読み取った UUID に紐づく履歴件数です。';
+      setState('結果をクリアしました。再度カメラを起動してください。');
+    });
+    manualSubmitBtn.addEventListener('click', async () => {
+      const visitorId = parseVisitorId(manualInput.value);
+      if (!visitorId) {
+        setState('UUID を読み取れませんでした。', 'is-error');
+        return;
+      }
+      await registerAndIssue(visitorId);
+    });
+    manualInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        manualSubmitBtn.click();
+      }
+    });
+
+    const saved = localStorage.getItem('lottery-last-issued');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.lottery_number && parsed.visitor_id) {
+          visitorIdEl.textContent = parsed.visitor_id;
+          lotteryNumberEl.textContent = parsed.lottery_number;
+          stampCountEl.textContent = `${Number(parsed.stamp_count || 0)} 件`;
+          lotteryMetaEl.textContent = '前回の発行結果を表示しています。';
+          stampMetaEl.textContent = 'スタンプ履歴と連携した抽選番号です。';
+          appendHistory('前回の結果', `UUID <strong>${parsed.visitor_id}</strong> / 抽選番号 <strong>${parsed.lottery_number}</strong>`);
+        }
+      } catch (error) {
+        console.warn('saved lottery result parse failed', error);
+      }
+    }
+
+    const menuToggle = document.querySelector('.menu-toggle');
+    const nav = document.getElementById('nav');
+
+    if (menuToggle && nav) {
+      menuToggle.addEventListener('click', () => {
+        nav.classList.toggle('active');
+      });
+
+      document.querySelectorAll('#nav a').forEach((link) => {
+        link.addEventListener('click', () => {
+          nav.classList.remove('active');
+        });
+      });
+    }
+
+    function showLotteryResult(number) {
+
+      stopScanner();
+
+      document
+        .getElementById("readerCard")
+        .hidden = true;
+
+      document
+        .getElementById("resultCard")
+        .hidden = false;
+
+      document
+        .getElementById("lotteryNumber")
+        .textContent = number;
+
+    }
+  </script>
+</body>
+
+</html>

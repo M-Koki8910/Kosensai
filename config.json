@@ -1,6 +1,9 @@
 {
   "pages": {
-    "bulletin": true
+    "bulletin": true,
+    "lottery-entry": true,
+    "lottery-guide": true,
+    "lottery-prizes": true
   },
   "visibility": {
     "bulletin": true

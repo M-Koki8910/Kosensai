@@ -79,6 +79,9 @@ function loadConfig() {
       'shop',
       'event',
       'stamp-rally',
+        'lottery-entry',
+        'lottery-guide',
+        'lottery-prizes',
       'schedule',
       'company',
       'map',
@@ -677,6 +680,10 @@ function sendJson(res, statusCode, data) {
     'X-Content-Type-Options': 'nosniff'
   });
   res.end(JSON.stringify(data));
+}
+
+function formatLotteryNumberFromId(id) {
+  return `LOT-${String(id).padStart(6, '0')}`;
 }
 
 function getFilePath(urlPath) {
@@ -3070,6 +3077,26 @@ let page = pathname
           return sendJson(res, 404, { ok: false, error: 'Visitor not found' });
         }
 
+        const existingEntry = db.prepare(
+          'SELECT * FROM lottery WHERE visitor_id = ? ORDER BY entry_time DESC LIMIT 1'
+        ).get(visitorId);
+
+        if (existingEntry) {
+          return sendJson(res, 200, {
+            ok: true,
+            message: 'Lottery entry already exists',
+            lottery_id: existingEntry.id,
+            visitor_id: visitorId,
+            lottery_number: existingEntry.lottery_number,
+            weight: parseFloat(Number(existingEntry.weight).toFixed(4)),
+            acquired_stamps: db.prepare(
+              'SELECT COUNT(*) as count FROM stamp_history WHERE visitor_id = ?'
+            ).get(visitorId).count,
+            total_companies: COMPANY_MASTER.length,
+            existing: true
+          });
+        }
+
         // スタンプ取得履歴を取得
         const stamps = db.prepare(
           'SELECT COUNT(*) as count FROM stamp_history WHERE visitor_id = ?'
@@ -3081,14 +3108,38 @@ let page = pathname
         // 重みづけを算出: 1 + (獲得数 / 全ブース数)
         const weight = 1 + (acquiredCount / totalCompanies);
 
-        // 抽選番号を生成（UUID + タイムスタンプ）
-        const lotteryNumber = `${visitorId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const createLotteryEntry = (entryVisitorId, entryWeight) => {
+          db.exec('BEGIN IMMEDIATE TRANSACTION');
 
-        // 抽選エントリーを記録
-        const result = db.prepare(`
-          INSERT INTO lottery (visitor_id, lottery_number, weight, entry_time)
-          VALUES (?, ?, ?, datetime('now', '+9 hours'))
-        `).run(visitorId, lotteryNumber, weight);
+          try {
+            const insertResult = db.prepare(`
+              INSERT INTO lottery (visitor_id, lottery_number, weight, entry_time)
+              VALUES (?, ?, ?, datetime('now', '+9 hours'))
+            `).run(entryVisitorId, `pending-${crypto.randomUUID()}`, entryWeight);
+
+            const lotteryId = Number(insertResult.lastInsertRowid);
+            const lotteryNumber = formatLotteryNumberFromId(lotteryId);
+
+            db.prepare(`
+              UPDATE lottery
+              SET lottery_number = ?
+              WHERE id = ?
+            `).run(lotteryNumber, lotteryId);
+
+            db.exec('COMMIT');
+            return { lotteryId, lotteryNumber };
+          } catch (error) {
+            try {
+              db.exec('ROLLBACK');
+            } catch (rollbackError) {
+              console.error('Failed to rollback lottery insert', rollbackError);
+            }
+            throw error;
+          }
+        };
+
+        const createdEntry = createLotteryEntry(visitorId, weight);
+        const lotteryNumber = createdEntry.lotteryNumber;
 
         logEvent('lottery_entry', {
           username: null,
@@ -3107,7 +3158,7 @@ let page = pathname
         return sendJson(res, 201, {
           ok: true,
           message: 'Lottery entry successful',
-          lottery_id: result.lastInsertRowid,
+          lottery_id: createdEntry.lotteryId,
           visitor_id: visitorId,
           lottery_number: lotteryNumber,
           weight: parseFloat(weight.toFixed(4)),
