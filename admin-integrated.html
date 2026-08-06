@@ -128,13 +128,66 @@
       color: white;
       overflow-y: auto;
       padding: 20px 0;
+<<<<<<< HEAD
       display: none;
+=======
+      display: block;
+>>>>>>> feature/Work-local
     }
 
     .sidebar.show {
       display: block;
     }
 
+<<<<<<< HEAD
+=======
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        padding: 10px 0;
+        max-height: auto;
+        overflow-y: visible;
+        position: fixed;
+        left: -250px;
+        top: 0;
+        height: 100vh;
+        width: 250px;
+        transition: left 0.3s ease;
+        z-index: 1001;
+      }
+
+      .sidebar.show {
+        display: block;
+        left: 0;
+      }
+
+      .sidebar-title {
+        padding: 10px 15px;
+        min-width: auto;
+        border-bottom: none;
+        border-right: 1px solid #34495e;
+      }
+
+      .sidebar-menu {
+        flex-direction: column;
+        gap: 0;
+        padding-top: 0;
+      }
+
+      .sidebar-menu button {
+        padding: 12px 20px;
+        white-space: normal;
+        border-right: none;
+      }
+
+      .sidebar-menu button.active {
+        border-left: 3px solid #2980b9;
+        border-bottom: none;
+        padding-left: 17px;
+      }
+    }
+
+>>>>>>> feature/Work-local
     .sidebar-title {
       padding: 0 20px 20px;
       font-size: 18px;
@@ -187,6 +240,16 @@
       display: block;
     }
 
+<<<<<<< HEAD
+=======
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 15px;
+        width: 100%;
+      }
+    }
+
+>>>>>>> feature/Work-local
     .page {
       display: none;
     }
@@ -222,6 +285,20 @@
       font-size: 14px;
     }
 
+<<<<<<< HEAD
+=======
+    @media (max-width: 768px) {
+      .header-bar {
+        padding: 10px 15px;
+      }
+
+      .user-info {
+        gap: 10px;
+        font-size: 12px;
+      }
+    }
+
+>>>>>>> feature/Work-local
     .logout-btn {
       background: #dc3545;
       color: white;
@@ -252,6 +329,24 @@
       font-size: 14px;
     }
 
+<<<<<<< HEAD
+=======
+    @media (max-width: 768px) {
+      .page-header {
+        margin-bottom: 20px;
+      }
+
+      .page-title {
+        font-size: 20px;
+        margin-bottom: 5px;
+      }
+
+      .page-subtitle {
+        font-size: 12px;
+      }
+    }
+
+>>>>>>> feature/Work-local
     .stat-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -279,6 +374,30 @@
       margin-top: 8px;
     }
 
+<<<<<<< HEAD
+=======
+    @media (max-width: 768px) {
+      .stat-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .stat-item {
+        padding: 15px;
+      }
+
+      .stat-number {
+        font-size: 24px;
+      }
+
+      .stat-label {
+        font-size: 11px;
+        margin-top: 5px;
+      }
+    }
+
+>>>>>>> feature/Work-local
     .controls {
       margin-bottom: 20px;
       display: flex;
@@ -296,12 +415,47 @@
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
+<<<<<<< HEAD
+=======
+      font-size: 14px;
+>>>>>>> feature/Work-local
     }
 
     .filter-select {
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
+<<<<<<< HEAD
+=======
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        gap: 8px;
+      }
+
+      .search-box {
+        min-width: 100%;
+      }
+
+      .search-box input {
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      .filter-select {
+        padding: 8px;
+        font-size: 12px;
+        min-width: 100px;
+        flex: 1;
+      }
+
+      .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+>>>>>>> feature/Work-local
     }
 
     .btn {
@@ -351,6 +505,11 @@
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       margin-top: 15px;
+<<<<<<< HEAD
+=======
+      margin-bottom: 20px;
+      font-size: 12px;
+>>>>>>> feature/Work-local
     }
 
     thead {
@@ -359,6 +518,7 @@
     }
 
     th {
+<<<<<<< HEAD
       padding: 15px;
       text-align: left;
       font-weight: 600;
@@ -370,12 +530,81 @@
       padding: 15px;
       border-bottom: 1px solid #dee2e6;
       font-size: 14px;
+=======
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      font-size: 12px;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #dee2e6;
+      font-size: 12px;
+>>>>>>> feature/Work-local
     }
 
     tbody tr:hover {
       background: #f9f9f9;
     }
 
+<<<<<<< HEAD
+=======
+    @media (max-width: 768px) {
+      table {
+        font-size: 11px;
+        margin-bottom: 15px;
+      }
+
+      th {
+        padding: 8px;
+        font-size: 11px;
+      }
+
+      td {
+        padding: 8px;
+        font-size: 11px;
+      }
+
+      /* モバイル向けテーブルレイアウト */
+      table thead {
+        display: none;
+      }
+
+      table, table tbody, table tr, table td {
+        display: block;
+        width: 100%;
+      }
+
+      table tbody tr {
+        border: 1px solid #dee2e6;
+        margin-bottom: 10px;
+        border-radius: 4px;
+      }
+
+      table td {
+        text-align: right;
+        padding-left: 40%;
+        position: relative;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 8px;
+        font-weight: bold;
+        text-align: left;
+      }
+
+      table td:last-child {
+        border-bottom: none;
+      }
+    }
+
+>>>>>>> feature/Work-local
     .status-badge {
       display: inline-block;
       padding: 5px 10px;
@@ -430,6 +659,36 @@
       margin-bottom: 5px;
       font-weight: 600;
       color: #333;
+<<<<<<< HEAD
+=======
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .modal-content {
+        padding: 20px;
+        width: 95%;
+        max-height: 90vh;
+      }
+
+      .modal-header {
+        font-size: 16px;
+        margin-bottom: 15px;
+      }
+
+      .modal-body {
+        margin-bottom: 15px;
+      }
+
+      .form-group {
+        margin-bottom: 12px;
+      }
+
+      .form-group label {
+        margin-bottom: 4px;
+        font-size: 12px;
+      }
+>>>>>>> feature/Work-local
     }
 
     .form-group input,
@@ -487,6 +746,29 @@
       word-wrap: break-word;
     }
 
+<<<<<<< HEAD
+=======
+    .home-panel {
+      background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);
+      border: 1px solid #d8e3ff;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 10px 30px rgba(37, 78, 144, 0.08);
+    }
+
+    .home-panel h2 {
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: #1f2d3d;
+    }
+
+    .home-panel p {
+      font-size: 18px;
+      color: #3c4a5d;
+      line-height: 1.8;
+    }
+
+>>>>>>> feature/Work-local
     .page {
       display: none;
       padding: 20px;
@@ -520,14 +802,90 @@
       padding: 8px;
       border-bottom: 1px solid #ddd;
     }
+<<<<<<< HEAD
+=======
+
+    /* ハンバーガーメニュー用CSS */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #333;
+      cursor: pointer;
+      padding: 10px;
+      margin-right: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      .sidebar {
+        position: fixed;
+        left: -250px;
+        top: 0;
+        height: 100vh;
+        width: 250px;
+        transition: left 0.3s ease;
+        z-index: 1001;
+      }
+
+      .sidebar.show {
+        display: block;
+        left: 0;
+      }
+
+      .sidebar-menu {
+        flex-direction: column;
+        padding-top: 10px;
+      }
+
+      .sidebar-menu button {
+        padding: 12px 20px;
+        width: 100%;
+        border-right: none;
+      }
+
+      .sidebar-menu button.active {
+        border-left: 3px solid #2980b9;
+        border-bottom: none;
+        padding-left: 17px;
+      }
+
+      /* メニュー開閉時のオーバーレイ */
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+      }
+
+      .sidebar-overlay.show {
+        display: block;
+      }
+    }
+>>>>>>> feature/Work-local
   </style>
 </head>
 
 <div class="topbar">
+<<<<<<< HEAD
   <a href="/" class="home-link">
     <img src="/logo.png" alt="高専祭TOP" class="logo">
 </a>
    <!--  <a href="/" class="home-link">高専祭TOP-開発用ページ</a>
+=======
+  <a href="./index.html" class="home-link">
+    <img src="./logo.png" alt="高専祭TOP" class="logo">
+</a>
+   <!--  <a href="./index.html" class="home-link">高専祭TOP-開発用ページ</a>
+>>>>>>> feature/Work-local
      <p>ページの再読み込みを行わないでください</p>
      <button class="menu-toggle" aria-label="メニューを開く"></button>
  --> </div>
@@ -581,9 +939,17 @@
 
   <!-- 管理画面 -->
   <div id="adminScreen" class="admin-container" style="display: none;">
+<<<<<<< HEAD
     <div class="sidebar" id="sidebar">
       <div class="sidebar-title">🛠 管理画面</div>
       <ul class="sidebar-menu">
+=======
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-title">🛠 管理画面</div>
+      <ul class="sidebar-menu">
+        <li><button class="nav-item" data-page="home">🏠 ホーム</button></li>
+>>>>>>> feature/Work-local
         <li><button class="nav-item active" data-page="dashboard">📊 ダッシュボード</button></li>
         <li><button class="nav-item" data-page="posts">📝 投稿管理</button></li>
         <li><button class="nav-item" data-page="ng-rules">🚫 NG判定ルール</button></li>
@@ -599,7 +965,11 @@
 
     <div style="flex: 1; display: flex; flex-direction: column;">
       <div class="header-bar" id="headerBar">
+<<<<<<< HEAD
        
+=======
+        <button class="menu-toggle" id="menuToggle" aria-label="メニューを開く">☰</button>
+>>>>>>> feature/Work-local
         <div style="flex: 1;"></div>
         <div class="user-info">
           <span id="userDisplayName">ユーザー</span>
@@ -611,12 +981,34 @@
       <div class="main-content" id="mainContent">
         <div id="message" class="message"></div>
 
+<<<<<<< HEAD
         <!-- ダッシュボード -->
         <div id="dashboard" class="page active">
           <div class="page-header">
             <div class="page-title">ダッシュボード</div>
             <div class="page-subtitle">管理画面へようこそ</div>
           </div>
+=======
+        <div id="home" class="page">
+          <div class="page-header">
+            <div class="page-title">ホーム</div>
+<!--             <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
+ -->          </div>
+
+          <div class="home-panel">
+            <h2>管理画面へようこそ</h2>
+            <p>左上☰からメニューを展開できます。</p>
+            <p>ページの再読み込みは避けてください。</p>
+          </div>
+        </div>
+
+        <!-- ダッシュボード -->
+        <div id="dashboard" class="page">
+          <div class="page-header">
+            <div class="page-title">ダッシュボード</div>
+<!--             <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
+ -->          </div>
+>>>>>>> feature/Work-local
           <div class="stat-row">
             <div class="stat-item">
               <div class="stat-number" id="dashboardPosts">0</div>
@@ -938,7 +1330,54 @@
     </div>
   </div>
 
+<<<<<<< HEAD
   <script src="admin-integrated.js"></script>
+=======
+  <script>
+    // ハンバーガーメニューの開閉機能
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+      // メニュー開閉ボタンのクリック
+      if (menuToggle) {
+        menuToggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          sidebar.classList.toggle('show');
+          sidebarOverlay.classList.toggle('show');
+        });
+      }
+
+      // オーバーレイクリックでメニューを閉じる
+      if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function() {
+          sidebar.classList.remove('show');
+          sidebarOverlay.classList.remove('show');
+        });
+      }
+
+      // メニュー項目クリックでメニューを閉じる
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => {
+        item.addEventListener('click', function() {
+          sidebar.classList.remove('show');
+          sidebarOverlay.classList.remove('show');
+        });
+      });
+
+      // ウィンドウリサイズ時に768px以上でメニューを閉じる
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+          sidebar.classList.remove('show');
+          sidebarOverlay.classList.remove('show');
+        }
+      });
+    });
+  </script>
+
+  <script src="./admin-integrated.js"></script>
+>>>>>>> feature/Work-local
   <script src="./script.js"></script>
 </body>
 

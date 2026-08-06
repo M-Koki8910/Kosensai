@@ -94,6 +94,7 @@ const BulletinBoard = (() => {
     div.className = "post-item";
 
     div.innerHTML = `
+<<<<<<< HEAD
       <div class="post-header">
         <span>${formatDate(post.created_at)}</span>
         <span class="post-status">${post.status}</span>
@@ -105,6 +106,58 @@ const BulletinBoard = (() => {
     return div;
   }
 
+=======
+      <div class="post-body">
+        <div class="post-header">
+          <span>${formatDate(post.created_at)}</span>
+          <span class="post-status">${post.status}</span>
+        </div>
+        <div class="post-content"></div>
+        <div class="post-reactions">
+          <button type="button" class="reaction-btn thumbs-up ${post.reacted_thumbs_up ? "active" : ""}" data-reaction="thumbs_up">
+            👍 <span class="reaction-count">${post.thumbs_up_count || 0}</span>
+          </button>
+          <button type="button" class="reaction-btn heart ${post.reacted_heart ? "active" : ""}" data-reaction="heart">
+            ❤ <span class="reaction-count">${post.heart_count || 0}</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    div.querySelector(".post-content").textContent = post.content;
+
+    div.querySelectorAll(".reaction-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        sendReaction(post.id, button.dataset.reaction);
+      });
+    });
+
+    return div;
+  }
+
+  async function sendReaction(postId, reactionType) {
+    try {
+      const res = await fetch(`${API}/${postId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction_type: reactionType })
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        showMessage(data.error || "リアクションに失敗しました", "error");
+        return;
+      }
+
+      showMessage(data.alreadyReacted ? "既にリアクション済みです" : "リアクションしました", "success");
+      loadPosts();
+    } catch (err) {
+      showMessage("通信エラー", "error");
+    }
+  }
+
+>>>>>>> feature/Work-local
   function showMessage(text, type) {
     const el = document.getElementById("message");
     if (!el) return;

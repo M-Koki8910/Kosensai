@@ -79,6 +79,12 @@ function loadConfig() {
       'shop',
       'event',
       'stamp-rally',
+<<<<<<< HEAD
+=======
+        'lottery-entry',
+        'lottery-guide',
+        'lottery-prizes',
+>>>>>>> feature/Work-local
       'schedule',
       'company',
       'map',
@@ -200,6 +206,46 @@ const SYSTEM_ADMIN_PASSWORD =
 const db = new DatabaseSync(DB_PATH);
 
 // 各種テーブル初期化
+<<<<<<< HEAD
+=======
+// ──────────────────────────────────────────────────────────────
+// 訪問者識別・スタンプラリー・抽選連携テーブル
+// ──────────────────────────────────────────────────────────────
+
+// 訪問者管理テーブル
+db.exec(`
+  CREATE TABLE IF NOT EXISTS visitors (
+    visitor_id TEXT PRIMARY KEY,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    last_seen TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
+  );
+`);
+
+// スタンプ履歴テーブル
+db.exec(`
+  CREATE TABLE IF NOT EXISTS stamp_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_id TEXT NOT NULL,
+    company_id TEXT NOT NULL,
+    timestamp TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    FOREIGN KEY (visitor_id) REFERENCES visitors(visitor_id),
+    UNIQUE(visitor_id, company_id)
+  );
+`);
+
+// 抽選管理テーブル
+db.exec(`
+  CREATE TABLE IF NOT EXISTS lottery (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_id TEXT NOT NULL,
+    lottery_number TEXT NOT NULL UNIQUE,
+    weight REAL NOT NULL,
+    entry_time TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    FOREIGN KEY (visitor_id) REFERENCES visitors(visitor_id)
+  );
+`);
+
+>>>>>>> feature/Work-local
 db.exec(`
   CREATE TABLE IF NOT EXISTS stamp_visits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -302,6 +348,21 @@ db.exec(`
 `);
 
 db.exec(`
+<<<<<<< HEAD
+=======
+  CREATE TABLE IF NOT EXISTS post_reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL,
+    session_id TEXT NOT NULL,
+    reaction_type TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+    UNIQUE(post_id, session_id, reaction_type)
+  );
+`);
+
+db.exec(`
+>>>>>>> feature/Work-local
   CREATE TABLE IF NOT EXISTS ng_rules (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     pattern TEXT NOT NULL,
@@ -630,6 +691,13 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
+<<<<<<< HEAD
+=======
+function formatLotteryNumberFromId(id) {
+  return `LOT-${String(id).padStart(6, '0')}`;
+}
+
+>>>>>>> feature/Work-local
 function getFilePath(urlPath) {
   if (urlPath === '/' || urlPath === '') {
     return path.join(STATIC_ROOT, 'index.html');
@@ -843,6 +911,11 @@ function createVisitorSession(req, res) {
       VALUES (?, NULL, 'anonymous', 'visitor', 'all', ?, datetime('now', '+9 hours'))
     `).run(sessionId, expiresAt);
 
+<<<<<<< HEAD
+=======
+    ensureVisitorRecord(sessionId, req);
+
+>>>>>>> feature/Work-local
     try {
       setCookie(res, buildSessionCookie(req, sessionId, {
         maxAgeSeconds: Math.floor(SESSION_TTL_MS / 1000)
@@ -856,6 +929,35 @@ function createVisitorSession(req, res) {
   }
 }
 
+<<<<<<< HEAD
+=======
+function ensureVisitorRecord(visitorId, req) {
+  const normalizedVisitorId = String(visitorId || '').trim();
+
+  if (!normalizedVisitorId) {
+    return false;
+  }
+
+  const result = db.prepare(`
+    INSERT OR IGNORE INTO visitors (visitor_id, created_at, last_seen)
+    VALUES (?, datetime('now', '+9 hours'), datetime('now', '+9 hours'))
+  `).run(normalizedVisitorId);
+
+  if (result.changes > 0) {
+    logEvent('visitor_registered', {
+      username: null,
+      sessionId: normalizedVisitorId,
+      userAgent: req && req.headers ? req.headers['user-agent'] || '' : '',
+      page: req && req.url ? req.url : '',
+      detail: JSON.stringify({ visitor_id: normalizedVisitorId })
+    });
+    return true;
+  }
+
+  return false;
+}
+
+>>>>>>> feature/Work-local
 function parseBody(req, callback) {
   let body = '';
   let size = 0;
@@ -1143,12 +1245,58 @@ function getSummary(user) {
 // 投稿一覧クエリサブルーチン
 function getPostsSub(filters = {}) {
   let query = `
+<<<<<<< HEAD
     SELECT id, content, status, risk_score, created_at, updated_at
     FROM posts
     WHERE 1=1
   `;
   const params = [];
 
+=======
+    SELECT
+      p.id,
+      p.content,
+      p.status,
+      p.risk_score,
+      p.created_at,
+      p.updated_at,
+      COALESCE((
+        SELECT COUNT(*)
+        FROM post_reactions pr
+        WHERE pr.post_id = p.id AND pr.reaction_type = 'thumbs_up'
+      ), 0) AS thumbs_up_count,
+      COALESCE((
+        SELECT COUNT(*)
+        FROM post_reactions pr
+        WHERE pr.post_id = p.id AND pr.reaction_type = 'heart'
+      ), 0) AS heart_count
+  `;
+  const params = [];
+
+  if (filters.sessionId) {
+    query += `,
+      CASE WHEN EXISTS(
+        SELECT 1
+        FROM post_reactions pr
+        WHERE pr.post_id = p.id AND pr.session_id = ? AND pr.reaction_type = 'thumbs_up'
+      ) THEN 1 ELSE 0 END AS reacted_thumbs_up,
+      CASE WHEN EXISTS(
+        SELECT 1
+        FROM post_reactions pr
+        WHERE pr.post_id = p.id AND pr.session_id = ? AND pr.reaction_type = 'heart'
+      ) THEN 1 ELSE 0 END AS reacted_heart
+    `;
+    params.push(filters.sessionId, filters.sessionId);
+  } else {
+    query += `, 0 AS reacted_thumbs_up, 0 AS reacted_heart `;
+  }
+
+  query += `
+    FROM posts p
+    WHERE 1=1
+  `;
+
+>>>>>>> feature/Work-local
   if (filters.status) {
     query += ` AND status = ?`;
     params.push(filters.status);
@@ -1169,6 +1317,33 @@ function getPostsSub(filters = {}) {
   return db.prepare(query).all(...params);
 }
 
+<<<<<<< HEAD
+=======
+function getPostReactionSummary(postId, sessionId = null) {
+  const counts = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN reaction_type = 'thumbs_up' THEN 1 ELSE 0 END), 0) AS thumbs_up_count,
+      COALESCE(SUM(CASE WHEN reaction_type = 'heart' THEN 1 ELSE 0 END), 0) AS heart_count
+    FROM post_reactions
+    WHERE post_id = ?
+  `).get(postId) || { thumbs_up_count: 0, heart_count: 0 };
+
+  const reacted = sessionId ? db.prepare(`
+    SELECT reaction_type
+    FROM post_reactions
+    WHERE post_id = ? AND session_id = ?
+  `).all(postId, sessionId) : [];
+
+  return {
+    thumbs_up_count: counts.thumbs_up_count || 0,
+    heart_count: counts.heart_count || 0,
+    reacted_reaction_type: reacted[0] ? reacted[0].reaction_type : null,
+    reacted_thumbs_up: reacted.some(item => item.reaction_type === 'thumbs_up') ? 1 : 0,
+    reacted_heart: reacted.some(item => item.reaction_type === 'heart') ? 1 : 0,
+  };
+}
+
+>>>>>>> feature/Work-local
 // 公開中アナウンス一覧取得サブルーチン
 function getAnnouncementsSub() {
   const now = new Date().toISOString();
@@ -1285,9 +1460,29 @@ let page = pathname
   // ログイン時以外の不要なセッションの蓄積を防ぐため、静的ファイル読み込み時のみ匿名を発行
   if (req.method === 'GET' && !pathname.startsWith('/api')) {
     const cookies = getCookies(req);
+<<<<<<< HEAD
     if (!cookies[SESSION_COOKIE_NAME]) {
       createVisitorSession(req, res);
     }
+=======
+    let visitorId = String(cookies[SESSION_COOKIE_NAME] || '').trim();
+
+    if (!visitorId) {
+      visitorId = createVisitorSession(req, res) || '';
+    } else {
+      const sessionRow = db.prepare(`
+        SELECT id, expires_at
+        FROM sessions
+        WHERE id = ?
+      `).get(visitorId);
+
+      if (!sessionRow || isExpired(sessionRow.expires_at)) {
+        visitorId = createVisitorSession(req, res) || visitorId;
+      }
+    }
+
+    ensureVisitorRecord(visitorId, req);
+>>>>>>> feature/Work-local
   }
 
   // API: ログイン
@@ -2081,9 +2276,88 @@ let page = pathname
     return;
   }
 
+<<<<<<< HEAD
   // GET /api/posts
   // 投稿一覧（公開済みのみ・認証不要）
   if (pathname === '/api/posts' && req.method === 'GET') {
+=======
+  // POST /api/posts/:id/reactions
+  // 投稿へのリアクション追加（匿名可・Cookieセッション単位で各種1回まで）
+  if (pathname.match(/^\/api\/posts\/(\d+)\/reactions$/) && req.method === 'POST') {
+    const match = pathname.match(/^\/api\/posts\/(\d+)\/reactions$/);
+    const postId = parseInt(match[1], 10);
+
+    parseBody(req, (err, payload) => {
+      if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+
+      const reactionType = String(payload.reaction_type || payload.reactionType || '').toLowerCase();
+      if (!['thumbs_up', 'heart'].includes(reactionType)) {
+        return sendJson(res, 400, { ok: false, error: 'Invalid reaction type' });
+      }
+
+      let sessionId = String(getCookies(req)[SESSION_COOKIE_NAME] || '').trim();
+      if (!sessionId) {
+        sessionId = createVisitorSession(req, res) || '';
+      }
+
+      if (!sessionId) {
+        return sendJson(res, 500, { ok: false, error: 'Failed to create session' });
+      }
+
+      const post = db.prepare(`SELECT id, status FROM posts WHERE id = ?`).get(postId);
+      if (!post || post.status !== 'published') {
+        return sendJson(res, 404, { ok: false, error: 'Post not found' });
+      }
+
+      const existingReaction = db.prepare(`
+        SELECT reaction_type
+        FROM post_reactions
+        WHERE post_id = ? AND session_id = ?
+      `).get(postId, sessionId);
+
+      if (existingReaction) {
+        if (existingReaction.reaction_type === reactionType) {
+          const summary = getPostReactionSummary(postId, sessionId);
+          return sendJson(res, 200, {
+            ok: true,
+            added: false,
+            alreadyReacted: true,
+            reaction_type: reactionType,
+            ...summary
+          });
+        }
+
+        return sendJson(res, 409, {
+          ok: false,
+          error: 'Already reacted',
+          reaction_type: existingReaction.reaction_type
+        });
+      }
+
+      const result = db.prepare(`
+        INSERT OR IGNORE INTO post_reactions
+        (post_id, session_id, reaction_type, created_at, updated_at)
+        VALUES (?, ?, ?, datetime('now', '+9 hours'), datetime('now', '+9 hours'))
+      `).run(postId, sessionId, reactionType);
+
+      const summary = getPostReactionSummary(postId, sessionId);
+
+      return sendJson(res, 200, {
+        ok: true,
+        added: result.changes > 0,
+        alreadyReacted: result.changes === 0,
+        reaction_type: reactionType,
+        ...summary
+      });
+    });
+    return;
+  }
+
+  // GET /api/posts
+  // 投稿一覧（公開済みのみ・認証不要）
+  if (pathname === '/api/posts' && req.method === 'GET') {
+    const sessionId = String(getCookies(req)[SESSION_COOKIE_NAME] || '').trim() || null;
+>>>>>>> feature/Work-local
     const status = url.searchParams.get('status') || 'published';
     const search = url.searchParams.get('search') || '';
     const limit = parseInt(url.searchParams.get('limit') || '50', 10);
@@ -2091,7 +2365,12 @@ let page = pathname
     const posts = getPostsSub({
       status: status === 'all' ? null : status,
       search,
+<<<<<<< HEAD
       limit
+=======
+      limit,
+      sessionId
+>>>>>>> feature/Work-local
     });
 
     return sendJson(res, 200, { ok: true, posts });
@@ -2145,6 +2424,7 @@ let page = pathname
       const search = url.searchParams.get('search') || '';
       const limit = parseInt(url.searchParams.get('limit') || '100', 10);
 
+<<<<<<< HEAD
       let query = `
         SELECT id, content, status, risk_score, created_at, updated_at
         FROM posts WHERE 1=1
@@ -2158,6 +2438,13 @@ let page = pathname
       params.push(limit);
 
       const posts = db.prepare(query).all(...params);
+=======
+      const posts = getPostsSub({
+        status: status || null,
+        search,
+        limit
+      });
+>>>>>>> feature/Work-local
 
       logEvent('admin_access', {
         username: user.username,
@@ -2172,6 +2459,39 @@ let page = pathname
     return;
   }
 
+<<<<<<< HEAD
+=======
+  // DELETE /api/admin/posts/:id
+  // 投稿の物理削除（announcement.manage 権限）
+  if (pathname.match(/^\/api\/admin\/posts\/(\d+)$/) && req.method === 'DELETE') {
+    requirePermission(req, res, 'announcement.manage', (user) => {
+      const match = pathname.match(/^\/api\/admin\/posts\/(\d+)$/);
+      const postId = parseInt(match[1], 10);
+
+      const post = db.prepare(`SELECT id, status FROM posts WHERE id = ?`).get(postId);
+      if (!post) {
+        return sendJson(res, 404, { ok: false, error: 'Post not found' });
+      }
+
+      db.prepare(`DELETE FROM post_reactions WHERE post_id = ?`).run(postId);
+      db.prepare(`DELETE FROM moderation_logs WHERE post_id = ?`).run(postId);
+      db.prepare(`DELETE FROM post_aggregations WHERE representative_post_id = ?`).run(postId);
+      db.prepare(`DELETE FROM posts WHERE id = ?`).run(postId);
+
+      logEvent('post_deleted', {
+        username: user.username,
+        sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+        userAgent: req.headers['user-agent'] || '',
+        page: pathname,
+        detail: JSON.stringify({ postId, oldStatus: post.status })
+      });
+
+      return sendJson(res, 200, { ok: true });
+    });
+    return;
+  }
+
+>>>>>>> feature/Work-local
   // GET /api/admin/moderation-logs
   // モデレーションログ参照（announcement.manage 権限）
   if (pathname === '/api/admin/moderation-logs' && req.method === 'GET') {
@@ -2670,6 +2990,379 @@ let page = pathname
  
  
 
+<<<<<<< HEAD
+=======
+  // ──────────────────────────────────────────────────────────────────────────
+  // 訪問者識別・スタンプラリー・抽選連携 API
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // POST /api/visitor/register - 訪問者を登録または更新（UUID をサーバー側で管理）
+  if (req.url === '/api/visitor/register' && req.method === 'POST') {
+    parseBody(req, (err, payload) => {
+      if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+
+      let visitorId = String(payload.visitor_id || getCookies(req)[SESSION_COOKIE_NAME] || '').trim();
+      if (!visitorId) {
+        visitorId = createVisitorSession(req, res) || '';
+      }
+
+      if (!visitorId) {
+        return sendJson(res, 400, { ok: false, error: 'visitor_id is required' });
+      }
+
+      try {
+        const isNew = ensureVisitorRecord(visitorId, req);
+
+        return sendJson(res, isNew ? 201 : 200, {
+          ok: true,
+          message: isNew ? 'Visitor registered' : 'Visitor already registered',
+          visitor_id: visitorId,
+          is_new: isNew
+        });
+      } catch (e) {
+        console.error('Error registering visitor:', e);
+        return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+      }
+    });
+    return;
+  }
+
+  // POST /api/stamp/acquire - スタンプを取得
+  if (req.url === '/api/stamp/acquire' && req.method === 'POST') {
+    parseBody(req, (err, payload) => {
+      if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+
+      let visitorId = String(payload.visitor_id || getCookies(req)[SESSION_COOKIE_NAME] || '').trim();
+      const companyId = String(payload.company_id || '').trim();
+
+      if (!visitorId) {
+        visitorId = createVisitorSession(req, res) || '';
+      }
+
+      if (!visitorId) {
+        return sendJson(res, 400, { ok: false, error: 'visitor_id is required' });
+      }
+      if (!companyId) {
+        return sendJson(res, 400, { ok: false, error: 'company_id is required' });
+      }
+
+      try {
+        ensureVisitorRecord(visitorId, req);
+
+        // スタンプが既に取得されているか確認
+        const existingStamp = db.prepare(
+          'SELECT * FROM stamp_history WHERE visitor_id = ? AND company_id = ?'
+        ).get(visitorId, companyId);
+
+        if (existingStamp) {
+          return sendJson(res, 400, { 
+            ok: false, 
+            error: 'Stamp already acquired for this company',
+            stamp: existingStamp
+          });
+        }
+
+        // スタンプを記録
+        const result = db.prepare(`
+          INSERT INTO stamp_history (visitor_id, company_id, timestamp)
+          VALUES (?, ?, datetime('now', '+9 hours'))
+        `).run(visitorId, companyId);
+
+        logEvent('stamp_acquired', {
+          username: null,
+          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+          userAgent: req.headers['user-agent'] || '',
+          page: pathname,
+          detail: JSON.stringify({ visitor_id: visitorId, company_id: companyId })
+        });
+
+        return sendJson(res, 201, { 
+          ok: true, 
+          message: 'Stamp acquired',
+          stamp_id: result.lastInsertRowid,
+          visitor_id: visitorId,
+          company_id: companyId
+        });
+      } catch (e) {
+        console.error('Error acquiring stamp:', e);
+        return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+      }
+    });
+    return;
+  }
+
+  // GET /api/stamp/status/:visitorId - スタンプ取得状況を確認
+  if (pathname.match(/^\/api\/stamp\/status\/(.+)$/) && req.method === 'GET') {
+    const match = pathname.match(/^\/api\/stamp\/status\/(.+)$/);
+    const visitorId = decodeURIComponent(match[1]);
+
+    try {
+      const visitor = db.prepare('SELECT * FROM visitors WHERE visitor_id = ?').get(visitorId);
+      if (!visitor) {
+        return sendJson(res, 404, { ok: false, error: 'Visitor not found' });
+      }
+
+      const stamps = db.prepare(
+        'SELECT * FROM stamp_history WHERE visitor_id = ? ORDER BY timestamp ASC'
+      ).all(visitorId);
+
+      const totalCompanies = COMPANY_MASTER.length;
+      const acquiredCount = stamps.length;
+      const achievementRate = totalCompanies > 0 ? (acquiredCount / totalCompanies) * 100 : 0;
+
+      return sendJson(res, 200, {
+        ok: true,
+        visitor_id: visitorId,
+        stamps: stamps,
+        acquired_count: acquiredCount,
+        total_companies: totalCompanies,
+        achievement_rate: achievementRate.toFixed(2),
+        created_at: visitor.created_at,
+        last_seen: visitor.last_seen
+      });
+    } catch (e) {
+      console.error('Error fetching stamp status:', e);
+      return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+    }
+  }
+  if (pathname.match(/^\/api\/stamp\/status\/(.+)$/) && req.method === 'GET') return;
+
+  // POST /api/lottery/entry - 抽選にエントリー
+  if (req.url === '/api/lottery/entry' && req.method === 'POST') {
+    parseBody(req, (err, payload) => {
+      if (err) return sendJson(res, 400, { ok: false, error: 'Invalid JSON' });
+
+      const visitorId = String(payload.visitor_id || '').trim();
+      if (!visitorId) {
+        return sendJson(res, 400, { ok: false, error: 'visitor_id is required' });
+      }
+
+      try {
+        // 訪問者が存在するか確認
+        const visitor = db.prepare('SELECT * FROM visitors WHERE visitor_id = ?').get(visitorId);
+        if (!visitor) {
+          return sendJson(res, 404, { ok: false, error: 'Visitor not found' });
+        }
+
+        const existingEntry = db.prepare(
+          'SELECT * FROM lottery WHERE visitor_id = ? ORDER BY entry_time DESC LIMIT 1'
+        ).get(visitorId);
+
+        if (existingEntry) {
+          return sendJson(res, 200, {
+            ok: true,
+            message: 'Lottery entry already exists',
+            lottery_id: existingEntry.id,
+            visitor_id: visitorId,
+            lottery_number: existingEntry.lottery_number,
+            weight: parseFloat(Number(existingEntry.weight).toFixed(4)),
+            acquired_stamps: db.prepare(
+              'SELECT COUNT(*) as count FROM stamp_history WHERE visitor_id = ?'
+            ).get(visitorId).count,
+            total_companies: COMPANY_MASTER.length,
+            existing: true
+          });
+        }
+
+        // スタンプ取得履歴を取得
+        const stamps = db.prepare(
+          'SELECT COUNT(*) as count FROM stamp_history WHERE visitor_id = ?'
+        ).get(visitorId);
+
+        const acquiredCount = stamps.count;
+        const totalCompanies = COMPANY_MASTER.length;
+
+        // 重みづけを算出: 1 + (獲得数 / 全ブース数)
+        const weight = 1 + (acquiredCount / totalCompanies);
+
+        const createLotteryEntry = (entryVisitorId, entryWeight) => {
+          db.exec('BEGIN IMMEDIATE TRANSACTION');
+
+          try {
+            const insertResult = db.prepare(`
+              INSERT INTO lottery (visitor_id, lottery_number, weight, entry_time)
+              VALUES (?, ?, ?, datetime('now', '+9 hours'))
+            `).run(entryVisitorId, `pending-${crypto.randomUUID()}`, entryWeight);
+
+            const lotteryId = Number(insertResult.lastInsertRowid);
+            const lotteryNumber = formatLotteryNumberFromId(lotteryId);
+
+            db.prepare(`
+              UPDATE lottery
+              SET lottery_number = ?
+              WHERE id = ?
+            `).run(lotteryNumber, lotteryId);
+
+            db.exec('COMMIT');
+            return { lotteryId, lotteryNumber };
+          } catch (error) {
+            try {
+              db.exec('ROLLBACK');
+            } catch (rollbackError) {
+              console.error('Failed to rollback lottery insert', rollbackError);
+            }
+            throw error;
+          }
+        };
+
+        const createdEntry = createLotteryEntry(visitorId, weight);
+        const lotteryNumber = createdEntry.lotteryNumber;
+
+        logEvent('lottery_entry', {
+          username: null,
+          sessionId: getCookies(req)[SESSION_COOKIE_NAME],
+          userAgent: req.headers['user-agent'] || '',
+          page: pathname,
+          detail: JSON.stringify({ 
+            visitor_id: visitorId, 
+            lottery_number: lotteryNumber,
+            weight: weight,
+            acquired_count: acquiredCount,
+            total_companies: totalCompanies
+          })
+        });
+
+        return sendJson(res, 201, {
+          ok: true,
+          message: 'Lottery entry successful',
+          lottery_id: createdEntry.lotteryId,
+          visitor_id: visitorId,
+          lottery_number: lotteryNumber,
+          weight: parseFloat(weight.toFixed(4)),
+          acquired_stamps: acquiredCount,
+          total_companies: totalCompanies
+        });
+      } catch (e) {
+        console.error('Error entering lottery:', e);
+        return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+      }
+    });
+    return;
+  }
+
+  // GET /api/lottery/entry/:visitorId - 訪問者の抽選エントリー状況を確認
+  if (pathname.match(/^\/api\/lottery\/entry\/(.+)$/) && req.method === 'GET') {
+    const match = pathname.match(/^\/api\/lottery\/entry\/(.+)$/);
+    const visitorId = decodeURIComponent(match[1]);
+
+    try {
+      const entries = db.prepare(
+        'SELECT * FROM lottery WHERE visitor_id = ? ORDER BY entry_time DESC'
+      ).all(visitorId);
+
+      return sendJson(res, 200, {
+        ok: true,
+        visitor_id: visitorId,
+        entries: entries,
+        entry_count: entries.length
+      });
+    } catch (e) {
+      console.error('Error fetching lottery entries:', e);
+      return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+    }
+  }
+  if (pathname.match(/^\/api\/lottery\/entry\/(.+)$/) && req.method === 'GET') return;
+
+  // GET /api/admin/visitors - 訪問者一覧（管理者のみ）
+  if (req.url === '/api/admin/visitors' && req.method === 'GET') {
+    requireRole(req, res, 'administrator', (user) => {
+      try {
+        const visitors = db.prepare(
+          'SELECT COUNT(*) as total_visitors FROM visitors'
+        ).get();
+
+        const visitorList = db.prepare(
+          'SELECT * FROM visitors ORDER BY last_seen DESC LIMIT 100'
+        ).all();
+
+        return sendJson(res, 200, {
+          ok: true,
+          total_visitors: visitors.total_visitors,
+          visitors: visitorList
+        });
+      } catch (e) {
+        console.error('Error fetching visitors:', e);
+        return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+      }
+    });
+    return;
+  }
+
+  // GET /api/admin/lottery-list - 抽選エントリー一覧（管理者のみ）
+  if (req.url === '/api/admin/lottery-list' && req.method === 'GET') {
+    requireRole(req, res, 'administrator', (user) => {
+      try {
+        const entries = db.prepare(`
+          SELECT l.*, v.created_at as visitor_created_at
+          FROM lottery l
+          JOIN visitors v ON l.visitor_id = v.visitor_id
+          ORDER BY l.entry_time DESC
+        `).all();
+
+        const totalEntries = entries.length;
+        const totalWeight = entries.reduce((sum, entry) => sum + entry.weight, 0);
+
+        return sendJson(res, 200, {
+          ok: true,
+          total_entries: totalEntries,
+          total_weight: parseFloat(totalWeight.toFixed(4)),
+          entries: entries
+        });
+      } catch (e) {
+        console.error('Error fetching lottery entries:', e);
+        return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+      }
+    });
+    return;
+  }
+
+  // GET /api/admin/stamp-analytics - スタンプ取得状況の分析（管理者のみ）
+  if (req.url === '/api/admin/stamp-analytics' && req.method === 'GET') {
+    requireRole(req, res, 'administrator', (user) => {
+      try {
+        // 各ブースのスタンプ取得数
+        const companyStats = db.prepare(`
+          SELECT company_id, COUNT(*) as stamp_count
+          FROM stamp_history
+          GROUP BY company_id
+          ORDER BY stamp_count DESC
+        `).all();
+
+        // 訪問者別のスタンプ取得状況
+        const visitorStats = db.prepare(`
+          SELECT 
+            v.visitor_id,
+            v.created_at,
+            v.last_seen,
+            COUNT(sh.id) as stamps_acquired
+          FROM visitors v
+          LEFT JOIN stamp_history sh ON v.visitor_id = sh.visitor_id
+          GROUP BY v.visitor_id
+          ORDER BY stamps_acquired DESC, v.last_seen DESC
+        `).all();
+
+        const totalVisitors = visitorStats.length;
+        const totalStamps = companyStats.reduce((sum, stat) => sum + stat.stamp_count, 0);
+        const averageStamps = totalVisitors > 0 ? (totalStamps / totalVisitors).toFixed(2) : 0;
+
+        return sendJson(res, 200, {
+          ok: true,
+          total_visitors: totalVisitors,
+          total_stamps_issued: totalStamps,
+          average_stamps_per_visitor: parseFloat(averageStamps),
+          total_companies: COMPANY_MASTER.length,
+          company_stats: companyStats,
+          visitor_stats: visitorStats.slice(0, 100) // 最初の100件
+        });
+      } catch (e) {
+        console.error('Error fetching stamp analytics:', e);
+        return sendJson(res, 500, { ok: false, error: 'Internal server error' });
+      }
+    });
+    return;
+  }
+
+>>>>>>> feature/Work-local
   // ─────────────────────────────────────────────────────────────────────────
   // 静的ファイルアクセスのログ記録
   // （直後に serveStatic を配置すること）

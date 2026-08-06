@@ -103,10 +103,15 @@ loginForm.addEventListener('submit', async (e) => {
       showAdminScreen();
       applyUIAccessControl();
       
+<<<<<<< HEAD
       // ★修正：ダッシュボードに強制遷移
       showPage('dashboard');
       
       loadDashboard();
+=======
+      // ★修正：初回表示はホームへ
+      showPage('home');
+>>>>>>> feature/Work-local
     } else {
       showLoginMessage(data.error || 'ログインに失敗しました', 'error');
     }
@@ -165,6 +170,17 @@ function showAdminScreen() {
 // ★【修正】showPage 関数: ページ表示とデータロード
 // ============================================================================
 function showPage(page) {
+<<<<<<< HEAD
+=======
+
+  if (page === 'home') {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('home').classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('[data-page="home"]').classList.add('active');
+    return;
+  }
+>>>>>>> feature/Work-local
  
   // publish / site-control ページは administrator のみ
   if (page === 'publish' || page === 'site-control') {
@@ -407,7 +423,11 @@ async function checkSession() {
       applyUIAccessControl();
       
       // ★修正：showPage() を呼ぶだけで loadDashboard() もカバー
+<<<<<<< HEAD
       showPage('dashboard');
+=======
+      //showPage('dashboard');
+>>>>>>> feature/Work-local
  
     } else {
       showLoginScreen();
@@ -498,6 +518,10 @@ async function loadPosts() {
  onclick="hidePost(${post.id})">
  非表示
 </button>
+<<<<<<< HEAD
+=======
+          <button class="btn btn-danger" onclick="deletePost(${post.id})">削除</button>
+>>>>>>> feature/Work-local
         </td>
       </tr>
     `).join('');
@@ -656,6 +680,57 @@ async function hidePost(postId) {
   }
 }
 
+<<<<<<< HEAD
+=======
+async function deletePost(postId) {
+
+  if (!confirm('投稿を削除しますか？ この操作は取り消せません。')) {
+    return;
+  }
+
+  try {
+
+    const response =
+      await securefetch(
+        `/api/admin/posts/${postId}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+    if (!response) return;
+
+    const data = await response.json();
+
+    if (data.ok) {
+
+      showMessage(
+        '投稿を削除しました',
+        'success'
+      );
+
+      loadPosts();
+
+    } else {
+
+      showMessage(
+        data.error,
+        'error'
+      );
+    }
+
+  } catch (e) {
+
+    console.error(e);
+
+    showMessage(
+      '削除に失敗しました',
+      'error'
+    );
+  }
+}
+
+>>>>>>> feature/Work-local
 // ============================================================================
 // NG判定ルール管理
 // ============================================================================
@@ -1216,7 +1291,11 @@ async function loadPublish() {
         <td>【サイト全体】</td>
         <td>${data.siteWidePublished !== false ? '🟢 公開' : '🔴 非公開'}</td>
         <td>
+<<<<<<< HEAD
           <button class="btn" onclick="toggleSiteWide(${data.siteWidePublished !== false})" style="background: ${data.siteWidePublished !== false ? '#28a745' : '#dc3545'}; color: white;">
+=======
+          <button class="btn" onclick="toggleSiteWide(${data.siteWidePublished !== false})" style="background: ${data.siteWidePublished !== false ? '#dc3545' : '#28a745'}; color: white;">
+>>>>>>> feature/Work-local
             ${data.siteWidePublished !== false ? '非公開にする' : '公開する'}
           </button>
         </td>
@@ -1231,8 +1310,13 @@ async function loadPublish() {
           <td>${displayName}</td>
           <td>${published ? '🟢 公開' : '🔴 非公開'}</td>
           <td>
+<<<<<<< HEAD
             <button class="btn" onclick="togglePublish('${displayName}', ${published})" style="background: ${published ? '#ffc107' : '#17a2b8'}; color: white;">
               ${published ? '非公開に' : '公開に'}
+=======
+            <button class="btn" onclick="togglePublish('${displayName}', ${published})" style="background: ${published ? '#dc3545' : '#28a745'}; color: white;">
+              ${published ? '非公開にする' : '公開する'}
+>>>>>>> feature/Work-local
             </button>
           </td>
         </tr>

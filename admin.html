@@ -360,6 +360,29 @@
       font-size: 13px;
       word-wrap: break-word;
     }
+<<<<<<< HEAD
+=======
+
+    .home-panel {
+      background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);
+      border: 1px solid #d8e3ff;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(37, 78, 144, 0.08);
+    }
+
+    .home-panel h2 {
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: #1f2d3d;
+    }
+
+    .home-panel p {
+      font-size: 18px;
+      color: #3c4a5d;
+      line-height: 1.8;
+    }
+>>>>>>> feature/Work-local
   </style>
 </head>
 <body>
@@ -367,7 +390,14 @@
     <div class="sidebar">
       <div class="sidebar-title">🛠 管理画面</div>
       <ul class="sidebar-menu">
+<<<<<<< HEAD
         <li class="nav-item active" data-page="posts">
+=======
+        <li class="nav-item active" data-page="home">
+          🏠 ホーム
+        </li>
+        <li class="nav-item" data-page="posts">
+>>>>>>> feature/Work-local
           📝 投稿管理
         </li>
         <li class="nav-item" data-page="ng-rules">
@@ -385,8 +415,26 @@
     <div class="main-content">
       <div id="message" class="message"></div>
 
+<<<<<<< HEAD
       <!-- 投稿管理ページ -->
       <div id="posts" class="page active">
+=======
+      <!-- ホームページ -->
+      <div id="home" class="page active">
+        <div class="page-header">
+          <div class="page-title">ホーム</div>
+          <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
+        </div>
+
+        <div class="home-panel">
+          <h2>管理画面へようこそ</h2>
+          <p>ページの再読み込みは避けてください。必要な操作は左側のメニューから選んでください。</p>
+        </div>
+      </div>
+
+      <!-- 投稿管理ページ -->
+      <div id="posts" class="page">
+>>>>>>> feature/Work-local
         <div class="page-header">
           <div class="page-title">投稿管理</div>
           <div class="page-subtitle">掲示板の投稿を確認・管理します</div>
@@ -565,6 +613,11 @@
       </div>
       <div class="modal-footer">
         <button class="btn" onclick="closeModal('postModal')">キャンセル</button>
+<<<<<<< HEAD
+=======
+        <button class="btn btn-warning" onclick="hideCurrentPost()">非表示</button>
+        <button class="btn btn-danger" onclick="deleteCurrentPost()">削除</button>
+>>>>>>> feature/Work-local
         <button class="btn btn-success" onclick="savePostStatus()">保存</button>
       </div>
     </div>
