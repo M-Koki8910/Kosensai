@@ -244,7 +244,7 @@
 
       <div class="reader-shell">
         <div id="reader">
-          <video id="cameraView" playsinline muted></video>
+          <div id="cameraView" playsinline muted></div>
           <div class="scan-frame"></div>
         </div>
       </div>
@@ -291,12 +291,16 @@
     //const stampMetaEl = document.getElementById('stampMeta');
     //const eventHistory = document.getElementById('eventHistory');
 
-    let cameraStream = null;
-    let barcodeDetector = null;
+    /*  let cameraStream = null;
+     let barcodeDetector = null;
+     let scannerActive = false;
+     let isProcessing = false;
+     let scanFrameId = null;
+     const cameraView = document.getElementById('cameraView'); */
+
+    let html5QrCode = null;
     let scannerActive = false;
     let isProcessing = false;
-    let scanFrameId = null;
-    const cameraView = document.getElementById('cameraView');
 
     function setState(message, kind = '') {
       scannerState.className = `scanner-state ${kind}`.trim();
@@ -410,86 +414,89 @@
 
     async function stopScanner() {
       scannerActive = false;
-      if (scanFrameId !== null) {
-        cancelAnimationFrame(scanFrameId);
-        scanFrameId = null;
-      }
 
-      if (cameraStream) {
-        cameraStream.getTracks().forEach((track) => track.stop());
-        cameraStream = null;
-      }
+      if (html5QrCode) {
+        try {
+          await html5QrCode.stop();
+          await html5QrCode.clear();
+        } catch (e) {
+          console.warn(e);
+        }
 
-      if (cameraView) {
-        cameraView.srcObject = null;
+        html5QrCode = null;
       }
     }
 
     async function startScanner() {
+
       if (scannerActive || isProcessing) return;
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.BarcodeDetector) {
-        setState('この環境では自動読み取りが使えません。手動入力を使ってください。', 'is-error');
-        return;
-      }
+
+      scannerActive = true;
+
+      setState("カメラを起動しています...");
+
+      html5QrCode = new Html5Qrcode("cameraView");
 
       try {
-        barcodeDetector = barcodeDetector || new BarcodeDetector({ formats: ['qr_code'] });
-        cameraStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
-          audio: false
-        });
 
-        cameraView.srcObject = cameraStream;
-        await cameraView.play();
-        scannerActive = true;
-        setState('カメラを起動しました。参加用QRをかざしてください。');
+        await html5QrCode.start(
 
-        const scanTick = async () => {
-          if (!scannerActive || !cameraView || cameraView.readyState < 2) {
-            scanFrameId = requestAnimationFrame(scanTick);
-            return;
-          }
+          { facingMode: "environment" },
 
-          try {
-            const codes = await barcodeDetector.detect(cameraView);
-            if (isLotteryQR(codes[0].rawValue)) {
+          {
+            fps: 10,
+            qrbox: 250
+          },
 
-              let visitorId = localStorage.getItem("visitor_uuid");
+          async (decodedText) => {
 
-              if (!visitorId) {
+            console.log("QR読み取り:", decodedText);
 
-                visitorId = crypto.randomUUID();
-
-                localStorage.setItem(
-                  "visitor_uuid",
-                  visitorId
-                );
-
-              }
-
-              await stopScanner();
-
-              await registerAndIssue(visitorId);
-
+            if (!isLotteryQR(decodedText)){
+               console.log("抽選QRではありません");
               return;
             }
-          } catch (error) {
-            console.warn('QR scan failed', error);
+
+            console.log("抽選QRです");
+
+            await stopScanner();
+
+            let visitorId = localStorage.getItem("visitor_uuid");
+
+            if (!visitorId) {
+
+              visitorId = crypto.randomUUID();
+
+              localStorage.setItem(
+                "visitor_uuid",
+                visitorId
+              );
+            }
+
+            await registerAndIssue(visitorId);
+
+          },
+
+          () => {
+            // QR未検出時
           }
 
-          scanFrameId = requestAnimationFrame(scanTick);
-        };
+        );
 
-        scanFrameId = requestAnimationFrame(scanTick);
-      } catch (error) {
-        console.error(error);
-        await stopScanner();
-        setState('カメラの起動に失敗しました。手動入力を使ってください。', 'is-error');
+        setState("QRコードをかざしてください");
+
+      } catch (err) {
+
+        console.error(err);
+
+        scannerActive = false;
+
+        setState("カメラを起動できませんでした", "is-error");
       }
     }
 
     startScanBtn.addEventListener('click', startScanner);
-    resetBtn.addEventListener('click', async () => {
+    /* resetBtn.addEventListener('click', async () => {
       await stopScanner();
       eventHistory.innerHTML = '';
       visitorIdEl.textContent = '未取得';
@@ -498,21 +505,21 @@
       lotteryMetaEl.textContent = 'QRを読み取るとここに表示されます。';
       stampMetaEl.textContent = '読み取った UUID に紐づく履歴件数です。';
       setState('結果をクリアしました。再度カメラを起動してください。');
-    });
-    manualSubmitBtn.addEventListener('click', async () => {
-      const visitorId = parseVisitorId(manualInput.value);
-      if (!visitorId) {
-        setState('UUID を読み取れませんでした。', 'is-error');
-        return;
-      }
-      await registerAndIssue(visitorId);
-    });
-    manualInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        manualSubmitBtn.click();
-      }
-    });
+    }); */
+    /*  manualSubmitBtn.addEventListener('click', async () => {
+       const visitorId = parseVisitorId(manualInput.value);
+       if (!visitorId) {
+         setState('UUID を読み取れませんでした。', 'is-error');
+         return;
+       }
+       await registerAndIssue(visitorId);
+     }); */
+    /*  manualInput.addEventListener('keydown', (event) => {
+       if (event.key === 'Enter') {
+         event.preventDefault();
+         manualSubmitBtn.click();
+       }
+     }); */
 
     const saved = localStorage.getItem('lottery-last-issued');
     if (saved) {
