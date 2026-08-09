@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <script src="./scripts/script.js" defer></script>
+    <link rel="icon" type="image/png" href="./images/tab-resize.png">
+
+    <title>このサイトについて</title>
+    <style>
+        /* =========================================
+   About Me Page
+   すべて .aboutme 配下に限定
+   ========================================= */
+
+        .aboutme {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+
+            box-sizing: border-box;
+
+            color: #26343d;
+            line-height: 1.9;
+        }
+
+
+        /* =========================================
+   共通
+   ========================================= */
+
+        .aboutme *,
+        .aboutme *::before,
+        .aboutme *::after {
+            box-sizing: border-box;
+        }
+
+        .aboutme p,
+        .aboutme h1,
+        .aboutme h2,
+        .aboutme h3 {
+            margin-top: 0;
+        }
+
+        .aboutme p {
+            margin-bottom: 1.5em;
+            width: auto;
+            max-width: none;
+
+            overflow-wrap: break-word;
+            word-break: normal;
+        }
+
+        .aboutme p:last-child {
+            margin-bottom: 0;
+        }
+
+
+        /* =========================================
+   Hero
+   ========================================= */
+
+        .aboutme-hero {
+            width: 100%;
+            padding: 100px 20px;
+
+            background: linear-gradient(135deg,
+                    #183b56,
+                    #2c6e9e);
+
+            color: #ffffff;
+        }
+
+        .aboutme-hero-inner {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+
+            text-align: center;
+        }
+
+        .aboutme-eyebrow {
+            margin-bottom: 15px;
+
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 0.2em;
+        }
+
+        .aboutme-hero h1 {
+            margin-bottom: 25px;
+
+            font-size: 2.5rem;
+            line-height: 1.4;
+        }
+
+        .aboutme-lead {
+            max-width: 700px !important;
+            margin: 0 auto !important;
+
+            font-size: 1.05rem;
+            line-height: 2;
+        }
+
+
+        /* =========================================
+   Section
+   ========================================= */
+
+        .aboutme-section {
+            width: 100%;
+            padding: 85px 20px;
+
+            background: #ffffff;
+        }
+
+        .aboutme-section-gray {
+            background: #f5f8fb;
+        }
+
+
+        /* =========================================
+   Inner
+   ========================================= */
+
+        .aboutme-inner {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+
+        /* =========================================
+   Heading
+   ========================================= */
+
+        .aboutme-heading {
+            margin-bottom: 45px;
+        }
+
+        .aboutme-label {
+            margin-bottom: 5px !important;
+
+            color: #2c6e9e;
+
+            font-size: 0.85rem !important;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+        }
+
+        .aboutme-heading h2 {
+            margin-bottom: 0;
+
+            font-size: 2rem;
+            line-height: 1.5;
+        }
+
+        .aboutme-subtitle {
+            margin-top: 5px !important;
+
+            color: #687780;
+
+            font-size: 0.9rem !important;
+        }
+
+
+        /* =========================================
+   Content
+   ========================================= */
+
+        .aboutme-content {
+            width: 100%;
+            max-width: none;
+
+            font-size: 1rem;
+        }
+
+
+        /* =========================================
+   Technology / Example Cards
+   ========================================= */
+
+        .aboutme-tech-grid,
+        .aboutme-example-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+
+            gap: 20px;
+
+            width: 100%;
+            margin: 35px 0;
+        }
+
+        .aboutme-card {
+            width: 100%;
+            min-width: 0;
+
+            padding: 25px;
+
+            background: #ffffff;
+
+            border: 1px solid #dce5ec;
+            border-radius: 12px;
+
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        }
+
+        .aboutme-card h3 {
+            margin-bottom: 12px;
+
+            color: #245f88;
+
+            font-size: 1.2rem;
+            line-height: 1.5;
+        }
+
+        .aboutme-card p {
+            margin-bottom: 0;
+        }
+
+
+        /* =========================================
+   Note
+   ========================================= */
+
+        .aboutme-note {
+            width: 100%;
+            margin: 35px 0;
+            padding: 30px;
+
+            background: #eef6fc;
+
+            border-left: 5px solid #2c6e9e;
+            border-radius: 8px;
+        }
+
+        .aboutme-note h3 {
+            margin-bottom: 15px;
+
+            color: #245f88;
+        }
+
+
+        /* =========================================
+   Message
+   ========================================= */
+
+        .aboutme-message {
+            width: 100%;
+            margin-top: 35px;
+            padding: 30px;
+
+            background: #eef6fc;
+
+            border: 1px solid #c8deed;
+            border-radius: 12px;
+        }
+
+        .aboutme-message p {
+            margin-bottom: 1em;
+        }
+
+
+        /* =========================================
+   Final Message
+   ========================================= */
+
+        .aboutme-final-message {
+            width: 100%;
+            margin-top: 40px;
+            padding: 35px;
+
+            text-align: center;
+
+            background: #ffffff;
+
+            border-radius: 12px;
+        }
+
+        .aboutme-final-message strong {
+            display: block;
+
+            margin: 25px 0;
+
+            color: #245f88;
+
+            font-size: 1.5rem;
+            line-height: 1.5;
+        }
+
+
+        /* =========================================
+   Tablet
+   ========================================= */
+
+        @media (max-width: 768px) {
+
+            .aboutme-hero {
+                padding: 70px 20px;
+            }
+
+            .aboutme-hero h1 {
+                font-size: 2rem;
+            }
+
+            .aboutme-section {
+                padding: 60px 20px;
+            }
+
+            .aboutme-heading {
+                margin-bottom: 35px;
+            }
+
+            .aboutme-heading h2 {
+                font-size: 1.7rem;
+            }
+
+            .aboutme-tech-grid,
+            .aboutme-example-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .aboutme-card {
+                padding: 22px;
+            }
+
+            .aboutme-note,
+            .aboutme-message,
+            .aboutme-final-message {
+                padding: 25px;
+            }
+        }
+
+
+        /* =========================================
+   Smartphone
+   ========================================= */
+
+        @media (max-width: 480px) {
+
+            .aboutme-hero {
+                padding: 55px 15px;
+            }
+
+            .aboutme-hero h1 {
+                font-size: 1.6rem;
+            }
+
+            .aboutme-lead {
+                font-size: 0.95rem;
+            }
+
+            .aboutme-section {
+                padding: 50px 15px;
+            }
+
+            .aboutme-heading {
+                margin-bottom: 30px;
+            }
+
+            .aboutme-heading h2 {
+                font-size: 1.45rem;
+            }
+
+            .aboutme-content {
+                font-size: 0.95rem;
+            }
+
+            .aboutme-card {
+                padding: 20px;
+            }
+
+            .aboutme-note,
+            .aboutme-message,
+            .aboutme-final-message {
+                padding: 20px;
+            }
+
+            .aboutme-final-message strong {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="topbar">
+        <a href="./index.html" class="home-link">
+            <img src="./images/logo.png" alt="高専祭TOP" class="logo">
+        </a>
+        <button class="menu-toggle" aria-label="メニューを開く">☰</button>
+    </div>
+
+    <nav id="nav">
+        <ul>
+            <li><a href="./about.html">高専祭とは</a></li>
+            <li><a href="./guest.html">ゲスト紹介</a></li>
+            <li><a href="./shop.html">模擬店紹介</a></li>
+            <li><a href="./event.html">イベント紹介</a></li>
+            <li><a href="./stamp-rally.html">スタンプラリー</a></li>
+            <li><a href="./schedule.html">スケジュール</a></li>
+            <li><a href="./company.html">ご協賛企業紹介</a></li>
+            <li><a href="./map.html">会場マップ</a></li>
+            <li><a href="./about-kosen.html">松江高専とは</a></li>
+            <li><a href="./announcements.html">お知らせ</a></li>
+            <li><a href="./bulletin.html">掲示板</a></li>
+        </ul>
+        <div class="nav-footer">
+            <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank"
+                rel="noopener noreferrer">
+                <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学校広報
+            </a>
+            <a class="nav-social" href="https://www.instagram.com/mct_gakuseikai/" target="_blank"
+                rel="noopener noreferrer">
+                <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学生会
+            </a>
+        </div>
+    </nav>
+
+    <main class="aboutme">
+
+        <!-- ページタイトル -->
+        <section class="aboutme-hero">
+            <div class="aboutme-hero-inner">
+                <p class="aboutme-eyebrow">ABOUT THIS SITE</p>
+                <h1>このサイトについて</h1>
+                <p class="aboutme-lead">
+                    この高専祭Webサイトがどのように作られたのか、について紹介します。
+                </p>
+            </div>
+        </section>
+
+
+        <!-- このサイトについて -->
+        <section class="aboutme-section">
+            <div class="aboutme-inner">
+
+                <div class="aboutme-heading">
+                    <p class="aboutme-label">01</p>
+                    <h2>このサイトについて</h2>
+                </div>
+
+                <div class="aboutme-content">
+                    <p>
+                        普段何気なく見ているこのWebサイトも、
+                        ページを作り、デザインを考え、動作を確認し、
+                        サーバーに公開することで成り立っています。
+                    </p>
+
+                    <p>
+                        このページでは、今回の高専祭Webサイトが
+                        どのように作られたのか、なぜ作ろうと思ったのか、
+                        そして次の製作者へのメッセージを紹介します。
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- 技術構成 -->
+        <section class="aboutme-section aboutme-section-gray">
+            <div class="aboutme-inner">
+
+                <div class="aboutme-heading">
+                    <p class="aboutme-label">02</p>
+                    <h2>技術構成</h2>
+                </div>
+
+                <div class="aboutme-content">
+
+                    <p>
+                        このWebサイトは、主に以下の技術を組み合わせて
+                        製作しています。
+                    </p>
+
+                    <div class="aboutme-tech-grid">
+
+                        <article class="aboutme-card">
+                            <h3>HTML</h3>
+                            <p>
+                                Webページの構造を作るために使用しています。
+                                文章や画像、リンクなど、ページの基本的な構成を担当しています。
+                            </p>
+                        </article>
+
+                        <article class="aboutme-card">
+                            <h3>CSS</h3>
+                            <p>
+                                Webサイトのデザインやレイアウトを整えるために使用しています。
+                                PCだけでなく、スマートフォンでも見やすくなるよう設計しています。
+                            </p>
+                        </article>
+
+                        <article class="aboutme-card">
+                            <h3>JavaScript</h3>
+                            <p>
+                                ページに動きや機能を追加するために使用しています。
+                                ユーザーの操作に応じた処理や、サーバーとの通信などを行っています。
+                            </p>
+                        </article>
+
+                        <article class="aboutme-card">
+                            <h3>サーバー処理</h3>
+                            <p>
+                                公開時にはサーバー側の処理も組み合わせています。
+                                Webページを公開するだけでなく、動的な機能も実現しています。
+                            </p>
+                        </article>
+
+                    </div>
+
+                    <p>
+                        このように、Webサイトは一つの技術だけで作られているわけではありません。
+                        複数の技術を組み合わせることで、一つのWebサイトとして動作しています。
+                    </p>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- 作った理由 -->
+        <section class="aboutme-section">
+            <div class="aboutme-inner">
+
+                <div class="aboutme-heading">
+                    <p class="aboutme-label">03</p>
+                    <h2>なぜ作ろうと思ったのか</h2>
+                </div>
+
+                <div class="aboutme-content">
+
+                    <p>
+                        高専祭には毎年たくさんの人が訪れます。
+                    </p>
+
+                    <p>
+                        せっかく高専祭を開催するのであれば、
+                        情報を掲載するだけのWebページではなく、
+                        実際に来場者が使って楽しめるものを作ってみたい。
+                        そう考えたことが、このサイトを作るきっかけになりました。
+                    </p>
+
+                    <p>
+                        また、普段学校で学んでいる情報系の知識を、
+                        実際に多くの人が利用するものに使ってみたいという思いもありました。
+                    </p>
+
+                    <div class="aboutme-note">
+                        <h3>「実際に使われるもの」を作る</h3>
+
+                        <p>
+                            授業でプログラムを書くことと、
+                            実際に一般公開するWebサイトを作ることでは、
+                            考えなければならないことが大きく異なります。
+                        </p>
+
+                        <p>
+                            スマートフォンで見やすいか、
+                            多くの人が同時にアクセスしても大丈夫か、
+                            操作が分かりやすいかなど、
+                            実際に使われるものだからこそ考えることが増えていきます。
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- 製作を通して -->
+        <section class="aboutme-section aboutme-section-gray">
+            <div class="aboutme-inner">
+
+                <div class="aboutme-heading">
+                    <p class="aboutme-label">04</p>
+                    <h2>製作を通して</h2>
+                </div>
+
+                <div class="aboutme-content">
+
+                    <p>
+                        今回の製作では、HTMLやCSS、JavaScriptを書くだけではなく、
+                        Webサイトを実際にサーバーへ公開するところまで経験しました。
+                    </p>
+
+                    <p>
+                        製作中には、思った通りに表示されなかったり、
+                        スマートフォンでは正常に動かなかったり、
+                        サーバー上ではローカル環境と異なる問題が発生したりと、
+                        多くの問題に直面しました。
+                    </p>
+
+                    <p>
+                        しかし、そのたびに調べて、試して、修正することで、
+                        少しずつ完成に近づけることができました。
+                    </p>
+
+                    <p>
+                        最初からすべての知識があったわけではありません。
+                        必要になった技術をその都度調べながら作っていくことで、
+                        実際に人が利用するWebサイトとして公開するところまで
+                        たどり着くことができました。
+                    </p>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- 次の製作者へ -->
+        <section class="aboutme-section">
+            <div class="aboutme-inner">
+
+                <div class="aboutme-heading">
+                    <p class="aboutme-label">05</p>
+                    <h2>次の製作者へ</h2>
+                </div>
+
+                <div class="aboutme-content">
+
+                    <p>
+                        もしこのWebサイトを次の高専祭でも使ってもらえるのであれば、
+                        ぜひ遠慮なく改造してください。
+                    </p>
+
+                    <p>
+                        全部を理解してから触る必要はありません。
+                    </p>
+
+                    <p>
+                        「ここを変えたい」と思ったところからコードを読んで、
+                        調べて、実際に変更してみてください。
+                    </p>
+
+                    <p>
+                        最初はよく分からなくても、
+                        実際に動かしてみると意外と何とかなります。
+                    </p>
+
+                    <div class="aboutme-message">
+                        <p>
+                            このサイトをそのまま維持することよりも、
+                            次の人が自分たちのアイデアを加えていくことの方が、
+                            このサイトを作った意味があると思っています。
+                        </p>
+
+                        <p>
+                            今年よりもさらに便利で、面白い高専祭Webサイトにしてください。
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- 高専に入ると -->
+        <section class="aboutme-section aboutme-section-gray">
+            <div class="aboutme-inner">
+
+                <div class="aboutme-heading">
+                    <p class="aboutme-label">06</p>
+                    <h2>高専に入ると、こんなものが作れます</h2>
+                    <p class="aboutme-subtitle">（人による）</p>
+                </div>
+
+                <div class="aboutme-content">
+
+                    <p>
+                        高専では、授業でプログラミングや情報技術について
+                        学ぶ機会があります。
+                    </p>
+
+                    <p>
+                        ただ、学校で学んだことを使って何を作るかは人それぞれです。
+                    </p>
+
+                    <div class="aboutme-example-grid">
+
+                        <article class="aboutme-card">
+                            <h3>Webサイト</h3>
+                            <p>
+                                HTMLやCSS、JavaScriptなどを使って、
+                                自分で考えたWebサイトを作ることができます。
+                            </p>
+                        </article>
+
+                        <article class="aboutme-card">
+                            <h3>アプリ・ゲーム</h3>
+                            <p>
+                                プログラミングを使って、
+                                アプリやゲームなどを作ることもできます。
+                            </p>
+                        </article>
+
+                        <article class="aboutme-card">
+                            <h3>ロボット・電子工作</h3>
+                            <p>
+                                プログラムだけでなく、
+                                電子回路や機械と組み合わせて動くものを作ることもできます。
+                            </p>
+                        </article>
+
+                        <article class="aboutme-card">
+                            <h3>その他いろいろ</h3>
+                            <p>
+                                AI、データ分析、ネットワークなど、
+                                興味を持った分野を掘り下げていくこともできます。
+                            </p>
+                        </article>
+
+                    </div>
+
+                    <div class="aboutme-final-message">
+
+                        <p>
+                            「高専に入ったら必ずこんなものが作れるようになる」
+                            というものではありません。
+                        </p>
+
+                        <p>
+                            ですが、興味を持って、自分で調べて、
+                            実際に手を動かしていけば、
+                            学校で学んだ知識を使って、
+                            自分が考えたものを形にすることができます。
+                        </p>
+
+                        <strong>何を作るかは、自分次第です。</strong>
+
+                        <p>
+                            このサイトを見て、
+                            「自分も何か作ってみたい」と思ってくれる人が
+                            一人でもいれば、このサイトを作った甲斐があったと思います。
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+</body>
+
+</html>

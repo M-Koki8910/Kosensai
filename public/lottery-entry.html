@@ -10,6 +10,8 @@
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.7.0/minified/html5-qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="./scripts/script.js" defer></script>
+  <link rel="icon" type="image/png" href="./images/tab-resize.png">
+
   <style>
     :root {
 
@@ -68,6 +70,54 @@
       text-align: center;
 
       box-shadow: 0 10px 30px rgba(0, 0, 0, .05);
+
+      opacity: 0;
+
+      transform: translateY(16px) scale(0.98);
+
+      transition: opacity 0.45s ease, transform 0.45s cubic-bezier(.2, .8, .2, 1);
+
+    }
+
+    .card.is-visible {
+
+      opacity: 1;
+
+      transform: translateY(0) scale(1);
+
+    }
+
+    .lottery-number.is-burst {
+
+      animation: lotteryNumberPop 0.7s cubic-bezier(.22, 1, .36, 1) both;
+
+    }
+
+    @keyframes lotteryNumberPop {
+
+      0% {
+
+        opacity: 0;
+
+        transform: scale(0.8);
+
+      }
+
+      55% {
+
+        opacity: 1;
+
+        transform: scale(1.08);
+
+      }
+
+      100% {
+
+        opacity: 1;
+
+        transform: scale(1);
+
+      }
 
     }
 
@@ -336,14 +386,48 @@
     let scannerActive = false;
     let isProcessing = false;
 
-    function showReader() {
+    const LOTTERY_STORAGE_KEY = 'lottery-last-issued';
 
+    function showReader() {
       readerCard.hidden = false;
       resultCard.hidden = true;
-
-      rendercard.style.display = "block";
+      readerCard.style.display = "block";
       resultCard.style.display = "none";
+      resultCard.classList.remove('is-visible');
+      lotteryNumberEl.classList.remove('is-burst');
 
+      requestAnimationFrame(() => {
+        readerCard.classList.add('is-visible');
+      });
+    }
+
+    function saveIssuedLottery(number) {
+      const normalizedNumber = String(number || '').trim();
+      if (!normalizedNumber) return;
+
+      const payload = { lottery_number: normalizedNumber };
+      localStorage.setItem(LOTTERY_STORAGE_KEY, JSON.stringify(payload));
+      localStorage.setItem('lottery-latest-issued', JSON.stringify(payload));
+    }
+
+    function getSavedIssuedLottery() {
+      const keys = [LOTTERY_STORAGE_KEY, 'lottery-latest-issued'];
+
+      for (const key of keys) {
+        try {
+          const saved = localStorage.getItem(key);
+          if (!saved) continue;
+
+          const parsed = JSON.parse(saved);
+          if (parsed?.lottery_number) {
+            return parsed.lottery_number;
+          }
+        } catch (error) {
+          console.warn('保存済み抽選番号の読み込みに失敗しました', error);
+        }
+      }
+
+      return null;
     }
 
 
@@ -440,9 +524,7 @@
 
         const statusLabel = entryData.existing ? '再表示' : '発行完了';
         setState(`受付完了: ${lotteryNumber} を発行しました。`, 'is-success');
-        localStorage.setItem('lottery-latest-issued', JSON.stringify({
-          lottery_number: lotteryNumber
-        }));
+        saveIssuedLottery(lotteryNumber);
         showLotteryResult(lotteryNumber);
 
         /*  appendHistory(statusLabel, `UUID <strong>${escapeHtml(visitorId)}</strong> に対して抽選番号 <strong>${escapeHtml(lotteryNumber)}</strong> を保存しました。`);*/
@@ -612,32 +694,27 @@
 
       readerCard.style.display = "none";
       resultCard.style.display = "block";
+      readerCard.classList.remove('is-visible');
+      resultCard.classList.remove('is-visible');
 
       lotteryNumberEl.textContent = number;
+      lotteryNumberEl.classList.remove('is-burst');
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resultCard.classList.add('is-visible');
+          lotteryNumberEl.classList.add('is-burst');
+        });
+      });
 
       console.log("抽選番号を表示:", number);
 
     }
 
-    const saved = localStorage.getItem(
-      'lottery-last-issued'
-    );
+    const savedLotteryNumber = getSavedIssuedLottery();
 
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-
-        if (parsed?.lottery_number) {
-          showLotteryResult(
-            parsed.lottery_number
-          );
-        } else {
-          showReader();
-        }
-      } catch (e) {
-        console.error(e);
-        showReader();
-      }
+    if (savedLotteryNumber) {
+      showLotteryResult(savedLotteryNumber);
     } else {
       showReader();
     }

@@ -7,8 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>管理画面 - 高専祭</title>
   <link rel="stylesheet" href="./style.css">
+  <link rel="icon" type="image/png" href="./images/tab-resize.png">
+
   <style>
-   
     * {
       margin: 0;
       padding: 0;
@@ -528,7 +529,10 @@
         display: none;
       }
 
-      table, table tbody, table tr, table td {
+      table,
+      table tbody,
+      table tr,
+      table td {
         display: block;
         width: 100%;
       }
@@ -823,11 +827,12 @@
 <div class="topbar">
   <a href="./index.html" class="home-link">
     <img src="./images/logo.png" alt="高専祭TOP" class="logo">
-</a>
-   <!--  <a href="./index.html" class="home-link">高専祭TOP-開発用ページ</a>
+  </a>
+  <!--  <a href="./index.html" class="home-link">高専祭TOP-開発用ページ</a>
      <p>ページの再読み込みを行わないでください</p>
      <button class="menu-toggle" aria-label="メニューを開く"></button>
- --> </div>
+ -->
+</div>
 
 <!-- <nav id="nav">
     <ul>
@@ -913,8 +918,9 @@
         <div id="home" class="page">
           <div class="page-header">
             <div class="page-title">ホーム</div>
-<!--             <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
- -->          </div>
+            <!--             <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
+ -->
+          </div>
 
           <div class="home-panel">
             <h2>管理画面へようこそ</h2>
@@ -927,8 +933,9 @@
         <div id="dashboard" class="page">
           <div class="page-header">
             <div class="page-title">ダッシュボード</div>
-<!--             <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
- -->          </div>
+            <!--             <div class="page-subtitle">管理画面へようこそ　ページの再読み込みは避けてください</div>
+ -->
+          </div>
           <div class="stat-row">
             <div class="stat-item">
               <div class="stat-number" id="dashboardPosts">0</div>
@@ -1252,14 +1259,14 @@
 
   <script>
     // ハンバーガーメニューの開閉機能
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const menuToggle = document.getElementById('menuToggle');
       const sidebar = document.getElementById('sidebar');
       const sidebarOverlay = document.getElementById('sidebarOverlay');
 
       // メニュー開閉ボタンのクリック
       if (menuToggle) {
-        menuToggle.addEventListener('click', function(e) {
+        menuToggle.addEventListener('click', function (e) {
           e.stopPropagation();
           sidebar.classList.toggle('show');
           sidebarOverlay.classList.toggle('show');
@@ -1268,7 +1275,7 @@
 
       // オーバーレイクリックでメニューを閉じる
       if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', function() {
+        sidebarOverlay.addEventListener('click', function () {
           sidebar.classList.remove('show');
           sidebarOverlay.classList.remove('show');
         });
@@ -1277,14 +1284,14 @@
       // メニュー項目クリックでメニューを閉じる
       const navItems = document.querySelectorAll('.nav-item');
       navItems.forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', function () {
           sidebar.classList.remove('show');
           sidebarOverlay.classList.remove('show');
         });
       });
 
       // ウィンドウリサイズ時に768px以上でメニューを閉じる
-      window.addEventListener('resize', function() {
+      window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
           sidebar.classList.remove('show');
           sidebarOverlay.classList.remove('show');

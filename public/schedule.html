@@ -1,429 +1,455 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="./style.css">
-<script src="./scripts/script.js" defer></script>
-<title>スケジュール</title>
 
-<style>
-    /* ==========================
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <script src="./scripts/script.js" defer></script>
+    <link rel="icon" type="image/png" href="./images/tab-resize.png">
+
+    <title>スケジュール</title>
+
+    <style>
+        /* ==========================
    Schedule Page
 ========================== */
 
-.schedule-page{
-    width:100%;
-    max-width:500px;
-    margin:20px auto;
-}
+        .schedule-page {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+        }
 
-.schedule-tabs{
-    display:flex;
-    gap:10px;
-    margin-bottom:12px;
-}
+        .schedule-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
 
-.schedule-tabs button{
-    flex:1;
-    border:none;
-    border-radius:999px;
-    padding:12px;
+        .schedule-tabs button {
+            flex: 1;
+            border: none;
+            border-radius: 999px;
+            padding: 12px;
 
-    font-size:1rem;
-    font-weight:bold;
+            font-size: 1rem;
+            font-weight: bold;
 
-    cursor:pointer;
+            cursor: pointer;
 
-    background:#ddd;
-}
+            background: #ddd;
+        }
 
-.schedule-tabs button.active{
-    background:#1aa4e8;
-    color:#fff;
-}
+        .schedule-tabs button.active {
+            background: #1aa4e8;
+            color: #fff;
+        }
 
-/* タイムテーブル */
+        /* タイムテーブル */
 
-.schedule-board{
-    background:#8fd0ee;
-    border-radius:40px;
-    padding:20px;
-}
+        .schedule-board {
+            background: #8fd0ee;
+            border-radius: 40px;
+            padding: 20px;
+        }
 
-.schedule-title{
-    font-size:1.8rem;
-    font-weight:bold;
-    margin-bottom:20px;
-}
+        .schedule-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
 
-.schedule-layout{
-    display:flex;
-    align-items:flex-start;
-}
+        .schedule-layout {
+            display: flex;
+            align-items: flex-start;
+        }
 
-/* 時間列 */
+        /* 時間列 */
 
-.schedule-times{
-    width:65px;
-    margin-top:80px;
-}
+        .schedule-times {
+            width: 65px;
+            margin-top: 80px;
+        }
 
-.schedule-hour{
-    width:55px;
-    height:55px;
+        .schedule-hour {
+            width: 55px;
+            height: 55px;
 
-    display:flex;
-    justify-content:center;
-    align-items:center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
 
-    background:#1aa4e8;
-    color:white;
+            background: #1aa4e8;
+            color: white;
 
-    border-radius:50%;
-    border:2px solid white;
+            border-radius: 50%;
+            border: 2px solid white;
 
-    font-size:1.4rem;
-    font-weight:bold;
+            font-size: 1.4rem;
+            font-weight: bold;
 
-    margin-bottom:25px;
+            margin-bottom: 25px;
 
-    box-shadow:0 4px 10px rgba(0,0,0,.15);
-}
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .15);
+        }
 
-/* メイン */
+        /* メイン */
 
-.schedule-main{
-    flex:1;
+        .schedule-main {
+            flex: 1;
 
-    background:white;
+            background: white;
 
-    border:2px solid #18354a;
+            border: 2px solid #18354a;
 
-    border-radius:40px;
+            border-radius: 40px;
 
-    overflow:hidden;
+            overflow: hidden;
 
-    position:relative;
-}
+            position: relative;
+        }
 
-.schedule-header{
-    height:80px;
+        .schedule-header {
+            height: 80px;
 
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-.schedule-place{
-    padding:14px 24px;
+        .schedule-place {
+            padding: 14px 24px;
 
-    border-radius:14px;
+            border-radius: 14px;
 
-    font-size:1.1rem;
-    font-weight:bold;
-}
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
 
-.schedule-place.gym{
-    background:#f7b58f;
-}
+        .schedule-place.gym {
+            background: #f7b58f;
+        }
 
-.schedule-place.garden{
-    background:#aad494;
-}
+        .schedule-place.garden {
+            background: #aad494;
+        }
 
-.schedule-grid{
-    position:relative;
-}
+        .schedule-grid {
+            position: relative;
+        }
 
-.schedule-row{
-    height:80px;
+        .schedule-row {
+            height: 80px;
 
-    border-top:2px solid #222;
+            border-top: 2px solid #222;
 
-    position:relative;
-}
+            position: relative;
+        }
 
-.schedule-row::after{
-    content:"";
+        .schedule-row::after {
+            content: "";
 
-    position:absolute;
+            position: absolute;
 
-    left:0;
-    right:0;
-    top:50%;
+            left: 0;
+            right: 0;
+            top: 50%;
 
-    border-top:1px dashed #555;
-}
+            border-top: 1px dashed #555;
+        }
 
-/* イベント */
+        /* イベント */
 
-.schedule-event{
-    position:absolute;
+        .schedule-event {
+            position: absolute;
 
-    left:10px;
-    right:10px;
+            left: 10px;
+            right: 10px;
 
-    border-radius:12px;
+            border-radius: 12px;
 
-    padding:10px;
+            padding: 10px;
 
-    color:white;
+            color: white;
 
-    text-decoration:none;
-    font-weight:bold;
+            text-decoration: none;
+            font-weight: bold;
 
-    display:flex;
-    align-items:center;
+            display: flex;
+            align-items: center;
 
-    box-shadow:0 4px 10px rgba(0,0,0,.15);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .15);
 
-    z-index:10;
-}
+            z-index: 10;
+        }
 
-.schedule-event.gym{
-    background:#ff9966;
-}
+        .schedule-event.gym {
+            background: #ff9966;
+        }
 
-.schedule-event.garden{
-    background:#5ebd6c;
-}
+        .schedule-event.garden {
+            background: #5ebd6c;
+        }
 
-.event-detail{
-    margin:18px auto;
-    padding:16px;
-    max-width:760px;
-    background:#fff;
-    border-radius:12px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.08);
-    border:1px solid rgba(0,0,0,0.04);
-}
+        .event-detail {
+            margin: 18px auto;
+            padding: 16px;
+            max-width: 760px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
 
-.event-detail h3{ margin:0 0 8px; }
-.event-detail .event-meta{ color:#475569; font-size:0.95rem; margin-bottom:8px; }
-.event-detail p{ margin:0 0 12px; color:#273043; }
-.btn-close{ display:inline-block; padding:8px 12px; background:#1aa4e8; color:#fff; border-radius:8px; text-decoration:none; font-weight:700; }
-</style>
+        .event-detail h3 {
+            margin: 0 0 8px;
+        }
+
+        .event-detail .event-meta {
+            color: #475569;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .event-detail p {
+            margin: 0 0 12px;
+            color: #273043;
+        }
+
+        .btn-close {
+            display: inline-block;
+            padding: 8px 12px;
+            background: #1aa4e8;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+    </style>
 
 </head>
+
 <body>
-<div class="topbar">
-    <a href="./index.html" class="home-link">
-    <img src="./images/logo.png" alt="高専祭TOP" class="logo">
-</a>
-  <button class="menu-toggle" aria-label="メニューを開く">☰</button>
-</div>
-
-<nav id="nav">
-    <ul>
-        <li><a href="./about.html">高専祭とは</a></li>
-        <li><a href="./guest.html">ゲスト紹介</a></li>
-        <li><a href="./shop.html">模擬店紹介</a></li>
-        <li><a href="./event.html">イベント紹介</a></li>
-        <li><a href="./stamp-rally.html">スタンプラリー</a></li>
-        <li><a href="./schedule.html">スケジュール</a></li>
-        <li><a href="./company.html">ご協賛企業紹介</a></li>
-        <li><a href="./map.html">会場マップ</a></li>
-        <li><a href="./about-kosen.html">松江高専とは</a></li>
-        <li><a href="./announcements.html">お知らせ</a></li>
-        <li><a href="./bulletin.html">掲示板</a></li>
-    </ul>
-    <div class="nav-footer">
-        <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank" rel="noopener noreferrer">
-            <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学校広報
+    <div class="topbar">
+        <a href="./index.html" class="home-link">
+            <img src="./images/logo.png" alt="高専祭TOP" class="logo">
         </a>
-        <a class="nav-social" href="https://www.instagram.com/mct_gakuseikai/" target="_blank" rel="noopener noreferrer">
-            <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学生会
-        </a>
-    </div>
-</nav>
-
-<main class="schedule-page">
-
-    <div class="schedule-tabs">
-        <button class="schedule-day-tab active" data-day="1">
-            1日目
-        </button>
-
-        <button class="schedule-day-tab" data-day="2">
-            2日目
-        </button>
+        <button class="menu-toggle" aria-label="メニューを開く">☰</button>
     </div>
 
-    <div class="schedule-tabs">
-        <button class="schedule-place-tab active" data-place="gym">
-            体育館
-        </button>
+    <nav id="nav">
+        <ul>
+            <li><a href="./about.html">高専祭とは</a></li>
+            <li><a href="./guest.html">ゲスト紹介</a></li>
+            <li><a href="./shop.html">模擬店紹介</a></li>
+            <li><a href="./event.html">イベント紹介</a></li>
+            <li><a href="./stamp-rally.html">スタンプラリー</a></li>
+            <li><a href="./schedule.html">スケジュール</a></li>
+            <li><a href="./company.html">ご協賛企業紹介</a></li>
+            <li><a href="./map.html">会場マップ</a></li>
+            <li><a href="./about-kosen.html">松江高専とは</a></li>
+            <li><a href="./announcements.html">お知らせ</a></li>
+            <li><a href="./bulletin.html">掲示板</a></li>
+        </ul>
+        <div class="nav-footer">
+            <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank"
+                rel="noopener noreferrer">
+                <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学校広報
+            </a>
+            <a class="nav-social" href="https://www.instagram.com/mct_gakuseikai/" target="_blank"
+                rel="noopener noreferrer">
+                <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学生会
+            </a>
+        </div>
+    </nav>
 
-        <button class="schedule-place-tab" data-place="garden">
-            学びの庭
-        </button>
-    </div>
+    <main class="schedule-page">
 
-    <div id="schedule-view"></div>
+        <div class="schedule-tabs">
+            <button class="schedule-day-tab active" data-day="1">
+                1日目
+            </button>
 
-</main>
-<script>
+            <button class="schedule-day-tab" data-day="2">
+                2日目
+            </button>
+        </div>
 
-const EVENTS = [
+        <div class="schedule-tabs">
+            <button class="schedule-place-tab active" data-place="gym">
+                体育館
+            </button>
 
-    {
-        day:1,
-        place:"gym",
-        title:"ゲストライブ",
-        start:11,
-        end:12,
-        href:"./event.html",
-    },
-    {
-        day:1,
-        place:"gym",
-        title:"吹奏楽部コンサート",
-        start:13,
-        end:14,
-        href:"./event.html",
-    },
-    {
-        day:1,
-        place:"gym",
-        title:"学生ライブ",
-        start:15,
-        end:19,
-        href:"./event.html",
-    },
-    {
-        day:2,
-        place:"gym",
-        title:"カラオケ大会",
-        start:10,
-        end:11,
-        href:"./event.html",
-    },
-    {
-        day:2,
-        place:"gym",
-        title:"ダンス部パフォーマンス",
-        start:12,
-        end:13,
-        href:"./event.html",
-    },
-    {
-        day:2,
-        place:"gym",
-        title:"抽選会　(※学生のみ参加可)",
-        start:15,
-        end:19,
-        href:"./event.html",
-    },
-    {
-        day:1,
-        place:"garden",
-        title:"模擬店紹介",
-        start:9,
-        end:10,
-        href:"./event.html",
-    },
-    {
-        day:1,
-        place:"garden",
-        title:"大食い",
-        start:10,
-        end:11,
-        href:"./event.html",
-    },
-    {
-        day:1,
-        place:"garden",
-        title:"フィジーク",
-        start:12,
-        end:13,
-        href:"./event.html",
-    },
-    {
-        day:1,
-        place:"garden",
-        title:"クイズ",
-        start:14,
-        end:15,
-        href:"./event.html",
-    },
-    {
-        day:2,
-        place:"garden",
-        title:"パフォーマンス書道",
-        start:9,
-        end:10,
-        href:"./event.html",
-    },
-    {
-        day:2,
-        place:"garden",
-        title:"誰が一位でしょう？",
-        start:11,
-        end:12,
-        href:"./event.html",
-    },
-     {
-        day:2,
-        place:"garden",
-        title:"腕相撲",
-        start:13,
-        end:14,
-        href:"./event.html",
-    }
+            <button class="schedule-place-tab" data-place="garden">
+                学びの庭
+            </button>
+        </div>
 
-];
+        <div id="schedule-view"></div>
 
-let currentDay = 1;
-let currentPlace = "gym";
+    </main>
+    <script>
 
-document.querySelectorAll(".schedule-day-tab").forEach(button=>{
+        const EVENTS = [
 
-    button.addEventListener("click",()=>{
+            {
+                day: 1,
+                place: "gym",
+                title: "ゲストライブ",
+                start: 11,
+                end: 12,
+                href: "./event.html",
+            },
+            {
+                day: 1,
+                place: "gym",
+                title: "吹奏楽部コンサート",
+                start: 13,
+                end: 14,
+                href: "./event.html",
+            },
+            {
+                day: 1,
+                place: "gym",
+                title: "学生ライブ",
+                start: 15,
+                end: 19,
+                href: "./event.html",
+            },
+            {
+                day: 2,
+                place: "gym",
+                title: "カラオケ大会",
+                start: 10,
+                end: 11,
+                href: "./event.html",
+            },
+            {
+                day: 2,
+                place: "gym",
+                title: "ダンス部パフォーマンス",
+                start: 12,
+                end: 13,
+                href: "./event.html",
+            },
+            {
+                day: 2,
+                place: "gym",
+                title: "抽選会　(※学生のみ参加可)",
+                start: 15,
+                end: 19,
+                href: "./event.html",
+            },
+            {
+                day: 1,
+                place: "garden",
+                title: "模擬店紹介",
+                start: 9,
+                end: 10,
+                href: "./event.html",
+            },
+            {
+                day: 1,
+                place: "garden",
+                title: "大食い",
+                start: 10,
+                end: 11,
+                href: "./event.html",
+            },
+            {
+                day: 1,
+                place: "garden",
+                title: "フィジーク",
+                start: 12,
+                end: 13,
+                href: "./event.html",
+            },
+            {
+                day: 1,
+                place: "garden",
+                title: "クイズ",
+                start: 14,
+                end: 15,
+                href: "./event.html",
+            },
+            {
+                day: 2,
+                place: "garden",
+                title: "パフォーマンス書道",
+                start: 9,
+                end: 10,
+                href: "./event.html",
+            },
+            {
+                day: 2,
+                place: "garden",
+                title: "誰が一位でしょう？",
+                start: 11,
+                end: 12,
+                href: "./event.html",
+            },
+            {
+                day: 2,
+                place: "garden",
+                title: "腕相撲",
+                start: 13,
+                end: 14,
+                href: "./event.html",
+            }
 
-        document
-            .querySelectorAll(".schedule-day-tab")
-            .forEach(b=>b.classList.remove("active"));
+        ];
 
-        button.classList.add("active");
+        let currentDay = 1;
+        let currentPlace = "gym";
 
-        currentDay = Number(button.dataset.day);
+        document.querySelectorAll(".schedule-day-tab").forEach(button => {
 
-        render();
-    });
+            button.addEventListener("click", () => {
 
-});
+                document
+                    .querySelectorAll(".schedule-day-tab")
+                    .forEach(b => b.classList.remove("active"));
 
-document.querySelectorAll(".schedule-place-tab").forEach(button=>{
+                button.classList.add("active");
 
-    button.addEventListener("click",()=>{
+                currentDay = Number(button.dataset.day);
 
-        document
-            .querySelectorAll(".schedule-place-tab")
-            .forEach(b=>b.classList.remove("active"));
+                render();
+            });
 
-        button.classList.add("active");
+        });
 
-        currentPlace = button.dataset.place;
+        document.querySelectorAll(".schedule-place-tab").forEach(button => {
 
-        render();
-    });
+            button.addEventListener("click", () => {
 
-});
+                document
+                    .querySelectorAll(".schedule-place-tab")
+                    .forEach(b => b.classList.remove("active"));
 
-function render(){
+                button.classList.add("active");
 
-    
+                currentPlace = button.dataset.place;
 
-    const view =
-        document.getElementById("schedule-view");
+                render();
+            });
 
-    const placeName =
-        currentPlace === "gym"
-        ? "体育館"
-        : "学びの庭";
+        });
 
-   let html = `
+        function render() {
+
+
+
+            const view =
+                document.getElementById("schedule-view");
+
+            const placeName =
+                currentPlace === "gym"
+                    ? "体育館"
+                    : "学びの庭";
+
+            let html = `
 <div class="schedule-board">
 
     <div class="schedule-title">
@@ -435,16 +461,16 @@ function render(){
         <div class="schedule-times">
 `;
 
-    for(let i=9;i<=19;i++){
+            for (let i = 9; i <= 19; i++) {
 
-    html += `
+                html += `
         <div class="schedule-hour">
             ${i}
         </div>
     `;
-}
+            }
 
-    html += `
+            html += `
         </div>
 
         <div class="schedule-main">
@@ -458,30 +484,30 @@ function render(){
             <div class="schedule-grid">
 `;
 
-    for(let i=9;i<=19;i++){
+            for (let i = 9; i <= 19; i++) {
 
-        html += `<div class="schedule-row"></div>`;
-    }
+                html += `<div class="schedule-row"></div>`;
+            }
 
-    const filtered =
-        EVENTS.filter(event=>
-            event.day === currentDay &&
-            event.place === currentPlace
-        );
+            const filtered =
+                EVENTS.filter(event =>
+                    event.day === currentDay &&
+                    event.place === currentPlace
+                );
 
-    filtered.forEach(event=>{
+            filtered.forEach(event => {
 
-        const top =
-            (event.start - 9) * 80;
+                const top =
+                    (event.start - 9) * 80;
 
-        const height =
-            (event.end - event.start) * 80;
+                const height =
+                    (event.end - event.start) * 80;
 
-        const gid = EVENTS.findIndex(e => e === event);
-        const targetId = `event-${gid}`;
-        const hrefTarget = event.href ? event.href : `#${targetId}`;
+                const gid = EVENTS.findIndex(e => e === event);
+                const targetId = `event-${gid}`;
+                const hrefTarget = event.href ? event.href : `#${targetId}`;
 
-        html += `
+                html += `
             <a
                 href="${hrefTarget}"
                 class="schedule-event ${event.place}"
@@ -493,9 +519,9 @@ function render(){
                 ${event.title}
             </a>
         `;
-    });
+            });
 
-    html += `
+            html += `
                     </div>
 
                 </div>
@@ -505,17 +531,17 @@ function render(){
         </div>
     `;
 
-    view.innerHTML = html;
-}
-// 補助: イベント詳細セクション生成（同じページ内リンク先）
-function renderEventDetails(){
-    const container = document.getElementById('schedule-view');
-    if(!container) return;
+            view.innerHTML = html;
+        }
+        // 補助: イベント詳細セクション生成（同じページ内リンク先）
+        function renderEventDetails() {
+            const container = document.getElementById('schedule-view');
+            if (!container) return;
 
-    let details = '<div id="event-details">';
+            let details = '<div id="event-details">';
 
-    EVENTS.forEach((event, idx) => {
-        details += `
+            EVENTS.forEach((event, idx) => {
+                details += `
             <section id="event-${idx}" class="event-detail">
                 <h3>${event.title}</h3>
                 <div class="event-meta">${event.day}日目・${event.place}・${event.start}:00〜${event.end}:00</div>
@@ -523,17 +549,18 @@ function renderEventDetails(){
                 <a href="#schedule-view" class="btn-close">スケジュールに戻る</a>
             </section>
         `;
-    });
+            });
 
-    details += '</div>';
+            details += '</div>';
 
-    container.insertAdjacentHTML('beforeend', details);
-}
+            container.insertAdjacentHTML('beforeend', details);
+        }
 
-// 初回描画後に詳細を追加
-render();
-//renderEventDetails();
-</script>
+        // 初回描画後に詳細を追加
+        render();
+        //renderEventDetails();
+    </script>
 
 </body>
+
 </html>

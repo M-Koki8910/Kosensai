@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,450 +10,455 @@
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.7.0/minified/html5-qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="./scripts/script.js" defer></script>
+    <link rel="icon" type="image/png" href="./images/tab-resize.png">
+
 
     <style>
         /* ============================================
    スキャンラインアニメーション関連
    ============================================ */
 
-/**
+        /**
  * スキャンライン要素
  * モーダル内のカメラ表示エリアに被せる走査線
  */
-.scan-line {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(
-        to bottom,
-        transparent 0%,
-        rgba(34, 197, 94, 0.8) 20%,
-        rgba(34, 197, 94, 1) 50%,
-        rgba(34, 197, 94, 0.8) 80%,
-        transparent 100%
-    );
-    box-shadow: 
-        0 0 10px rgba(34, 197, 94, 0.6),
-        0 0 20px rgba(34, 197, 94, 0.3);
-    pointer-events: none;
-    will-change: transform;
-    z-index: 10;
-}
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(to bottom,
+                    transparent 0%,
+                    rgba(34, 197, 94, 0.8) 20%,
+                    rgba(34, 197, 94, 1) 50%,
+                    rgba(34, 197, 94, 0.8) 80%,
+                    transparent 100%);
+            box-shadow:
+                0 0 10px rgba(34, 197, 94, 0.6),
+                0 0 20px rgba(34, 197, 94, 0.3);
+            pointer-events: none;
+            will-change: transform;
+            z-index: 10;
+        }
 
-/* カメラ読み取り中の状態：スキャンラインを表示 */
-#scan-modal.is-success .scan-line {
-    opacity: 1;
-}
+        /* カメラ読み取り中の状態：スキャンラインを表示 */
+        #scan-modal.is-success .scan-line {
+            opacity: 1;
+        }
 
-/* スキャンライン領域の背景グロー効果（オプション） */
-#scan-modal.is-success #reader {
-    position: relative;
-    overflow: hidden;
-}
+        /* スキャンライン領域の背景グロー効果（オプション） */
+        #scan-modal.is-success #reader {
+            position: relative;
+            overflow: hidden;
+        }
 
-/* スキャンライン周辺に淡いグロー を追加するなら以下を有効化 */
-#scan-modal.is-success #reader::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(
-        ellipse at center,
-        rgba(34, 197, 94, 0.05) 0%,
-        transparent 70%
-    );
-    pointer-events: none;
-    animation: scanPulse 1.8s ease-in-out infinite;
-}
+        /* スキャンライン周辺に淡いグロー を追加するなら以下を有効化 */
+        #scan-modal.is-success #reader::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center,
+                    rgba(34, 197, 94, 0.05) 0%,
+                    transparent 70%);
+            pointer-events: none;
+            animation: scanPulse 1.8s ease-in-out infinite;
+        }
 
-@keyframes scanPulse {
-    0%, 100% {
-        opacity: 0.3;
-    }
-    50% {
-        opacity: 0.6;
-    }
-}
+        @keyframes scanPulse {
 
-/* ============================================
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* ============================================
    チェックマークアニメーション
    ============================================ */
 
-/**
+        /**
  * スキャン成功時のチェックマーク
  * SVGまたはテキスト要素として実装
  */
-#scan-success {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    font-size: 80px;
-    color: #22c55e;
-    opacity: 0;
-    pointer-events: none;
-    transition: none;
-    will-change: transform, opacity;
-}
+        #scan-success {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 80px;
+            color: #22c55e;
+            opacity: 0;
+            pointer-events: none;
+            transition: none;
+            will-change: transform, opacity;
+        }
 
-/* is-visible クラスでチェックマーク表示 */
-#scan-success.is-visible {
-    animation: checkmarkPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
+        /* is-visible クラスでチェックマーク表示 */
+        #scan-success.is-visible {
+            animation: checkmarkPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
 
-@keyframes checkmarkPop {
-    0% {
-        transform: translate(-50%, -50%) scale(0) rotate(-20deg);
-        opacity: 0;
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.2) rotate(10deg);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1) rotate(0deg);
-        opacity: 1;
-    }
-}
+        @keyframes checkmarkPop {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(-20deg);
+                opacity: 0;
+            }
 
-/* チェックマークの余韻（わずかな動き） */
-#scan-success.is-visible::before {
-    content: '';
-    position: absolute;
-    inset: -30px;
-    border: 3px solid rgba(34, 197, 94, 0.2);
-    border-radius: 50%;
-    animation: checkmarkRing 0.6s ease-out;
-}
+            50% {
+                transform: translate(-50%, -50%) scale(1.2) rotate(10deg);
+                opacity: 1;
+            }
 
-@keyframes checkmarkRing {
-    0% {
-        opacity: 1;
-        transform: scale(0.5);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(2);
-    }
-}
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
 
-/* ============================================
+        /* チェックマークの余韻（わずかな動き） */
+        #scan-success.is-visible::before {
+            content: '';
+            position: absolute;
+            inset: -30px;
+            border: 3px solid rgba(34, 197, 94, 0.2);
+            border-radius: 50%;
+            animation: checkmarkRing 0.6s ease-out;
+        }
+
+        @keyframes checkmarkRing {
+            0% {
+                opacity: 1;
+                transform: scale(0.5);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(2);
+            }
+        }
+
+        /* ============================================
    モーダル状態別スタイル
    ============================================ */
 
-/**
+        /**
  * is-scanning: 読み取り待機中
  * - スキャンラインなし
  * - ガイドフレームのみ
  */
-#scan-modal.is-scanning {
-    /* 基本状態 */
-}
+        #scan-modal.is-scanning {
+            /* 基本状態 */
+        }
 
-/**
+        /**
  * is-success: 読み取り完了直後
  * - スキャンラインが流れている
  * - チェックマーク表示準備
  * - 背景のトーン調整（読み取り感を演出）
  */
-#scan-modal.is-success #reader {
-    background: linear-gradient(
-        135deg,
-        rgba(34, 197, 94, 0.02) 0%,
-        rgba(59, 130, 246, 0.02) 100%
-    );
-}
+        #scan-modal.is-success #reader {
+            background: linear-gradient(135deg,
+                    rgba(34, 197, 94, 0.02) 0%,
+                    rgba(59, 130, 246, 0.02) 100%);
+        }
 
-/**
+        /**
  * is-loading: スタンプ記録中
  * - スキャンラインなし
  * - ローディング表示
  */
-#scan-modal.is-loading {
-    opacity: 0.9;
-}
+        #scan-modal.is-loading {
+            opacity: 0.9;
+        }
 
-#scan-modal.is-loading #reader {
-    position: relative;
-}
+        #scan-modal.is-loading #reader {
+            position: relative;
+        }
 
-#scan-modal.is-loading #reader::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    z-index: 20;
-}
+        #scan-modal.is-loading #reader::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 20;
+        }
 
-@keyframes spin {
-    to {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
-}
+        @keyframes spin {
+            to {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
 
-/**
+        /**
  * is-error: エラー状態
  * - スキャンラインなし
  * - エラー表示
  */
-#scan-modal.is-error {
-    /* エラースタイル */
-}
+        #scan-modal.is-error {
+            /* エラースタイル */
+        }
 
-#scan-modal.is-error #reader {
-    background: linear-gradient(
-        135deg,
-        rgba(239, 68, 68, 0.05) 0%,
-        rgba(251, 146, 60, 0.05) 100%
-    );
-    border-color: rgba(239, 68, 68, 0.3);
-}
+        #scan-modal.is-error #reader {
+            background: linear-gradient(135deg,
+                    rgba(239, 68, 68, 0.05) 0%,
+                    rgba(251, 146, 60, 0.05) 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
 
-/* ============================================
+        /* ============================================
    ガイドフレーム（既存のQR読み取り枠）
    ============================================ */
 
-/**
+        /**
  * QRコード読み取りのガイドフレーム
  * スキャンラインが流れるエリアの上に配置
  */
-.qr-guide-frame {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 260px;
-    height: 260px;
-    border: 3px solid rgba(255, 255, 255, 0.6);
-    border-radius: 12px;
-    pointer-events: none;
-    z-index: 5;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
-}
+        .qr-guide-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 260px;
+            height: 260px;
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 5;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+        }
 
-/* 読み取り中はガイドフレームを強調 */
-#scan-modal.is-success .qr-guide-frame {
-    border-color: #22c55e;
-    border-width: 2px;
-    box-shadow: 
-        0 0 0 9999px rgba(0, 0, 0, 0.4),
-        inset 0 0 20px rgba(34, 197, 94, 0.2);
-}
+        /* 読み取り中はガイドフレームを強調 */
+        #scan-modal.is-success .qr-guide-frame {
+            border-color: #22c55e;
+            border-width: 2px;
+            box-shadow:
+                0 0 0 9999px rgba(0, 0, 0, 0.4),
+                inset 0 0 20px rgba(34, 197, 94, 0.2);
+        }
 
-/* ============================================
+        /* ============================================
    トランジション・アニメーション調整
    ============================================ */
 
-/* モーダル状態遷移のスムーズさ */
-#scan-modal {
-    transition: opacity 0.3s ease;
-}
+        /* モーダル状態遷移のスムーズさ */
+        #scan-modal {
+            transition: opacity 0.3s ease;
+        }
 
-#scan-modal.is-closing {
-    opacity: 0;
-}
+        #scan-modal.is-closing {
+            opacity: 0;
+        }
 
-/* メッセージテキストのフェード */
-#scan-status {
-    transition: opacity 0.2s ease;
-}
+        /* メッセージテキストのフェード */
+        #scan-status {
+            transition: opacity 0.2s ease;
+        }
 
-/* ============================================
+        /* ============================================
    アクセシビリティ関連
    ============================================ */
 
-/* 高コントラストモード対応 */
-@media (prefers-contrast: more) {
-    .scan-line {
-        height: 3px;
-        opacity: 1 !important;
-    }
+        /* 高コントラストモード対応 */
+        @media (prefers-contrast: more) {
+            .scan-line {
+                height: 3px;
+                opacity: 1 !important;
+            }
 
-    #scan-success {
-        filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
-    }
-}
+            #scan-success {
+                filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+            }
+        }
 
-/* 動きの削減設定に対応 */
-@media (prefers-reduced-motion: reduce) {
-    .scan-line {
-        animation: none;
-        top: 33.33%;
-    }
+        /* 動きの削減設定に対応 */
+        @media (prefers-reduced-motion: reduce) {
+            .scan-line {
+                animation: none;
+                top: 33.33%;
+            }
 
-    #scan-success.is-visible {
-        animation: none;
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
+            #scan-success.is-visible {
+                animation: none;
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
 
-    #scan-success.is-visible::before {
-        animation: none;
-        opacity: 0;
-    }
+            #scan-success.is-visible::before {
+                animation: none;
+                opacity: 0;
+            }
 
-    #scan-modal.is-loading #reader::before {
-        animation: none;
-        border-top-color: #999;
-    }
+            #scan-modal.is-loading #reader::before {
+                animation: none;
+                border-top-color: #999;
+            }
 
-    scanPulse {
-        animation: none;
-    }
-}
+            scanPulse {
+                animation: none;
+            }
+        }
 
-/* ============================================
+        /* ============================================
    レスポンシブ調整
    ============================================ */
 
-/* モバイル・小画面対応 */
-@media (max-width: 640px) {
-    .scan-line {
-        height: 1.5px;
-    }
+        /* モバイル・小画面対応 */
+        @media (max-width: 640px) {
+            .scan-line {
+                height: 1.5px;
+            }
 
-    #scan-success {
-        font-size: 60px;
-    }
+            #scan-success {
+                font-size: 60px;
+            }
 
-    .qr-guide-frame {
-        width: 220px;
-        height: 220px;
-    }
-}
+            .qr-guide-frame {
+                width: 220px;
+                height: 220px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-<div class="topbar">
-    <a href="./index.html" class="home-link">
-    <img src="./images/logo.png" alt="高専祭TOP" class="logo">
-</a>
-  <button class="menu-toggle" aria-label="メニューを開く">☰</button>
-</div>
-
-<nav id="nav">
-    <ul>
-        <li><a href="./about.html">高専祭とは</a></li>
-        <li><a href="./guest.html">ゲスト紹介</a></li>
-        <li><a href="./shop.html">模擬店紹介</a></li>
-        <li><a href="./event.html">イベント紹介</a></li>
-        <li><a href="./stamp-rally.html">スタンプラリー</a></li>
-        <li><a href="./schedule.html">スケジュール</a></li>
-        <li><a href="./company.html">ご協賛企業紹介</a></li>
-        <li><a href="./map.html">会場マップ</a></li>
-        <li><a href="./about-kosen.html">松江高専とは</a></li>
-        <li><a href="./announcements.html">お知らせ</a></li>
-        <li><a href="./bulletin.html">掲示板</a></li>
-    </ul>
-    <div class="nav-footer">
-        <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank" rel="noopener noreferrer">
-            <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学校広報
+    <div class="topbar">
+        <a href="./index.html" class="home-link">
+            <img src="./images/logo.png" alt="高専祭TOP" class="logo">
         </a>
-        <a class="nav-social" href="https://www.instagram.com/mct_gakuseikai/" target="_blank" rel="noopener noreferrer">
-            <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学生会
-        </a>
+        <button class="menu-toggle" aria-label="メニューを開く">☰</button>
     </div>
-</nav>
 
-<main>
-    <section class="hero" style="background-image: linear-gradient(rgba(15,23,42,0.55), rgba(15,23,42,0.55)), url('header_ed.jpg'); height: 72vh; min-height: 420px;">
-        <div class="hero-text">
-            <p class="guest-label">KOSENSAI STAMP RALLY</p>
-            <h1>会場を巡ってスタンプを集めよう</h1>
-            <p>各ブースのQRコードを読み取ると、訪問履歴が保存されます。</p>
+    <nav id="nav">
+        <ul>
+            <li><a href="./about.html">高専祭とは</a></li>
+            <li><a href="./guest.html">ゲスト紹介</a></li>
+            <li><a href="./shop.html">模擬店紹介</a></li>
+            <li><a href="./event.html">イベント紹介</a></li>
+            <li><a href="./stamp-rally.html">スタンプラリー</a></li>
+            <li><a href="./schedule.html">スケジュール</a></li>
+            <li><a href="./company.html">ご協賛企業紹介</a></li>
+            <li><a href="./map.html">会場マップ</a></li>
+            <li><a href="./about-kosen.html">松江高専とは</a></li>
+            <li><a href="./announcements.html">お知らせ</a></li>
+            <li><a href="./bulletin.html">掲示板</a></li>
+        </ul>
+        <div class="nav-footer">
+            <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank"
+                rel="noopener noreferrer">
+                <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学校広報
+            </a>
+            <a class="nav-social" href="https://www.instagram.com/mct_gakuseikai/" target="_blank"
+                rel="noopener noreferrer">
+                <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学生会
+            </a>
         </div>
-    </section>
+    </nav>
 
-    <section class="container-section">
-        <h2>スタンプラリーとは</h2>
-        <p class="stamp-intro">高専祭会場の出展企業を巡って、QRコードを読み取るとスタンプが増えていく体験型コンテンツです。スマートフォンで読み取れば、会場の見どころを巡りながら楽しく参加できます。</p>
-        <p class="stamp-intro">このページでは、スタンプの集め方と会場マップの確認から、実際のQR読み取りまで一つながりで体験できます。</p>
-    </section>
-
-    <section class="container-section" id="stamp-rally-start">
-        <h2>スタンプラリーを始める</h2>
-        <p class="stamp-intro">まずは説明を確認してから、下のボタンでスタンプラリーを開始してください。開始後に巡る場所のカード、QR読み取りボタン、会場マップが表示されます。</p>
-
-        <div class="stamp-survey" id="stamp-survey" aria-label="任意アンケート">
-            <h3>開始前アンケート（任意）</h3>
-            <p class="stamp-note">未回答のまま開始できます。未回答の場合、属性は null として記録されます。</p>
-            <div class="stamp-survey-grid">
-                <label>
-                    年代
-                    <select id="survey-age-group">
-                        <option value="">回答しない</option>
-                        <option value="under-13">13歳未満</option>
-                        <option value="13-18">13-18歳</option>
-                        <option value="19-29">19-29歳</option>
-                        <option value="30-49">30-49歳</option>
-                        <option value="50-plus">50歳以上</option>
-                    </select>
-                </label>
-                <label>
-                    来場区分
-                    <select id="survey-visitor-type">
-                        <option value="">回答しない</option>
-                        <option value="student">学生</option>
-                        <option value="guardian">保護者</option>
-                        <option value="alumni">卒業生</option>
-                        <option value="community">地域来場者</option>
-                        <option value="other">その他</option>
-                    </select>
-                </label>
-                <label>
-                    同伴
-                    <select id="survey-group-type">
-                        <option value="">回答しない</option>
-                        <option value="alone">1人</option>
-                        <option value="family">家族</option>
-                        <option value="friends">友人</option>
-                        <option value="school-group">学校関係者グループ</option>
-                        <option value="other">その他</option>
-                    </select>
-                </label>
+    <main>
+        <section class="hero"
+            style="background-image: linear-gradient(rgba(15,23,42,0.55), rgba(15,23,42,0.55)), url('header_ed.jpg'); height: 72vh; min-height: 420px;">
+            <div class="hero-text">
+                <p class="guest-label">KOSENSAI STAMP RALLY</p>
+                <h1>会場を巡ってスタンプを集めよう</h1>
+                <p>各ブースのQRコードを読み取ると、訪問履歴が保存されます。</p>
             </div>
-        </div>
+        </section>
 
-        <button id="begin-rally" class="stamp-btn" type="button">スタンプラリーを始める</button>
-    </section>
+        <section class="container-section">
+            <h2>スタンプラリーとは</h2>
+            <p class="stamp-intro">高専祭会場の出展企業を巡って、QRコードを読み取るとスタンプが増えていく体験型コンテンツです。スマートフォンで読み取れば、会場の見どころを巡りながら楽しく参加できます。
+            </p>
+            <p class="stamp-intro">このページでは、スタンプの集め方と会場マップの確認から、実際のQR読み取りまで一つながりで体験できます。</p>
+        </section>
 
-    <section class="stamp-rally container-section hidden" id="stamp-rally">
-        <h2>スタンプを集める</h2>
-        <p class="stamp-intro">会場のQRコードを読み取ると、訪問履歴がこの端末に保存されます。各場所のカードを見ながら、QRコードを読み取ってスタンプを集めましょう。</p>
+        <section class="container-section" id="stamp-rally-start">
+            <h2>スタンプラリーを始める</h2>
+            <p class="stamp-intro">まずは説明を確認してから、下のボタンでスタンプラリーを開始してください。開始後に巡る場所のカード、QR読み取りボタン、会場マップが表示されます。</p>
 
-        <div class="stamp-grid" id="stamp-grid"></div>
-
-        <div class="stamp-sheet-panel" aria-label="スタンプラリーシート">
-            <div class="stamp-sheet-head">
-                <div>
-                    <p class="stamp-label">STAMP SHEET</p>
-                    <h3>達成した分だけ、先頭から順に押されます</h3>
+            <div class="stamp-survey" id="stamp-survey" aria-label="任意アンケート">
+                <h3>開始前アンケート（任意）</h3>
+                <p class="stamp-note">未回答のまま開始できます。未回答の場合、属性は null として記録されます。</p>
+                <div class="stamp-survey-grid">
+                    <label>
+                        年代
+                        <select id="survey-age-group">
+                            <option value="">回答しない</option>
+                            <option value="under-13">13歳未満</option>
+                            <option value="13-18">13-18歳</option>
+                            <option value="19-29">19-29歳</option>
+                            <option value="30-49">30-49歳</option>
+                            <option value="50-plus">50歳以上</option>
+                        </select>
+                    </label>
+                    <label>
+                        来場区分
+                        <select id="survey-visitor-type">
+                            <option value="">回答しない</option>
+                            <option value="student">学生</option>
+                            <option value="guardian">保護者</option>
+                            <option value="alumni">卒業生</option>
+                            <option value="community">地域来場者</option>
+                            <option value="other">その他</option>
+                        </select>
+                    </label>
+                    <label>
+                        同伴
+                        <select id="survey-group-type">
+                            <option value="">回答しない</option>
+                            <option value="alone">1人</option>
+                            <option value="family">家族</option>
+                            <option value="friends">友人</option>
+                            <option value="school-group">学校関係者グループ</option>
+                            <option value="other">その他</option>
+                        </select>
+                    </label>
                 </div>
-                <p class="stamp-sheet-progress">
-                    <span id="stamp-sheet-count">0</span>/<span id="stamp-sheet-total">0</span>
-                    <span id="stamp-sheet-rate">0%</span>
-                </p>
             </div>
-            <div class="stamp-sheet-bar" aria-hidden="true">
-                <div id="stamp-sheet-fill" class="stamp-sheet-bar-fill"></div>
-            </div>
-            <p class="stamp-note">空き枠は全スポット分を最初から用意し、達成率は埋まった枠数で表します。巡る順番に関係なく、達成した数だけ左から埋まります。</p>
-            <div id="stamp-sheet" class="stamp-sheet-grid"></div>
-        </div>
 
-        <!--
+            <button id="begin-rally" class="stamp-btn" type="button">スタンプラリーを始める</button>
+        </section>
+
+        <section class="stamp-rally container-section hidden" id="stamp-rally">
+            <h2>スタンプを集める</h2>
+            <p class="stamp-intro">会場のQRコードを読み取ると、訪問履歴がこの端末に保存されます。各場所のカードを見ながら、QRコードを読み取ってスタンプを集めましょう。</p>
+
+            <div class="stamp-grid" id="stamp-grid"></div>
+
+            <div class="stamp-sheet-panel" aria-label="スタンプラリーシート">
+                <div class="stamp-sheet-head">
+                    <div>
+                        <p class="stamp-label">STAMP SHEET</p>
+                        <h3>達成した分だけ、先頭から順に押されます</h3>
+                    </div>
+                    <p class="stamp-sheet-progress">
+                        <span id="stamp-sheet-count">0</span>/<span id="stamp-sheet-total">0</span>
+                        <span id="stamp-sheet-rate">0%</span>
+                    </p>
+                </div>
+                <div class="stamp-sheet-bar" aria-hidden="true">
+                    <div id="stamp-sheet-fill" class="stamp-sheet-bar-fill"></div>
+                </div>
+                <p class="stamp-note">空き枠は全スポット分を最初から用意し、達成率は埋まった枠数で表します。巡る順番に関係なく、達成した数だけ左から埋まります。</p>
+                <div id="stamp-sheet" class="stamp-sheet-grid"></div>
+            </div>
+
+            <!--
         以前の会場スポット版スタンプカードは、将来の再利用に備えて残しています。
         <div class="stamp-grid" id="stamp-grid-legacy">
             <article class="stamp-card" data-stamp-id="entrance">...</article>
@@ -462,84 +468,86 @@
         </div>
         -->
 
-        <div class="stamp-controls">
-            <button id="start-scan" class="stamp-btn" type="button">カメラでQRを読み取る</button>
-        </div>
+            <div class="stamp-controls">
+                <button id="start-scan" class="stamp-btn" type="button">カメラでQRを読み取る</button>
+            </div>
 
-        <div id="scan-modal" class="stamp-scan-modal hidden" aria-hidden="true">
-            <div class="stamp-scan-modal-backdrop" data-scan-close="backdrop"></div>
-            <section class="stamp-scan-modal-panel" role="dialog" aria-modal="true" aria-labelledby="scan-modal-title">
-                <div class="stamp-scan-modal-head">
-                    <div>
-                        <p class="stamp-label">SCAN MODE</p>
-                        <h3 id="scan-modal-title">QRコードを読み取る</h3>
-                    </div>
-                    <button id="scan-modal-close" class="stamp-btn secondary" type="button">閉じる</button>
-                </div>
-
-                <div class="stamp-scan-stage">
-                    <div class="stamp-scan-reader-wrap">
-                        <div id="reader" class="reader-box stamp-scan-reader" aria-live="polite"></div>
-                        <div class="stamp-scan-frame" aria-hidden="true">
-                            <span class="stamp-scan-line"></span>
+            <div id="scan-modal" class="stamp-scan-modal hidden" aria-hidden="true">
+                <div class="stamp-scan-modal-backdrop" data-scan-close="backdrop"></div>
+                <section class="stamp-scan-modal-panel" role="dialog" aria-modal="true"
+                    aria-labelledby="scan-modal-title">
+                    <div class="stamp-scan-modal-head">
+                        <div>
+                            <p class="stamp-label">SCAN MODE</p>
+                            <h3 id="scan-modal-title">QRコードを読み取る</h3>
                         </div>
-                        <div id="scan-success" class="stamp-scan-success" aria-hidden="true">✓</div>
+                        <button id="scan-modal-close" class="stamp-btn secondary" type="button">閉じる</button>
                     </div>
-                </div>
 
-                <p id="scan-status" class="scan-status">カメラを起動すると、読み取ったQRコードの場所を記録できます。</p>
+                    <div class="stamp-scan-stage">
+                        <div class="stamp-scan-reader-wrap">
+                            <div id="reader" class="reader-box stamp-scan-reader" aria-live="polite"></div>
+                            <div class="stamp-scan-frame" aria-hidden="true">
+                                <span class="stamp-scan-line"></span>
+                            </div>
+                            <div id="scan-success" class="stamp-scan-success" aria-hidden="true">✓</div>
+                        </div>
+                    </div>
 
-                <div class="stamp-scan-actions">
-                    <button id="scan-modal-retry" class="stamp-btn secondary hidden" type="button">再試行</button>
-                </div>
-            </section>
-        </div>
-        <!-- <div class="stamp-map-panel">
+                    <p id="scan-status" class="scan-status">カメラを起動すると、読み取ったQRコードの場所を記録できます。</p>
+
+                    <div class="stamp-scan-actions">
+                        <button id="scan-modal-retry" class="stamp-btn secondary hidden" type="button">再試行</button>
+                    </div>
+                </section>
+            </div>
+            <!-- <div class="stamp-map-panel">
             <h3>会場マップ</h3>
             <p class="stamp-note">現在の巡回ルートと各スポットの位置を確認できます。</p>
             <iframe id="stamp-map-frame" src="/map.html" title="会場マップ" class="stamp-map-frame"></iframe>
         </div> -->
-        <div id="stamp-summary" class="stamp-summary"></div>
-    </section>
+            <div id="stamp-summary" class="stamp-summary"></div>
+        </section>
 
-    <section class="container-section">
-        <h2>スタンプラリーをさらに楽しむ</h2>
-        <div class="cards">
-            <a href="./event.html" class="card">
-                <img src="./images/event.jpg" alt="イベント紹介">
-                <div class="card-body">
-                    <h3>イベント紹介</h3>
-                    <p>ステージや体験企画のタイムテーブルを確認できます。</p>
-                </div>
-            </a>
-            <a href="./shop.html" class="card">
-                <img src="./images/shop.jpg" alt="模擬店紹介">
-                <div class="card-body">
-                    <h3>模擬店紹介</h3>
-                    <p>会場で人気の模擬店やお食事スポットをチェック。
-                </div>
-            </a>
-            <a href="./about.html" class="card">
-                <img src="./images/about.jpg" alt="高専祭とは">
-                <div class="card-body">
-                    <h3>高専祭とは</h3>
-                    <p>開催の目的や見どころを知って、巡り方をイメージしよう。</p>
-                </div>
-            </a>
-            <a href="./map.html" class="card">
-                <img src="./images/header_ed.jpg" alt="会場マップ">
-                <div class="card-body">
-                    <h3>会場マップ</h3>
-                    <p>各ブースの場所と移動ルートを確認して、効率よく回れます。</p>
-                </div>
-            </a>
-        </div>
-    </section>
-</main>
+        <section class="container-section">
+            <h2>スタンプラリーをさらに楽しむ</h2>
+            <div class="cards">
+                <a href="./event.html" class="card">
+                    <img src="./images/event.jpg" alt="イベント紹介">
+                    <div class="card-body">
+                        <h3>イベント紹介</h3>
+                        <p>ステージや体験企画のタイムテーブルを確認できます。</p>
+                    </div>
+                </a>
+                <a href="./shop.html" class="card">
+                    <img src="./images/shop.jpg" alt="模擬店紹介">
+                    <div class="card-body">
+                        <h3>模擬店紹介</h3>
+                        <p>会場で人気の模擬店やお食事スポットをチェック。
+                    </div>
+                </a>
+                <a href="./about.html" class="card">
+                    <img src="./images/about.jpg" alt="高専祭とは">
+                    <div class="card-body">
+                        <h3>高専祭とは</h3>
+                        <p>開催の目的や見どころを知って、巡り方をイメージしよう。</p>
+                    </div>
+                </a>
+                <a href="./map.html" class="card">
+                    <img src="./images/header_ed.jpg" alt="会場マップ">
+                    <div class="card-body">
+                        <h3>会場マップ</h3>
+                        <p>各ブースの場所と移動ルートを確認して、効率よく回れます。</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </main>
 
-<footer>
-    <p>© 2026 松江高専 高専祭実行委員</p>
+    <footer>
+        <p>© 2026 松江高専 高専祭実行委員</p>
     </footer>
 
 </body>
+
 </html>
