@@ -8,7 +8,7 @@ const { DatabaseSync } = require('node:sqlite');
 
 const PORT = process.env.PORT || 3000;
 
-const STATIC_ROOT = __dirname;
+const STATIC_ROOT = path.join(__dirname, 'public');
 const ENV_PATH = path.join(__dirname, '.env');
 const SESSION_COOKIE_NAME = 'session_id';
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
@@ -141,7 +141,7 @@ const DEFAULT_COMPANY_MASTER = [
 ];
 
 function loadCompanyMaster() {
-  const masterPath = path.join(__dirname, 'companies.json');
+  const masterPath = path.join(__dirname, 'public','scripts','companies.json');
   try {
     if (!fs.existsSync(masterPath)) {
       return DEFAULT_COMPANY_MASTER;

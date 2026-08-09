@@ -1,12 +1,20 @@
 {
   "pages": {
-    "bulletin": true,
+    "index": true,
+    "about": true,
+    "guest": true,
+    "shop": true,
+    "event": true,
+    "stamp-rally": true,
     "lottery-entry": true,
     "lottery-guide": true,
-    "lottery-prizes": true
-  },
-  "visibility": {
-    "bulletin": true
+    "lottery-prizes": true,
+    "schedule": true,
+    "company": true,
+    "map": true,
+    "announcements": true,
+    "bulletin": true,
+    "access": true
   },
   "siteWidePublished": true
 }
