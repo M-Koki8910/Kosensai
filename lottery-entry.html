@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.7.0/minified/html5-qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="./script.js"></script>
+  <script src="./script.js" defer></script>
   <style>
     :root {
 
@@ -26,6 +26,12 @@
       --text: #1e293b;
 
       --sub: #64748b;
+
+    }
+
+    [hidden] {
+
+      display: none !important;
 
     }
 
@@ -195,29 +201,55 @@
 
 <body>
   <div class="topbar">
-    <a href="./index.html" class="home-link" aria-label="ホームに戻る">
+    <a href="./index.html" class="home-link">
       <img src="./logo.png" alt="高専祭TOP" class="logo">
     </a>
     <button class="menu-toggle" aria-label="メニューを開く">☰</button>
   </div>
 
-  <nav id="nav" aria-label="ページ移動">
+  <nav id="nav">
+    <div class="announcement-wrapper">
+
+      <!-- お知らせ -->
+      <div class="announcement-ticker info-ticker">
+        <div class="ticker-label">
+          お知らせ
+        </div>
+
+        <div class="ticker-container">
+          <div id="ticker-content" class="ticker-content"></div>
+        </div>
+      </div>
+
+      <!-- 注意 -->
+      <div class="announcement-ticker warning-ticker">
+        <div class="ticker-label">
+          ⚠ 重要
+        </div>
+
+        <div class="ticker-container">
+          <div class="ticker-content ticker-scroll">
+            ＊＊＊このページは開発用テストページです。＊＊＊　　履歴の削除、Cookieの削除は行わないください。記録が消失する可能性があります。
+          </div>
+        </div>
+      </div>
+
+    </div>
     <ul>
       <li><a href="./about.html">高専祭とは</a></li>
       <li><a href="./guest.html">ゲスト紹介</a></li>
       <li><a href="./shop.html">模擬店紹介</a></li>
       <li><a href="./event.html">イベント紹介</a></li>
       <li><a href="./stamp-rally.html">スタンプラリー</a></li>
-      <li><a href="./lottery-guide.html">抽選会の説明</a></li>
-      <li><a href="./lottery-entry.html">抽選会参加受付</a></li>
-      <li><a href="./lottery-prizes.html">景品紹介</a></li>
-      <li><a href="./schedule.html">スケジュール</a></li>
       <li><a href="./company.html">ご協賛企業紹介</a></li>
+      <!--<li><a href="./lottery-guide.html">抽選会の説明</a></li> -->
+      <li><a href="./lottery-entry.html">抽選会参加受付</a></li>
+      <!--<li><a href="./lottery-prizes.html">景品紹介</a></li>-->
+      <li><a href="./schedule.html">スケジュール</a></li>
       <li><a href="./map.html">会場マップ</a></li>
       <li><a href="./about-kosen.html">松江高専とは</a></li>
       <li><a href="./announcements.html">お知らせ</a></li>
       <li><a href="./bulletin.html">掲示板</a></li>
-      <li><a href="./admin-integrated.html">管理ページ</a></li>
     </ul>
     <div class="nav-footer">
       <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank" rel="noopener noreferrer">
@@ -290,6 +322,8 @@
     //const stampCountEl = document.getElementById('stampCount');
     //const stampMetaEl = document.getElementById('stampMeta');
     //const eventHistory = document.getElementById('eventHistory');
+    const readerCard = document.getElementById("readerCard");
+    const resultCard = document.getElementById("resultCard");
 
     /*  let cameraStream = null;
      let barcodeDetector = null;
@@ -301,6 +335,17 @@
     let html5QrCode = null;
     let scannerActive = false;
     let isProcessing = false;
+
+    function showReader() {
+
+      readerCard.hidden = false;
+      resultCard.hidden = true;
+
+      rendercard.style.display = "block";
+      resultCard.style.display = "none";
+
+    }
+
 
     function setState(message, kind = '') {
       scannerState.className = `scanner-state ${kind}`.trim();
@@ -395,14 +440,18 @@
 
         const statusLabel = entryData.existing ? '再表示' : '発行完了';
         setState(`受付完了: ${lotteryNumber} を発行しました。`, 'is-success');
+        localStorage.setItem('lottery-latest-issued', JSON.stringify({
+          lottery_number: lotteryNumber
+        }));
         showLotteryResult(lotteryNumber);
-        /*  appendHistory(statusLabel, `UUID <strong>${escapeHtml(visitorId)}</strong> に対して抽選番号 <strong>${escapeHtml(lotteryNumber)}</strong> を保存しました。`);
-         localStorage.setItem('lottery-last-issued', JSON.stringify({
-           visitor_id: visitorId,
-           lottery_number: lotteryNumber,
-           stamp_count: stampCount,
-           issued_at: new Date().toISOString() */
-        //}));
+
+        /*  appendHistory(statusLabel, `UUID <strong>${escapeHtml(visitorId)}</strong> に対して抽選番号 <strong>${escapeHtml(lotteryNumber)}</strong> を保存しました。`);*/
+        /* localStorage.setItem('lottery-last-issued', JSON.stringify({
+          visitor_id: visitorId,
+          lottery_number: lotteryNumber,
+          stamp_count: stampCount,
+          issued_at: new Date().toISOString()
+        })); */
       } catch (error) {
         console.error(error);
         setState(error.message || '受付に失敗しました。', 'is-error');
@@ -435,7 +484,7 @@
 
       setState("カメラを起動しています...");
 
-      html5QrCode = new Html5Qrcode("cameraView");
+      html5QrCode = new Html5Qrcode("reader");
 
       try {
 
@@ -452,8 +501,8 @@
 
             console.log("QR読み取り:", decodedText);
 
-            if (!isLotteryQR(decodedText)){
-               console.log("抽選QRではありません");
+            if (!isLotteryQR(decodedText)) {
+              console.log("抽選QRではありません");
               return;
             }
 
@@ -521,24 +570,25 @@
        }
      }); */
 
-    const saved = localStorage.getItem('lottery-last-issued');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.lottery_number && parsed.visitor_id) {
-          visitorIdEl.textContent = parsed.visitor_id;
-          lotteryNumberEl.textContent = parsed.lottery_number;
-          stampCountEl.textContent = `${Number(parsed.stamp_count || 0)} 件`;
-          lotteryMetaEl.textContent = '前回の発行結果を表示しています。';
-          stampMetaEl.textContent = 'スタンプ履歴と連携した抽選番号です。';
-          appendHistory('前回の結果', `UUID <strong>${parsed.visitor_id}</strong> / 抽選番号 <strong>${parsed.lottery_number}</strong>`);
-        }
-      } catch (error) {
-        console.warn('saved lottery result parse failed', error);
-      }
-    }
+    //const saved = localStorage.getItem('lottery-last-issued');
 
-    const menuToggle = document.querySelector('.menu-toggle');
+    /*  if (saved) {
+       try {
+         const parsed = JSON.parse(saved);
+         if (parsed && parsed.lottery_number && parsed.visitor_id) {
+           visitorIdEl.textContent = parsed.visitor_id;
+           lotteryNumberEl.textContent = parsed.lottery_number;
+           stampCountEl.textContent = `${Number(parsed.stamp_count || 0)} 件`;
+           lotteryMetaEl.textContent = '前回の発行結果を表示しています。';
+           stampMetaEl.textContent = 'スタンプ履歴と連携した抽選番号です。';
+           appendHistory('前回の結果', `UUID <strong>${parsed.visitor_id}</strong> / 抽選番号 <strong>${parsed.lottery_number}</strong>`);
+         }
+       } catch (error) {
+         console.warn('saved lottery result parse failed', error);
+       }
+     } */
+
+    /* const menuToggle = document.querySelector('.menu-toggle');
     const nav = document.getElementById('nav');
 
     if (menuToggle && nav) {
@@ -551,25 +601,59 @@
           nav.classList.remove('active');
         });
       });
-    }
+    } */
 
-    function showLotteryResult(number) {
+    async function showLotteryResult(number) {
 
-      stopScanner();
+      await stopScanner();
 
-      document
-        .getElementById("readerCard")
-        .hidden = true;
+      readerCard.hidden = true;
+      resultCard.hidden = false;
 
-      document
-        .getElementById("resultCard")
-        .hidden = false;
+      readerCard.style.display = "none";
+      resultCard.style.display = "block";
 
-      document
-        .getElementById("lotteryNumber")
-        .textContent = number;
+      lotteryNumberEl.textContent = number;
+
+      console.log("抽選番号を表示:", number);
 
     }
+
+    const saved = localStorage.getItem(
+      'lottery-last-issued'
+    );
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+
+        if (parsed?.lottery_number) {
+          showLotteryResult(
+            parsed.lottery_number
+          );
+        } else {
+          showReader();
+        }
+      } catch (e) {
+        console.error(e);
+        showReader();
+      }
+    } else {
+      showReader();
+    }
+
+    /* const saved = localStorage.getItem('lottery-last-issued');
+
+    if (saved) {
+
+      parsed = JSON.parse(saved);
+      showLotteryResult(parsed.lottery_number);
+
+    } else {
+
+      showReader();
+
+    } */
   </script>
 </body>
 

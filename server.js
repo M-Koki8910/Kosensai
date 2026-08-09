@@ -683,7 +683,7 @@ function sendJson(res, statusCode, data) {
 }
 
 function formatLotteryNumberFromId(id) {
-  return `LOT-${String(id).padStart(6, '0')}`;
+  return String(id).padStart(4, '0');
 }
 
 function getFilePath(urlPath) {

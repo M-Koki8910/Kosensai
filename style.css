@@ -5,6 +5,7 @@
 html {
     scroll-behavior: smooth;
 }
+
 * {
     margin: 0;
     padding: 0;
@@ -20,14 +21,16 @@ body.scan-modal-open {
     overflow: hidden;
 }
 
- .home-link {
+.home-link {
     display: inline-flex;
     align-items: center;
 }
 
 .logo {
-    height: 40px;   /* ←ここで高さ調整 */
-    width: auto;    /* 縦横比維持 */
+    height: 40px;
+    /* ←ここで高さ調整 */
+    width: auto;
+    /* 縦横比維持 */
 }
 
 /* ヘッダー代替トップバー */
@@ -89,8 +92,8 @@ body {
     height: 100%;
     transform: translateX(100%);
     transition: transform 0.25s ease;
-    background: rgba(255,255,255,0.98);
-    box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
     z-index: 240;
     overflow-y: auto;
 }
@@ -122,7 +125,7 @@ body {
 .nav-footer {
     margin-top: 24px;
     padding: 18px;
-    border-top: 1px solid rgba(0,0,0,0.08);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -138,12 +141,12 @@ body {
     font-weight: 700;
     padding: 12px 18px;
     border-radius: 12px;
-    background: rgba(30,58,138,0.08);
+    background: rgba(30, 58, 138, 0.08);
     transition: background 0.3s ease, color 0.3s ease;
 }
 
 .nav-footer .nav-social:hover {
-    background: rgba(30,58,138,0.16);
+    background: rgba(30, 58, 138, 0.16);
     color: #1e3a8a;
 }
 
@@ -156,7 +159,7 @@ body {
 
 #nav li a:hover,
 #nav li a:focus-visible {
-    background: rgba(30,58,138,0.08);
+    background: rgba(30, 58, 138, 0.08);
 }
 
 #nav li a:visited {
@@ -174,93 +177,93 @@ body {
 }
 
 .container section {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
 .container-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
 }
 
 .container-section h2 {
-  display: inline-block;
-  width: auto;
-  margin-bottom: 15px;
-  margin-left: 0;
+    display: inline-block;
+    width: auto;
+    margin-bottom: 15px;
+    margin-left: 0;
 }
 
 /* グリッド */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
-  width: min(100%, 1200px);
-  margin: 0 auto;
-  padding: 0 20px;
-  justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    width: min(100%, 1200px);
+    margin: 0 auto;
+    padding: 0 20px;
+    justify-content: center;
 }
 
 .shop-page .grid {
-  padding-left: 10px;
-  padding-right: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .shop-page .container-section {
-  padding-left: 16px;
-  padding-right: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
 @media (max-width: 900px) {
-  .shop-page .grid {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    padding: 0 10px;
-  }
+    .shop-page .grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        padding: 0 10px;
+    }
 }
 
 @media (max-width: 700px) {
-  .shop-page .grid {
-    padding: 0 10px;
-  }
+    .shop-page .grid {
+        padding: 0 10px;
+    }
 
-  .shop-page .container-section {
-    padding: 30px 10px;
-  }
+    .shop-page .container-section {
+        padding: 30px 10px;
+    }
 }
 
 /* カード */
 .card {
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  cursor: pointer;
-  transition: 0.2s;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: 0.2s;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+    transform: translateY(-5px);
 }
 
 /* 画像 */
 .card img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
 }
 
 /* タイトル部分 */
 .card-body {
-  padding: 10px;
-  text-align: center;
+    padding: 10px;
+    text-align: center;
 }
 
 .card-body h3 {
-  font-size: 18px;
-  margin: 0;
+    font-size: 18px;
+    margin: 0;
 }
 
 /* 詳細は普段非表示 */
@@ -281,7 +284,7 @@ body {
         height: auto;
         max-height: 0;
         transform: translateY(-100%);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
         display: block;
     }
 
@@ -327,25 +330,26 @@ h2::after {
     border-radius: 2px;
 }
 
-.guest > h2,
+.guest>h2,
 .guest-text h2,
-.access > h2 {
+.access>h2 {
     display: inline-block;
     border-bottom: 4px solid #1e3a8a;
     padding-bottom: 8px;
 }
 
-.guest > h2::after,
+.guest>h2::after,
 .guest-text h2::after,
-.access > h2::after {
+.access>h2::after {
     display: none;
 }
 
 /* ヒーロー */
 .hero {
     height: 100vh;
-    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
-                url("./logo.png") center/cover;
+
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+        url("./logo.png") center/cover;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -361,7 +365,7 @@ h2::after {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(45deg, rgba(64,88,152,0.3), rgba(30,58,138,0.3));
+    background: linear-gradient(45deg, rgba(64, 88, 152, 0.3), rgba(30, 58, 138, 0.3));
     z-index: 1;
 }
 
@@ -375,13 +379,13 @@ h2::after {
     font-size: 70px;
     margin-bottom: 20px;
     font-weight: 800;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .hero p {
     font-size: 24px;
     font-weight: 300;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .hero .hero-lead {
@@ -397,6 +401,7 @@ h2::after {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -408,9 +413,11 @@ h2::after {
         top: 14px;
         opacity: 0.15;
     }
+
     50% {
         opacity: 1;
     }
+
     100% {
         top: calc(100% - 18px);
         opacity: 0.9;
@@ -422,10 +429,12 @@ h2::after {
         transform: translate(-50%, -50%) scale(0.55);
         opacity: 0;
     }
+
     45% {
         transform: translate(-50%, -50%) scale(1.08);
         opacity: 1;
     }
+
     100% {
         transform: translate(-50%, -50%) scale(1);
         opacity: 1;
@@ -433,6 +442,7 @@ h2::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     .stamp-scan-modal,
     .stamp-scan-modal-panel,
     .stamp-scan-line,
@@ -455,15 +465,17 @@ h2::after {
     margin: 0 auto;
     padding: 80px 20px;
 }
+
 /* ===== 共通カード ===== */
 .card {
-    display: block; /* aタグでも崩れないように */
+    display: block;
+    /* aタグでも崩れないように */
     color: inherit;
     text-decoration: none;
     background: white;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
     position: relative;
@@ -477,7 +489,7 @@ h2::after {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(64,88,152,0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(64, 88, 152, 0.1), transparent);
     transition: left 0.5s;
 }
 
@@ -487,7 +499,7 @@ h2::after {
 
 .card:hover {
     transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .card img {
@@ -535,7 +547,7 @@ h2::after {
 .detail {
     max-height: 0;
     overflow: hidden;
-    transition:  max-height 0.3s ease, padding 0.3s ease;
+    transition: max-height 0.3s ease, padding 0.3s ease;
     padding: 0 15px;
     background: #f0f4ff;
 
@@ -580,13 +592,18 @@ h2::after {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
     animation: rotate 20s linear infinite;
 }
 
 @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* 中身 */
@@ -606,7 +623,7 @@ h2::after {
     height: 350px;
     object-fit: cover;
     border-radius: 20px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
     transition: transform 0.5s;
 }
 
@@ -644,12 +661,12 @@ h2::after {
     text-decoration: none;
     border-radius: 10px;
     transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .guest-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 /* スマホ */
@@ -664,6 +681,7 @@ h2::after {
         height: auto;
     }
 }
+
 .guest-highlight {
     animation: fadeIn 1s ease;
 }
@@ -673,6 +691,7 @@ h2::after {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -711,7 +730,7 @@ h2::after {
     margin: 18px 0 26px;
     padding: 20px;
     border-radius: 22px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.94));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.94));
     box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
     border: 1px solid rgba(148, 163, 184, 0.2);
 }
@@ -862,7 +881,7 @@ h2::after {
 }
 
 .stamp-card {
-    background: rgba(255,255,255,0.96);
+    background: rgba(255, 255, 255, 0.96);
     border-radius: 18px;
     padding: 18px;
     box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
@@ -1011,7 +1030,7 @@ h2::after {
     overflow: auto;
     padding: 22px;
     border-radius: 28px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,245,249,0.98));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.98));
     box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
     border: 1px solid rgba(148, 163, 184, 0.25);
     transform: translateY(18px) scale(0.98);
@@ -1154,7 +1173,7 @@ h2::after {
 }
 
 .stamp-summary {
-    background: rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 16px;
     padding: 12px 14px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
@@ -1177,7 +1196,7 @@ h2::after {
     margin-top: 20px;
     border-radius: 18px;
     padding: 18px;
-    background: rgba(255,255,255,0.96);
+    background: rgba(255, 255, 255, 0.96);
     box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
 }
 
@@ -1268,7 +1287,7 @@ h2::after {
 
 .analytics-card {
     border: 1px solid rgba(148, 163, 184, 0.25);
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
 }
 
 .analytics-card .stamp-label {
@@ -1282,7 +1301,7 @@ h2::after {
 .analytics-table {
     width: 100%;
     border-collapse: collapse;
-    background: rgba(255,255,255,0.95);
+    background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
@@ -1303,12 +1322,13 @@ h2::after {
     background: rgba(59, 130, 246, 0.06);
 }
 
-.user-table td > .stamp-btn {
+.user-table td>.stamp-btn {
     padding: 8px 12px;
     font-size: 0.95rem;
 }
 
 @media (max-width: 900px) {
+
     .analytics-table,
     .analytics-table th,
     .analytics-table td {
@@ -1363,17 +1383,17 @@ h2::after {
 }
 
 /* visited icon for stamp cards */
-.visited-icon{
-    display:inline-block;
-    background:linear-gradient(90deg,#10b981,#06b6d4);
-    color:#fff;
-    padding:6px 10px;
-    border-radius:10px;
-    font-weight:700;
+.visited-icon {
+    display: inline-block;
+    background: linear-gradient(90deg, #10b981, #06b6d4);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-weight: 700;
 }
 
 .stamp-card.visited {
-    border-color: rgba(16,185,129,0.25);
+    border-color: rgba(16, 185, 129, 0.25);
 }
 
 @media (max-width: 700px) {
@@ -1491,7 +1511,7 @@ h2::after {
     background: #fff;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
 }
 
 .map iframe {
@@ -1580,7 +1600,7 @@ h2::after {
 .guest-hero h1 {
     font-size: 3rem;
     font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
     margin-bottom: 20px;
     color: #fff;
 }
@@ -1588,14 +1608,21 @@ h2::after {
 .guest-hero h2 {
     font-size: 2.5rem;
     font-weight: 600;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     color: #fff;
     animation: fadeIn 2s ease-out;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* メイン */
@@ -1608,7 +1635,7 @@ h2::after {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     animation: fadeInUp 1s ease-out;
 }
 
@@ -1623,7 +1650,7 @@ h2::after {
     height: 250px;
     border-radius: 50%;
     border: 5px solid #fff;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s ease;
     margin-bottom: 20px;
 }
@@ -1678,7 +1705,7 @@ h2::after {
     color: #495057;
     margin-bottom: 8px;
     padding: 8px 12px;
-    background: rgba(255,255,255,0.8);
+    background: rgba(255, 255, 255, 0.8);
     border-radius: 8px;
     border-left: 3px solid #1e3a8a;
 }
@@ -1704,11 +1731,11 @@ h2::after {
 .social-link:hover {
     background: #3b82f6;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(30,58,138,0.3);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
 }
 
 .social-link.instagram {
-    background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
 }
 
 .social-link.twitter {
@@ -1834,7 +1861,7 @@ h2::after {
     padding: 40px;
     background: white;
     border-radius: 15px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .access-info h3 {
@@ -1861,7 +1888,7 @@ h2::after {
     height: 350px;
     border: 0;
     border-radius: 15px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* リンク */
@@ -1882,29 +1909,29 @@ h2::after {
 .map-link:hover {
     background: #405898;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(30,58,138,0.3);
+    box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
 }
 
 #userMessage {
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 14px;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
 }
 
 #userMessage.success {
-  background: #dcfce7;
-  color: #166534;
+    background: #dcfce7;
+    color: #166534;
 }
 
 #userMessage.error {
-  background: #fee2e2;
-  color: #991b1b;
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 #userMessage.info {
-  background: #e0f2fe;
-  color: #075985;
+    background: #e0f2fe;
+    color: #075985;
 }
 
 /* =========================
@@ -1968,6 +1995,7 @@ h2::after {
     0% {
         transform: translateX(0);
     }
+
     100% {
         transform: translateX(-100%);
     }
@@ -2007,18 +2035,19 @@ footer {
     padding: 25px 0;
     font-size: 16px;
     font-weight: 500;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
- #add-user-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 420px;
+#add-user-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
 }
 
 /* ===== レスポンシブ ===== */
 @media (max-width: 700px) {
+
     .cards,
     .grid {
         grid-template-columns: 1fr;
@@ -2078,64 +2107,62 @@ footer {
     }
 }
 
-    .hero {
-        height: 50vh;
-        padding: 0 10px;
-    }
+.hero {
+    height: 50vh;
+    padding: 0 10px;
+}
 
-    .hero h2 {
-        font-size: 24px;
-    }
+.hero h2 {
+    font-size: 24px;
+}
 
-    .hero p {
-        font-size: 14px;
-    }
+.hero p {
+    font-size: 14px;
+}
 
-    /* カード系（全部1列） */
-    .cards,
-    .grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
+/* カード系（全部1列） */
+.cards,
+.grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
 
-    }
+}
 
-    .card img {
-        height: 150px;
-    }
+.card img {
+    height: 150px;
+}
 
-    /* セクション余白 */
-    .section {
-        padding: 40px 0;
-    }
+/* セクション余白 */
+.section {
+    padding: 40px 0;
+}
 
-    /* ゲスト */
-    .guest-container {
-        flex-direction: column;
-        text-align: center;
-    }
+/* ゲスト */
+.guest-container {
+    flex-direction: column;
+    text-align: center;
+}
 
-    .guest img {
-        width: 100%;
-        max-width: 300px;
-        height: auto;
-    }
+.guest img {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+}
 
-    .guest-info {
-        text-align: center;
-    }
+.guest-info {
+    text-align: center;
+}
 
-    /* アクセス */
-    .access-container {
-        flex-direction: column;
-    }
+/* アクセス */
+.access-container {
+    flex-direction: column;
+}
 
-    .map iframe {
-        height: 250px;
-    }
+.map iframe {
+    height: 250px;
+}
 
-    /* フッター */
-    footer {
-        font-size: 12px;
-    }
-
-   
+/* フッター */
+footer {
+    font-size: 12px;
+}
