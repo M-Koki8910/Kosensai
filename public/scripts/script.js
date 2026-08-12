@@ -79,7 +79,7 @@ function initStampRally() {
     ];
     */
 
-     async function loadCompanyMaster() {
+    async function loadCompanyMaster() {
         try {
             const response = await fetch('./scripts/companies.json', { cache: 'no-store' });
             if (!response.ok) {
@@ -103,7 +103,7 @@ function initStampRally() {
             console.warn('出展企業マスタの読み込みに失敗しました', error);
             return [];
         }
-    } 
+    }
 
     function escapeHtml(value) {
         return String(value)
@@ -143,7 +143,7 @@ function initStampRally() {
     }
 
     //               <canvas class="stamp-qr" width="160" height="160" aria-label="${location.name}のQRコード"></canvas>
-//                <p class="stamp-note">${location.note}</p>
+    //                <p class="stamp-note">${location.note}</p>
 
     function renderStampCards() {
         const stampGrid = document.getElementById('stamp-grid');
@@ -199,7 +199,7 @@ function initStampRally() {
 
         stampSheetSlots = Array.from(stampSheetEl.querySelectorAll('.stamp-sheet-slot'));
     }
-//                        <strong>${escapeHtml(location.name)}</strong>
+    //                        <strong>${escapeHtml(location.name)}</strong>
 
     function loadVisited() {
         try {
@@ -278,7 +278,7 @@ function initStampRally() {
         });
     }
 
-    async function startScanner() {
+    /* async function startScanner() {
         openScanModal();
 
         if (!window.Html5Qrcode) {
@@ -351,6 +351,102 @@ function initStampRally() {
             setScanMessage("カメラを起動できませんでした。端末のカメラ利用権限を許可するか、対応ブラウザで再度お試しください。");
             setScanRetryVisible(true);
             setScanBusy(false);
+            scanner = null;
+        }
+    } */
+
+    async function startScanner() {
+
+        openScanModal();
+
+        if (!window.Html5Qrcode) {
+            setScanMessage("カメラ機能を読み込めませんでした。");
+            setScanModalState("is-error");
+            return;
+        }
+
+        if (scanner) {
+            await stopScanner();
+            scanner = null;
+        }
+
+        if (readerEl) {
+            readerEl.innerHTML = "";
+        }
+
+        scanner = new Html5Qrcode("reader");
+
+        try {
+
+            setScanBusy(false);
+            setScanRetryVisible(false);
+            setScanModalState("is-scanning");
+            setScanMessage("カメラを起動しています…");
+
+            await sleep(50);
+
+            if (!scanModalOpen) {
+                await stopScanner();
+                scanner = null;
+                return;
+            }
+
+            /*
+             * 背面カメラを指定
+             *
+             * iPhoneではこちらの方式のほうが
+             * getCameras() + deviceId より安定して
+             * 背面カメラを選択できる。
+             */
+            const cameraConfig = {
+                facingMode: "environment"
+            };
+
+            await scanner.start(
+
+                cameraConfig,
+
+                {
+                    fps: 10,
+                    qrbox: {
+                        width: 260,
+                        height: 260
+                    }
+                },
+
+                (decodedText) => {
+
+                    markVisited(decodedText);
+
+                },
+
+                () => {
+                    // QR未検出時
+                }
+
+            );
+
+            setScanMessage(
+                "QRコードを枠内に合わせてください。"
+            );
+
+        } catch (error) {
+
+            console.error(
+                "カメラ起動に失敗しました",
+                error
+            );
+
+            setScanModalState("is-error");
+
+            setScanMessage(
+                "カメラを起動できませんでした。" +
+                "端末のカメラ利用権限を確認してください。"
+            );
+
+            setScanRetryVisible(true);
+            setScanBusy(false);
+
             scanner = null;
         }
     }
@@ -688,14 +784,14 @@ function initStampRally() {
     }
 
     async function playSuccessTone() {
-    try {
-        const audio = new Audio("../readsound.mp3");
-        audio.volume = 0.8;
-        await audio.play();
-    } catch (error) {
-        console.warn("成功音の再生に失敗しました", error);
+        try {
+            const audio = new Audio("../readsound.mp3");
+            audio.volume = 0.8;
+            await audio.play();
+        } catch (error) {
+            console.warn("成功音の再生に失敗しました", error);
+        }
     }
-}
 
     /* async function playSuccessTone() {
         const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
@@ -842,7 +938,7 @@ function initStampRally() {
 
     const started = loadStartState();
     applyStartState(started);
-//---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
     function renderStampState() {
         if (!stampCards.length) {
             stampCards = Array.from(document.querySelectorAll('.stamp-card'));
