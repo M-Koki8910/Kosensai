@@ -84,6 +84,11 @@ body {
     padding-top: var(--topbar-height);
 }
 
+/* main {
+    padding-top:0;
+    padding-bottom: 0px;
+} */
+
 #nav {
     position: fixed;
     top: 0;
@@ -276,6 +281,10 @@ body {
         padding-top: var(--topbar-height);
     }
 
+    /* main {
+        padding-top: calc(var(--topbar-height) + 12px);
+    } */
+
     #nav {
         top: var(--topbar-height);
         left: 0;
@@ -305,7 +314,9 @@ body {
 
 /* セクション共通 */
 .section {
-    padding: 80px 0;
+    /*padding: 18px 0 32px;*/
+
+    padding:80px 0;
 }
 
 h2 {
@@ -372,18 +383,24 @@ h2::after {
 .hero .hero-text {
     position: relative;
     z-index: 2;
+    width: min(92vw, 980px);
+    max-width: 980px;
+    padding: 0 16px;
     animation: fadeInUp 1s ease-out;
 }
 
 .hero h1 {
-    font-size: 70px;
+    font-size: clamp(2.6rem, 4vw, 5.6rem);
+    line-height: 1.12;
     margin-bottom: 20px;
     font-weight: 800;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: -0.04em;
 }
 
 .hero p {
-    font-size: 24px;
+    font-size: clamp(1.1rem, 1.9vw, 2.2rem);
+    line-height: 1.6;
     font-weight: 300;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
@@ -391,8 +408,8 @@ h2::after {
 .hero .hero-lead {
     max-width: 760px;
     margin: 8px auto 10px;
-    font-size: 25px;
-    line-height: 1.8;
+    font-size: clamp(1.18rem, 2vw, 2rem);
+    line-height: 1.7;
     font-weight: 500;
 }
 
@@ -671,6 +688,24 @@ h2::after {
 
 /* スマホ */
 @media (max-width: 700px) {
+    .hero .hero-text {
+        width: min(90vw, 620px);
+        padding: 0 10px;
+    }
+
+    .hero h1 {
+        font-size: clamp(2.3rem, 8vw, 3.2rem);
+        line-height: 1.2;
+    }
+
+    .hero p {
+        font-size: clamp(1.05rem, 4.6vw, 1.5rem);
+    }
+
+    .hero .hero-lead {
+        font-size: clamp(1.08rem, 4vw, 1.5rem);
+    }
+
     .guest-box {
         flex-direction: column;
         text-align: center;
@@ -699,7 +734,7 @@ h2::after {
 }
 
 .guest {
-    padding: 60px 0;
+    padding: 80px 0;
     text-align: center;
 }
 
@@ -2029,12 +2064,9 @@ h2::after {
 
 /* ===== フッター ===== */
 footer {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2d5aa0 100%);
-    color: white;
-    text-align: center;
-    padding: 25px 0;
-    font-size: 16px;
-    font-weight: 500;
+    margin-top: 0;
+    background: #111827;
+    color: #fff;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -2163,6 +2195,246 @@ footer {
 }
 
 /* フッター */
-footer {
-    font-size: 12px;
+/* footer {
+    margin-top: 80px;
+    background: #111827;
+    color: #fff;
+} */
+
+
+/* =========================
+   メインフッター
+========================= */
+
+.footer-container {
+    width: min(1200px, 90%);
+    margin: 0 auto;
+    padding: 60px 0 50px;
+
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 45px;
+}
+
+
+/* 各セクション */
+
+.footer-section h3 {
+    margin: 0 0 20px;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-section li {
+    margin-bottom: 10px;
+}
+
+
+/* リンク */
+
+.footer-section a {
+    color: #d1d5db;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-section a:hover {
+    color: #fff;
+}
+
+
+/* =========================
+   ブランド・学校情報
+========================= */
+
+.footer-brand {
+    padding-right: 20px;
+}
+
+.footer-logo-link {
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.footer-logo {
+    width: 180px;
+    max-width: 100%;
+    height: auto;
+}
+
+.footer-brand h3 {
+    margin-bottom: 5px;
+}
+
+.footer-brand p {
+    margin: 0 0 15px;
+    line-height: 1.7;
+}
+
+.footer-address {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+
+/* =========================
+   SNS
+========================= */
+
+.footer-social {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    margin-top: 25px;
+}
+
+.footer-social a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.footer-social img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+
+/* =========================
+   法務・案内リンク
+========================= */
+
+.footer-legal {
+    width: min(1200px, 90%);
+    margin: 0 auto;
+
+    padding: 20px 0;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    color: #9ca3af;
+    font-size: 0.85rem;
+}
+
+.footer-legal a {
+    color: #9ca3af;
+    text-decoration: none;
+
+    transition: color 0.2s ease;
+}
+
+.footer-legal a:hover {
+    color: #fff;
+}
+
+
+/* =========================
+   コピーライト
+========================= */
+
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    text-align: center;
+
+    padding: 18px 20px;
+}
+
+.footer-bottom p {
+    margin: 0;
+
+    color: #6b7280;
+    font-size: 0.8rem;
+}
+
+
+/* =========================
+   タブレット
+========================= */
+
+@media (max-width: 900px) {
+
+    .footer-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px 30px;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+        padding-right: 0;
+    }
+}
+
+
+/* =========================
+   スマートフォン
+========================= */
+
+@media (max-width: 600px) {
+
+    .footer-container {
+        width: 88%;
+        padding: 45px 0 40px;
+
+        grid-template-columns: 1fr 1fr;
+        gap: 35px 20px;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+    }
+
+    .footer-logo {
+        width: 160px;
+    }
+
+    .footer-section h3 {
+        font-size: 0.95rem;
+    }
+
+    .footer-section li {
+        font-size: 0.9rem;
+        margin-bottom: 9px;
+    }
+
+    .footer-legal {
+        width: 88%;
+        line-height: 1.8;
+        text-align: center;
+    }
+}
+
+
+@media (max-width: 400px) {
+
+    .footer-container {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-brand {
+        grid-column: auto;
+    }
+
+    .footer-legal {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .footer-legal span {
+        display: none;
+    }
 }

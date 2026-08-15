@@ -394,44 +394,60 @@
             <p class="stamp-intro">まずは説明を確認してから、下のボタンでスタンプラリーを開始してください。開始後に巡る場所のカード、QR読み取りボタン、会場マップが表示されます。</p>
 
             <div class="stamp-survey" id="stamp-survey" aria-label="任意アンケート">
-                <h3>開始前アンケート（任意）</h3>
-                <p class="stamp-note">未回答のまま開始できます。未回答の場合、属性は null として記録されます。</p>
-                <div class="stamp-survey-grid">
-                    <label>
-                        年代
-                        <select id="survey-age-group">
-                            <option value="">回答しない</option>
-                            <option value="under-13">13歳未満</option>
-                            <option value="13-18">13-18歳</option>
-                            <option value="19-29">19-29歳</option>
-                            <option value="30-49">30-49歳</option>
-                            <option value="50-plus">50歳以上</option>
-                        </select>
-                    </label>
-                    <label>
-                        来場区分
-                        <select id="survey-visitor-type">
-                            <option value="">回答しない</option>
-                            <option value="student">学生</option>
-                            <option value="guardian">保護者</option>
-                            <option value="alumni">卒業生</option>
-                            <option value="community">地域来場者</option>
-                            <option value="other">その他</option>
-                        </select>
-                    </label>
-                    <label>
-                        同伴
-                        <select id="survey-group-type">
-                            <option value="">回答しない</option>
-                            <option value="alone">1人</option>
-                            <option value="family">家族</option>
-                            <option value="friends">友人</option>
-                            <option value="school-group">学校関係者グループ</option>
-                            <option value="other">その他</option>
-                        </select>
-                    </label>
-                </div>
-            </div>
+    <h3>開始前アンケート（任意）</h3>
+    <p class="stamp-note">
+        20秒ほどで回答できます。<br>
+        未回答のまま開始することもできます。
+    </p>
+
+    <div class="stamp-survey-grid">
+
+        <label>
+            年代
+            <select id="survey-age-group">
+                <option value="">回答しない</option>
+                <option value="under-13">小学生以下</option>
+                <option value="13-15">中学生</option>
+                <option value="16-18">高校生</option>
+                <option value="student">高専生・大学生</option>
+                <option value="20s">20代</option>
+                <option value="30s">30代</option>
+                <option value="40s">40代</option>
+                <option value="50-plus">50代以上</option>
+            </select>
+        </label>
+
+        <label>
+            高専祭を知ったきっかけ
+            <select id="survey-discovery">
+                <option value="">回答しない</option>
+                <option value="friend">友人・知人から</option>
+                <option value="school">学校・学校関係者から</option>
+                <option value="poster">ポスター・チラシ</option>
+                <option value="sns">SNS</option>
+                <option value="website">公式Webサイト</option>
+                <option value="previous">以前来たことがある</option>
+                <option value="other">その他</option>
+            </select>
+        </label>
+
+        <label>
+            お住まいの地域
+            <select id="survey-area">
+                <option value="">回答しない</option>
+                <option value="hamada">浜田市</option>
+                <option value="gotsu">江津市</option>
+                <option value="masuda">益田市</option>
+                <option value="oda">大田市</option>
+                <option value="izumo">出雲市</option>
+                <option value="matsue">松江市</option>
+                <option value="other-shimane">その他の島根県内</option>
+                <option value="outside-shimane">島根県外</option>
+            </select>
+        </label>
+
+    </div>
+</div>
 
             <button id="begin-rally" class="stamp-btn" type="button">スタンプラリーを始める</button>
         </section>
@@ -546,8 +562,32 @@
         </section>
     </main>
 
-    <footer>
-        <p>© 2026 松江高専 高専祭実行委員</p>
+            <footer>
+
+        <!-- お問い合わせ・規約等 -->
+        <div class="footer-legal">
+
+            <a href="./privacy.html">プライバシーポリシー</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./contact.html">お問い合わせ</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./disclaimer.html">免責事項</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./copyright.html">著作権について</a>
+
+        </div>
+
+
+        <!-- コピーライト -->
+        <div class="footer-bottom">
+            <p> 2026 松江高専 高専祭実行委員会</p>
+        </div>
     </footer>
 
 </body>
