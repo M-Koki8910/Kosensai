@@ -1,5 +1,0 @@
-[
-  { "pattern": "https?://[^\\s]+", "is_regex": 1, "risk_score": 30, "description": "URL" },
-  { "pattern": "[\\w\\.-]+@[\\w\\.-]+\\.\\w+", "is_regex": 1, "risk_score": 25, "description": "Email address" },
-  { "pattern": "\\bexample-badword\\b", "is_regex": 1, "risk_score": 50, "description": "Example badword" }
-]
