@@ -1,0 +1,49 @@
+[
+  {
+    "grade_num": 5,
+    "grade_name": "5等枠",
+    "items": [
+      { "item_num": 501, "item_name": "お菓子詰め合わせA" },
+      { "item_num": 502, "item_name": "お菓子詰め合わせB" },
+      { "item_num": 503, "item_name": "オリジナルタオマフラー" },
+      { "item_num": 504, "item_name": "高専クリアファイル" },
+      { "item_num": 505, "item_name": "ロゴ入りトートバッグ" },
+      { "item_num": 506, "item_name": "お菓子詰め合わせC" },
+      { "item_num": 507, "item_name": "お菓子詰め合わせD" },
+      { "item_num": 508, "item_name": "特製ピンバッジ" },
+      { "item_num": 509, "item_name": "デザインノート" },
+      { "item_num": 510, "item_name": "ステッカーシート" }
+    ]
+  },
+  {
+    "grade_num": 4,
+    "grade_name": "4等枠",
+    "items": [
+      { "item_num": 401, "item_name": "モバイルバッテリー" },
+      { "item_num": 402, "item_name": "ワイヤレスマウス" },
+      { "item_num": 403, "item_name": "USBメモリ 64GB" }
+    ]
+  },
+  {
+    "grade_num": 3,
+    "grade_name": "3等枠",
+    "items": [
+      { "item_num": 301, "item_name": "スマートスピーカー" },
+      { "item_num": 302, "item_name": "骨伝導イヤホン" }
+    ]
+  },
+  {
+    "grade_num": 2,
+    "grade_name": "2等枠",
+    "items": [
+      { "item_num": 201, "item_name": "スマートウォッチ" }
+    ]
+  },
+  {
+    "grade_num": 1,
+    "grade_name": "1等枠",
+    "items": [
+      { "item_num": 101, "item_name": "豪華カタログギフト" }
+    ]
+  }
+]
