@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <script src="./scripts/script.js" defer></script>
+    <link rel="icon" type="image/png" href="./images/tab-resize.png">
+
+    <title>模擬店紹介</title>
+
+</head>
+
+<body>
+    <div class="topbar">
+        <a href="./index.html" class="home-link">
+            <img src="./images/logo.png" alt="高専祭TOP" class="logo">
+        </a>
+        <button class="menu-toggle" aria-label="メニューを開く">☰</button>
+    </div>
+    <nav id="nav">
+        <ul>
+            <li><a href="./about.html">高専祭について</a></li>
+            <li><a href="./shop.html">模擬店紹介</a></li>
+            <li><a href="./guest.html">ゲスト紹介</a></li>
+            <li><a href="./event.html">イベント紹介</a></li>
+            <li><a href="./stamp-rally.html">スタンプラリー</a></li>
+            <li><a href="./company.html">ご協賛企業様紹介</a></li>
+            <li><a href="./schedule.html">スケジュール</a></li>
+            <li><a href="./map.html">会場マップ</a></li>
+            <li><a href="./announcements.html">お知らせ</a></li>
+            <li><a href="./bulletin.html">掲示板</a></li>
+            <li><a href="./lottery-entry.html">抽選会参加受付</a></li>
+            <li><a href="./about-kosen.html">松江高専とは</a></li>
+            <li><a href="./aboutme.html">このサイトについて</a></li>
+        </ul>
+
+        <div class="nav-footer">
+            <a class="nav-social" href="https://www.instagram.com/mct_relations/" target="_blank"
+                rel="noopener noreferrer">
+                <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学校広報
+            </a>
+            <a class="nav-social" href="https://www.instagram.com/mct_gakuseikai/" target="_blank"
+                rel="noopener noreferrer">
+                <img src="./images/insta.png" alt="Instagram" class="nav-social-icon">学生会
+            </a>
+        </div>
+
+    </nav>
+
+
+    <div class="container-section shop-page">
+        <h2>食べ物系</h2>
+        <div class="grid" id="food-grid">
+            <!-- JavaScriptで動的に生成 -->
+        </div>
+
+        <h2>体験系</h2>
+        <div class="grid" id="experience-grid">
+            <!-- JavaScriptで動的に生成 -->
+        </div>
+    </div>
+
+    <!-- モーダルウィンドウ -->
+    <div class="modal" id="shopModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-body">
+                <h2 id="modalTitle"></h2>
+                <p class="modal-product"><strong>販売商品：</strong><span id="modalProduct"></span></p>
+                <p class="modal-description" id="modalDescription"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 団体データ
+        const shops = [
+  {
+    "id": "shop-1",
+    "category": "food",
+    "name": "元1-5",
+    "product": "メイド喫茶",
+    "description": "こんにちは！私たちは元1年5組です！私たちは可愛い可愛いメイド喫茶（女装）をします！美味しいカクテルやインスタ映えするパフェなどを提供します！未だかつて無いメイド体験を！ガチ恋禁止♡"
+  },
+  {
+    "id": "shop-2",
+    "category": "food",
+    "name": "D3",
+    "product": "メロンパンアイス",
+    "description": "私たちD3はメロンパンアイスを販売します！外はサクサク、中はひんやり！メロンパンとアイスの相性抜群のスイーツです。バニラやチョコなど、お好きな味のアイスを選べます！"
+  },
+  {
+    "id": "shop-3",
+    "category": "food",
+    "name": "J3",
+    "product": "オムライス・カレー・プリン・削りイチゴ・ドリンク・ナゲット",
+    "description": "くりきゅん（村橋究理基先生）率いる、J3がかわいく高専祭を盛り上げます！オムライス・カレー・けずりいちご・ぷりんなど、おいしくてお財布にやさしいメニューをご用意して、ご主人様・お嬢様のおかえりをお待ちしております♡"
+  },
+  {
+    "id": "shop-4",
+    "category": "food",
+    "name": "J4",
+    "product": "ベビーカステラ、ドリンク(麦茶、オレンジジュース、サイダー、レモネード、色付きカルピスソーダ、アイスコーヒー)、ボードゲーム、カードゲーム",
+    "description": "今年もボードゲームカフェあります！こんにちは、J4です♪ドリンクやフードを片手にボードゲームを楽しみませんか？昨年の経験をもとによりよい空間を提供させていただきます。ぜひお越しください！※ベビーカステラやドリンクのみの販売もしています。"
+  },
+  {
+    "id": "shop-5",
+    "category": "food",
+    "name": "C4",
+    "product": "アイス",
+    "description": "「土木、食べてみませんか？」私たちC4はコンクリート、マサ土、鉄筋など普段は食べれないものを、フルーリーで再現し販売します！ぜひご賞味ください！"
+  },
+  {
+    "id": "shop-6",
+    "category": "food",
+    "name": "C5",
+    "product": "ドリンク、クレープ、ホットサンド",
+    "description": "C5では、甘いクレープ、できたてのホットサンド、冷たいドリンクを用意したプラネタリウムカフェを出店します。甘いものが食べたい人も、小腹を満たしたい人も、涼みたい人も大歓迎です。気軽に立ち寄ってください！"
+  },
+  {
+    "id": "shop-7",
+    "category": "food",
+    "name": "S2（専攻科2年）",
+    "product": "焼きそば",
+    "description": "去年の模擬店で2位を取った元S1のメンツで今年も焼きそばを作ります！うちの焼きそばのチャームポイントは麺の上に乗った目玉焼きとでかい豚バラです。ぜひご賞味あれ"
+  },
+  {
+    "id": "shop-8",
+    "category": "food",
+    "name": "P2（専攻科2年）",
+    "product": "スムージー，ドリンク，わたがし，ロングポテト，ディッピンドッツ",
+    "description": "高専祭のために，雨の日も風の日もベトナムで1年間修行してまいりました．お店を出すことができて本当にうれしいです．皆様のご来店を，選手一同お待ちしております．"
+  },
+  {
+    "id": "shop-9",
+    "category": "food",
+    "name": "サッカー部",
+    "product": "タコス",
+    "description": "私たちサッカー部はタコスを販売します！スパイシーなタコミートとフレッシュなサルサが最高の組み合わせです！ご賞味あれ~"
+  },
+  {
+    "id": "shop-10",
+    "category": "food",
+    "name": "卓球部",
+    "product": "ソーダフロート、ワッフル",
+    "description": "僕たちは今年、ソーダフロートとワッフルを販売いたします！ひんやり爽やかなソーダフロートと、外はサクッ、中はふんわり焼き上げたワッフルをお楽しみください！"
+  },
+  {
+    "id": "shop-11",
+    "category": "food",
+    "name": "ソフトテニス部",
+    "product": "たい焼き",
+    "description": "こんにちはソフトテニス部です！外はこんがり、中はあつあつ。部員みんなで元気にお待ちしています。ぜひ食べに来てください。"
+  },
+  {
+    "id": "shop-12",
+    "category": "food",
+    "name": "ハンドボール部",
+    "product": "フランクフルト、餃子",
+    "description": "私たちハンドボール部は去年に引き続きフランクフルトと新たに餃子を販売します！餃子はいくつか味を用意していますのでおたのしみに！皆さんがおいしく食べれるように頑張って作るので当日はぜひご賞味ください！"
+  },
+  {
+    "id": "shop-13",
+    "category": "food",
+    "name": "野球部",
+    "product": "焼き鳥",
+    "description": "野球部です。今年も伝統の焼き鳥を作ります！！炭火でじっくり焼き上げた極上の焼き鳥をお届けいたします。「炭火の香り」と「あふれる肉汁」、一本食べただけでやみつきになります！是非ご賞味ください。"
+  },
+  {
+    "id": "shop-14",
+    "category": "food",
+    "name": "ラグビー部",
+    "product": "ホットドッグ",
+    "description": "今年もやってきました！俺たちのホットドッグ！ジューシーに焼いたソーセージを最強で最高のブレッドに挟んでいます！課金すれば中毒性マシマシチーズをトッピングできます！飲み物もあるのでぜひ食べにきてください！"
+  },
+  {
+    "id": "shop-15",
+    "category": "food",
+    "name": "男子バスケットボール部",
+    "product": "塩焼きそば・ソフトドリンク",
+    "description": "私たち男子バスケットボール部は塩焼きそばとソフトドリンクを販売します！遠征のバスが小さくて困っています。もう補助席には乗りたくありません。みなさんのご来店をお待ちしています！"
+  },
+  {
+    "id": "shop-16",
+    "category": "food",
+    "name": "男子バレーボール部",
+    "product": "たこ焼き",
+    "description": "こんにちは！男子バレーボール部です！僕たちは毎年恒例のたこやきを販売します！男バレ一同＆兵器ブリオンでお待ちしております！"
+  },
+  {
+    "id": "shop-17",
+    "category": "food",
+    "name": "女子バレーボール部",
+    "product": "肉巻きおにぎり",
+    "description": "女子バレーボール部は肉巻きおにぎりを販売します！ほくほくご飯！みんな大好き焼き肉のたれで味付けした肉巻きおにぎりです！ぜひお越しください！女バレ一同お待ちしています！"
+  },
+  {
+    "id": "shop-18",
+    "category": "food",
+    "name": "弓道部",
+    "product": "チーズボール",
+    "description": "弓道部です！揚げたてのび～るチーズがやみつきのチーズボールを販売します！お手頃サイズで食べ歩きにもぴったり．迷ったらぜひお立ち寄りください！"
+  },
+  {
+    "id": "shop-19",
+    "category": "food",
+    "name": "水泳部",
+    "product": "はしまき",
+    "description": "水泳部では今年も「はしまき」を販売します！いろいろな種類の味を用意しています。お箸に巻いてあるので、歩きながらでも食べやすいです。焼きたての熱々をご用意していますので、ぜひ食べに来てください！お待ちしています！"
+  },
+  {
+    "id": "shop-20",
+    "category": "food",
+    "name": "陸上部",
+    "product": "お餅",
+    "description": "陸上部です。"
+  },
+  {
+    "id": "shop-21",
+    "category": "food",
+    "name": "郷土研究部",
+    "product": "パフェ、白玉団子（きなこ、チョコソース、みたらし）、ドリンク（コーヒー、お茶、オレンジジュース）、つまみ細工体験",
+    "description": "郷土研究部です。パフェや、白玉団子、冷たいお飲み物をご用意してお待ちしております。さらに今年はカフェのすぐ横で、自分だけの可愛い和風小物が作れる「つまみ細工づくり体験」も開催します！作った作品はお土産としてお持ち帰りいただけます。ぜひお越しください！"
+  },
+  {
+    "id": "shop-22",
+    "category": "food",
+    "name": "写真部",
+    "product": "チョコバナナ",
+    "description": "写真部ではチョコバナナを販売します！！当たり付き企画もご用意しています。ぜひ写真部へお立ち寄りください！部員が撮影した写真作品の展示も行っています。"
+  },
+  {
+    "id": "shop-23",
+    "category": "food",
+    "name": "吹奏楽部",
+    "product": "シリアルパンケーキ",
+    "description": "こんにちは！吹奏楽部です去年大好評だったシリアルパンケーキを販売します！トッピングが豊富に選べるので個性を爆発させましょう！！"
+  },
+  {
+    "id": "shop-24",
+    "category": "experience",
+    "name": "帰宅部",
+    "product": "フォトスポット・コスプレ",
+    "description": "ギラギラで映えるフォトスポットや小物、コスプレ体験を用意しています！女子はもちろん、男子も大歓迎！みんなでワイワイ楽しみながら、高専祭の思い出を写真に残しませんか？高専生活ではなかなか味わえない青春気分を思いっきり楽しもう！"
+  },
+  {
+    "id": "shop-25",
+    "category": "food",
+    "name": "文芸部・漫画研究会",
+    "product": "焼きそば",
+    "description": "今年も漫研・文芸部では焼きそばを販売します！コク深いソースの香りが食欲をそそる、こだわりの一品です．ぜひご賞味ください！"
+  },
+  {
+    "id": "shop-26",
+    "category": "food",
+    "name": "クイズ研究会",
+    "product": "うどん、脱出ゲーム",
+    "description": "遊び疲れたお昼時、小腹が空くおやつ時に のどごしばっちりな「うどん」、いかがですか？温・冷、トッピング、全部準備してます！皆様のご来店をお待ちしております！"
+  },
+  {
+    "id": "shop-27",
+    "category": "food",
+    "name": "エコラン",
+    "product": "ピザ",
+    "description": "エコランです。ピザを販売します。"
+  },
+  {
+    "id": "shop-28",
+    "category": "food",
+    "name": "デザコン",
+    "product": "ベビーカステラ、ドリンク",
+    "description": "濃い味に疲れたそこのあなた！夏にぴったり涼しげなサイダーやお茶、コーヒーと一緒にやさしい甘さのベビーカステラで一服していきませんか？ベビーカステラもいろいろな味があるのであなたのお気に入りの味を見つけてみてください！"
+  },
+  {
+    "id": "shop-29",
+    "category": "food",
+    "name": "レスコン",
+    "product": "カレー",
+    "description": "私たちレスコンはカレーを販売します。迷ったらまずはカレー！香りにつられて来たあなた、大正解です。熱々のおいしさをお楽しみください！"
+  },
+  {
+    "id": "shop-30",
+    "category": "food",
+    "name": "留学生",
+    "product": "ブラジル肉パン",
+    "description": "私たち留学生はブラジル肉パンを販売します！ブラジルの伝統料理を日本の食材で再現します。留学生が作る本格的なブラジル料理にご興味がありましたら、ぜひお越しください！"
+  }
+];
+
+        // 食べ物系と体験系に分類
+        const foodShops = shops.filter(shop => shop.category === 'food');
+        const experienceShops = shops.filter(shop => shop.category === 'experience');
+
+        // カード生成関数
+        function createCard(shop) {
+            const card = document.createElement('div');
+            card.className = 'card shop-card';
+            
+            // 商品名を表示用に調整（長すぎる場合は省略）
+            const productDisplay = shop.product.length > 30 
+                ? shop.product.substring(0, 30) + '...' 
+                : shop.product;
+            
+            card.innerHTML = `
+                <img src="./images/shop.jpg" alt="${shop.name}">
+                <div class="card-body">
+                    <h3>${shop.name}</h3>
+                </div>
+                <div class="detail" title="${shop.product}">${productDisplay}</div>
+            `;
+            card.addEventListener('click', () => openModal(shop));
+            return card;
+        }
+
+        // グリッドにカードを追加
+        const foodGrid = document.getElementById('food-grid');
+        foodShops.forEach(shop => {
+            foodGrid.appendChild(createCard(shop));
+        });
+
+        const experienceGrid = document.getElementById('experience-grid');
+        experienceShops.forEach(shop => {
+            experienceGrid.appendChild(createCard(shop));
+        });
+
+        // モーダル制御
+        const modal = document.getElementById('shopModal');
+        const closeBtn = document.querySelector('.close');
+
+        function openModal(shop) {
+            document.getElementById('modalTitle').textContent = shop.name;
+            document.getElementById('modalProduct').textContent = shop.product;
+            document.getElementById('modalDescription').textContent = shop.description;
+            modal.style.display = 'block';
+        }
+
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+
+</html>
