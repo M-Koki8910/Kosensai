@@ -332,6 +332,271 @@
                 height: 220px;
             }
         }
+
+        /* =========================================
+   スタンプラリー：概要・参加方法
+   ========================================= */
+
+.stamp-about {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* 概要文 */
+.stamp-about .stamp-intro {
+    max-width: 760px;
+    margin: 0 auto 36px;
+    text-align: center;
+    font-size: 1.05rem;
+    line-height: 1.9;
+    color: #475569;
+}
+
+
+/* =========================================
+   参加方法
+   ========================================= */
+
+.stamp-howto {
+    margin-top: 32px;
+}
+
+.stamp-howto > h3 {
+    margin: 0 0 20px;
+    text-align: center;
+    font-size: 1.35rem;
+    color: #1e3a8a;
+}
+
+
+/* 3ステップ */
+.stamp-howto-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+
+/* 各ステップ */
+.stamp-howto-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 22px 24px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    text-align: center;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.stamp-howto-item:hover {
+    transform: translateY(-3px);
+    border-color: #93c5fd;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+
+/* 番号 */
+.stamp-howto-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 52px;
+    height: 52px;
+    margin-bottom: 18px;
+
+    border-radius: 50%;
+
+    background: linear-gradient(
+        135deg,
+        #2563eb,
+        #38bdf8
+    );
+
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+
+    box-shadow:
+        0 5px 14px rgba(37, 99, 235, 0.25);
+}
+
+
+/* ステップ見出し */
+.stamp-howto-item h4 {
+    margin: 0 0 9px;
+
+    color: #1e293b;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+
+/* ステップ説明 */
+.stamp-howto-item p {
+    margin: 0;
+
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+
+/* =========================================
+   ご利用について
+   ========================================= */
+
+.stamp-notice {
+    margin-top: 36px;
+    padding: 22px 26px;
+
+    background: #f8fafc;
+    border-left: 4px solid #f8aa3d;
+    border-radius: 0 12px 12px 0;
+}
+
+
+/* 見出し */
+.stamp-notice h3 {
+    margin: 0 0 12px;
+
+    color: #1e3a8a;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+
+/* リスト */
+.stamp-notice ul {
+    margin: 0;
+    padding-left: 1.3rem;
+
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.8;
+}
+
+.stamp-notice li {
+    padding-left: 4px;
+}
+
+
+/* =========================================
+   タブレット
+   ========================================= */
+
+@media (max-width: 768px) {
+
+    .stamp-about .stamp-intro {
+        margin-bottom: 30px;
+        font-size: 1rem;
+        line-height: 1.8;
+    }
+
+    .stamp-howto-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .stamp-howto-item {
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        column-gap: 16px;
+
+        align-items: center;
+
+        padding: 18px 20px;
+
+        text-align: left;
+    }
+
+    .stamp-howto-number {
+        grid-row: 1 / span 2;
+
+        width: 48px;
+        height: 48px;
+        margin: 0;
+    }
+
+    .stamp-howto-item h4 {
+        margin-bottom: 4px;
+    }
+
+    .stamp-howto-item p {
+        font-size: 0.88rem;
+    }
+
+    .stamp-notice {
+        margin-top: 28px;
+        padding: 20px;
+    }
+}
+
+
+/* =========================================
+   スマートフォン
+   ========================================= */
+
+@media (max-width: 480px) {
+
+    .stamp-about .stamp-intro {
+        text-align: left;
+        font-size: 0.95rem;
+    }
+
+    .stamp-howto {
+        margin-top: 26px;
+    }
+
+    .stamp-howto > h3 {
+        font-size: 1.2rem;
+    }
+
+    .stamp-howto-item {
+        grid-template-columns: 44px 1fr;
+        column-gap: 13px;
+
+        padding: 16px;
+        border-radius: 13px;
+    }
+
+    .stamp-howto-number {
+        width: 44px;
+        height: 44px;
+
+        font-size: 0.85rem;
+    }
+
+    .stamp-howto-item h4 {
+        font-size: 0.95rem;
+    }
+
+    .stamp-howto-item p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+    }
+
+    .stamp-notice {
+        padding: 17px 18px;
+    }
+
+    .stamp-notice h3 {
+        font-size: 0.95rem;
+    }
+
+    .stamp-notice ul {
+        font-size: 0.82rem;
+        line-height: 1.7;
+    }
+}
     </style>
 </head>
 
@@ -374,62 +639,123 @@
 
     <main>
         <section class="hero"
-            style="background-image: linear-gradient(rgba(15,23,42,0.55), rgba(15,23,42,0.55)), url('header_ed.jpg'); height: 72vh; min-height: 420px;">
+            style="background-image: linear-gradient(rgba(15,23,42,0.55), rgba(15,23,42,0.55)), url('/images/logo.png'); height: 35vh; min-height: 100px;">
             <div class="hero-text">
                 <p class="guest-label">KOSENSAI STAMP RALLY</p>
                 <h1>会場を巡ってスタンプを集めよう</h1>
-                <p>各ブースのQRコードを読み取ると、訪問履歴が保存されます。</p>
+                <p>QRコードを読み取ってスタンプを集めて景品をゲット！</p>
             </div>
         </section>
 
-        <section class="container-section">
+        <!--   <section class="container-section">
             <h2>スタンプラリーとは</h2>
-            <p class="stamp-intro">高専祭会場の出展企業を巡って、QRコードを読み取るとスタンプが増えていく体験型コンテンツです。スマートフォンで読み取れば、会場の見どころを巡りながら楽しく参加できます。
+            <p class="stamp-intro"></p>
             </p>
-            <p class="stamp-intro">このページでは、スタンプの集め方と会場マップの確認から、実際のQR読み取りまで一つながりで体験できます。</p>
-        </section>
+        </section> -->
 
         <section class="container-section" id="stamp-rally-start">
-            <h2>スタンプラリーを始める</h2>
-            <p class="stamp-intro">まずは説明を確認してから、下のボタンでスタンプラリーを開始してください。開始後に巡る場所のカード、QR読み取りボタン、会場マップが表示されます。</p>
+            <section class="container-section stamp-about">
+                <h2>参加方法</h2>
+
+                <div class="stamp-howto">
+                    <div class="stamp-howto-grid">
+                        <div class="stamp-howto-item">
+                            <span class="stamp-howto-number">01</span>
+                            <div>
+                                <h4>スタンプラリーを開始</h4>
+                                <p>下のボタンからスタンプラリーを始めます。</p>
+                            </div>
+                        </div>
+
+                        <div class="stamp-howto-item">
+                            <span class="stamp-howto-number">02</span>
+                            <div>
+                                <h4>会場を巡る</h4>
+                                <p>各スポットを探して、気になるブースを楽しもう！</p>
+                            </div>
+                        </div>
+
+                        <div class="stamp-howto-item">
+                            <span class="stamp-howto-number">03</span>
+                            <div>
+                                <h4>QRコードを読み取る</h4>
+                                <p>スポットのQRコードを読み取るとスタンプを獲得できます。</p>
+                            </div>
+                        </div>
+
+                        <div class="stamp-howto-item">
+                            <span class="stamp-howto-number">04</span>
+                            <div>
+                                <h4>特典をゲット</h4>
+                                <p>一定数のスタンプを獲得すると、特典をゲットできます！</p>
+                                <p>学生は抽選会での当選確率がアップ！</p>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="stamp-notice">
+                    <h3>ご利用について</h3>
+                    <ul>
+                        <li>QRコードの読み取りには、カメラの使用を許可してください。</li>
+                        <li>データの消失を防ぐため、履歴の削除等はしないでください。</li>
+                        <li>同じスポットのスタンプを複数回獲得することはできません。</li>
+                    </ul>
+                </div>
+            </section>
 
             <div class="stamp-survey" id="stamp-survey" aria-label="任意アンケート">
                 <h3>開始前アンケート（任意）</h3>
-                <p class="stamp-note">未回答のまま開始できます。未回答の場合、属性は null として記録されます。</p>
+                <p class="stamp-note">
+                    20秒ほどで回答できます。<br>
+                    未回答のまま開始することもできます。
+                </p>
+
                 <div class="stamp-survey-grid">
+
                     <label>
                         年代
                         <select id="survey-age-group">
                             <option value="">回答しない</option>
-                            <option value="under-13">13歳未満</option>
-                            <option value="13-18">13-18歳</option>
-                            <option value="19-29">19-29歳</option>
-                            <option value="30-49">30-49歳</option>
-                            <option value="50-plus">50歳以上</option>
+                            <option value="under-13">小学生以下</option>
+                            <option value="13-15">中学生</option>
+                            <option value="16-18">高校生</option>
+                            <option value="student">高専生・大学生</option>
+                            <option value="20s">20代</option>
+                            <option value="30s">30代</option>
+                            <option value="40s">40代</option>
+                            <option value="50-plus">50代以上</option>
                         </select>
                     </label>
+
                     <label>
-                        来場区分
-                        <select id="survey-visitor-type">
+                        高専祭を知ったきっかけ
+                        <select id="survey-discovery">
                             <option value="">回答しない</option>
-                            <option value="student">学生</option>
-                            <option value="guardian">保護者</option>
-                            <option value="alumni">卒業生</option>
-                            <option value="community">地域来場者</option>
+                            <option value="friend">友人・知人から</option>
+                            <option value="school">学校・学校関係者から</option>
+                            <option value="poster">ポスター・チラシ</option>
+                            <option value="sns">SNS</option>
+                            <option value="website">公式Webサイト</option>
+                            <option value="previous">以前来たことがある</option>
                             <option value="other">その他</option>
                         </select>
                     </label>
+
                     <label>
-                        同伴
-                        <select id="survey-group-type">
+                        お住まいの地域
+                        <select id="survey-area">
                             <option value="">回答しない</option>
-                            <option value="alone">1人</option>
-                            <option value="family">家族</option>
-                            <option value="friends">友人</option>
-                            <option value="school-group">学校関係者グループ</option>
-                            <option value="other">その他</option>
+                            <option value="hamada">浜田市</option>
+                            <option value="gotsu">江津市</option>
+                            <option value="masuda">益田市</option>
+                            <option value="oda">大田市</option>
+                            <option value="izumo">出雲市</option>
+                            <option value="matsue">松江市</option>
+                            <option value="other-shimane">その他の島根県内</option>
+                            <option value="outside-shimane">島根県外</option>
                         </select>
                     </label>
+
                 </div>
             </div>
 
@@ -511,43 +837,34 @@
             <div id="stamp-summary" class="stamp-summary"></div>
         </section>
 
-        <section class="container-section">
-            <h2>スタンプラリーをさらに楽しむ</h2>
-            <div class="cards">
-                <a href="./event.html" class="card">
-                    <img src="./images/event.jpg" alt="イベント紹介">
-                    <div class="card-body">
-                        <h3>イベント紹介</h3>
-                        <p>ステージや体験企画のタイムテーブルを確認できます。</p>
-                    </div>
-                </a>
-                <a href="./shop.html" class="card">
-                    <img src="./images/shop.jpg" alt="模擬店紹介">
-                    <div class="card-body">
-                        <h3>模擬店紹介</h3>
-                        <p>会場で人気の模擬店やお食事スポットをチェック。
-                    </div>
-                </a>
-                <a href="./about.html" class="card">
-                    <img src="./images/about.jpg" alt="高専祭とは">
-                    <div class="card-body">
-                        <h3>高専祭とは</h3>
-                        <p>開催の目的や見どころを知って、巡り方をイメージしよう。</p>
-                    </div>
-                </a>
-                <a href="./map.html" class="card">
-                    <img src="./images/header_ed.jpg" alt="会場マップ">
-                    <div class="card-body">
-                        <h3>会場マップ</h3>
-                        <p>各ブースの場所と移動ルートを確認して、効率よく回れます。</p>
-                    </div>
-                </a>
-            </div>
-        </section>
     </main>
 
     <footer>
-        <p>© 2026 松江高専 高専祭実行委員</p>
+
+        <!-- お問い合わせ・規約等 -->
+        <div class="footer-legal">
+
+            <a href="./privacy.html">プライバシーポリシー</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./contact.html">お問い合わせ</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./disclaimer.html">免責事項</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./copyright.html">著作権について</a>
+
+        </div>
+
+
+        <!-- コピーライト -->
+        <div class="footer-bottom">
+            <p> 2026 松江高専 高専祭実行委員会</p>
+        </div>
     </footer>
 
 </body>

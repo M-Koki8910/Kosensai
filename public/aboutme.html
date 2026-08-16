@@ -10,26 +10,12 @@
 
     <title>このサイトについて</title>
     <style>
-        /* =========================================
-   About Me Page
-   すべて .aboutme 配下に限定
-   ========================================= */
-
         .aboutme {
             width: 100%;
-            margin: 0;
-            padding: 0;
-
-            box-sizing: border-box;
-
-            color: #26343d;
-            line-height: 1.9;
+            color: #1f2937;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef4f8 100%);
+            line-height: 1.8;
         }
-
-
-        /* =========================================
-   共通
-   ========================================= */
 
         .aboutme *,
         .aboutme *::before,
@@ -37,350 +23,185 @@
             box-sizing: border-box;
         }
 
-        .aboutme p,
         .aboutme h1,
         .aboutme h2,
-        .aboutme h3 {
+        .aboutme h3,
+        .aboutme p,
+        .aboutme ul {
             margin-top: 0;
         }
 
-        .aboutme p {
-            margin-bottom: 1.5em;
-            width: auto;
-            max-width: none;
-
-            overflow-wrap: break-word;
-            word-break: normal;
+        .aboutme p,
+        .aboutme ul {
+            margin-bottom: 1rem;
+            font-size: 1rem;
         }
-
-        .aboutme p:last-child {
-            margin-bottom: 0;
-        }
-
-
-        /* =========================================
-   Hero
-   ========================================= */
 
         .aboutme-hero {
-            width: 100%;
-            padding: 100px 20px;
-
-            background: linear-gradient(135deg,
-                    #183b56,
-                    #2c6e9e);
-
-            color: #ffffff;
+            padding: 90px 20px 70px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: #fff;
         }
 
         .aboutme-hero-inner {
-            width: 100%;
             max-width: 1000px;
             margin: 0 auto;
-
             text-align: center;
         }
 
         .aboutme-eyebrow {
-            margin-bottom: 15px;
-
-            font-size: 0.85rem;
-            font-weight: bold;
-            letter-spacing: 0.2em;
+            margin-bottom: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 0.18em;
+            font-size: 0.78rem;
+            font-weight: 700;
         }
 
         .aboutme-hero h1 {
-            margin-bottom: 25px;
-
-            font-size: 2.5rem;
-            line-height: 1.4;
+            margin-bottom: 16px;
+            font-size: clamp(2.1rem, 4vw, 3.2rem);
+            line-height: 1.3;
+            font-weight: 800;
         }
 
         .aboutme-lead {
-            max-width: 700px !important;
-            margin: 0 auto !important;
-
-            font-size: 1.05rem;
-            line-height: 2;
-        }
-
-
-        /* =========================================
-   Section
-   ========================================= */
-
-        .aboutme-section {
-            width: 100%;
-            padding: 85px 20px;
-
-            background: #ffffff;
-        }
-
-        .aboutme-section-gray {
-            background: #f5f8fb;
-        }
-
-
-        /* =========================================
-   Inner
-   ========================================= */
-
-        .aboutme-inner {
-            width: 100%;
-            max-width: 1000px;
+            max-width: 760px;
             margin: 0 auto;
+            font-size: 1.08rem;
+            line-height: 1.9;
+            color: rgba(255, 255, 255, 0.9);
         }
 
+        .aboutme-page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 72px 20px;
+        }
 
-        /* =========================================
-   Heading
-   ========================================= */
+        .aboutme-page.aboutme-muted {
+            background: rgba(255, 255, 255, 0.65);
+        }
 
         .aboutme-heading {
-            margin-bottom: 45px;
+            margin-bottom: 32px;
         }
 
         .aboutme-label {
-            margin-bottom: 5px !important;
-
-            color: #2c6e9e;
-
-            font-size: 0.85rem !important;
-            font-weight: bold;
-            letter-spacing: 0.15em;
+            margin-bottom: 8px;
+            color: #1e3a8a;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.16em;
         }
 
         .aboutme-heading h2 {
-            margin-bottom: 0;
-
-            font-size: 2rem;
-            line-height: 1.5;
+            margin: 0;
+            font-size: clamp(1.7rem, 2.4vw, 2.4rem);
+            line-height: 1.4;
+            color: #0f172a;
         }
 
-        .aboutme-subtitle {
-            margin-top: 5px !important;
-
-            color: #687780;
-
-            font-size: 0.9rem !important;
-        }
-
-
-        /* =========================================
-   Content
-   ========================================= */
-
-        .aboutme-content {
-            width: 100%;
-            max-width: none;
-
-            font-size: 1rem;
-        }
-
-
-        /* =========================================
-   Technology / Example Cards
-   ========================================= */
-
-        .aboutme-tech-grid,
-        .aboutme-example-grid {
+        .aboutme-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-
-            gap: 20px;
-
-            width: 100%;
-            margin: 35px 0;
+            gap: 22px;
         }
 
         .aboutme-card {
-            width: 100%;
-            min-width: 0;
-
-            padding: 25px;
-
-            background: #ffffff;
-
-            border: 1px solid #dce5ec;
-            border-radius: 12px;
-
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 18px;
+            padding: 26px 24px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
         }
 
         .aboutme-card h3 {
             margin-bottom: 12px;
-
-            color: #245f88;
-
-            font-size: 1.2rem;
-            line-height: 1.5;
+            font-size: 1.25rem;
+            color: #1e3a8a;
         }
 
         .aboutme-card p {
             margin-bottom: 0;
+            color: #475569;
         }
 
-
-        /* =========================================
-   Note
-   ========================================= */
+        .aboutme-card.aboutme-highlight {
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
 
         .aboutme-note {
-            width: 100%;
-            margin: 35px 0;
-            padding: 30px;
-
-            background: #eef6fc;
-
-            border-left: 5px solid #2c6e9e;
-            border-radius: 8px;
+            margin-top: 28px;
+            padding: 24px 26px;
+            border-left: 5px solid #1e3a8a;
+            background: #f8fafc;
+            border-radius: 12px;
         }
 
         .aboutme-note h3 {
-            margin-bottom: 15px;
-
-            color: #245f88;
+            margin-bottom: 10px;
+            color: #1e3a8a;
         }
 
+        .aboutme-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 12px;
+        }
 
-        /* =========================================
-   Message
-   ========================================= */
-
-        .aboutme-message {
-            width: 100%;
-            margin-top: 35px;
-            padding: 30px;
-
-            background: #eef6fc;
-
-            border: 1px solid #c8deed;
+        .aboutme-list li {
+            position: relative;
+            padding: 14px 18px 14px 46px;
+            background: #fff;
+            border: 1px solid rgba(148, 163, 184, 0.2);
             border-radius: 12px;
+            color: #334155;
         }
 
-        .aboutme-message p {
-            margin-bottom: 1em;
+        .aboutme-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 18px;
+            top: 12px;
+            color: #1e3a8a;
+            font-weight: 800;
         }
 
-
-        /* =========================================
-   Final Message
-   ========================================= */
-
-        .aboutme-final-message {
-            width: 100%;
-            margin-top: 40px;
-            padding: 35px;
-
-            text-align: center;
-
-            background: #ffffff;
-
-            border-radius: 12px;
+        .aboutme-cta {
+            margin-top: 30px;
+            padding: 26px 24px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-radius: 18px;
+            color: #fff;
+            box-shadow: 0 16px 30px rgba(30, 58, 138, 0.18);
         }
 
-        .aboutme-final-message strong {
+        .aboutme-cta strong {
             display: block;
-
-            margin: 25px 0;
-
-            color: #245f88;
-
-            font-size: 1.5rem;
-            line-height: 1.5;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
         }
 
-
-        /* =========================================
-   Tablet
-   ========================================= */
-
-        @media (max-width: 768px) {
-
+        @media (max-width: 700px) {
             .aboutme-hero {
-                padding: 70px 20px;
+                padding-top: 72px;
             }
 
-            .aboutme-hero h1 {
-                font-size: 2rem;
+            .aboutme-page {
+                padding: 58px 16px;
             }
 
-            .aboutme-section {
-                padding: 60px 20px;
-            }
-
-            .aboutme-heading {
-                margin-bottom: 35px;
-            }
-
-            .aboutme-heading h2 {
-                font-size: 1.7rem;
-            }
-
-            .aboutme-tech-grid,
-            .aboutme-example-grid {
+            .aboutme-grid {
                 grid-template-columns: 1fr;
-                gap: 15px;
             }
 
-            .aboutme-card {
-                padding: 22px;
-            }
-
+            .aboutme-card,
             .aboutme-note,
-            .aboutme-message,
-            .aboutme-final-message {
-                padding: 25px;
-            }
-        }
-
-
-        /* =========================================
-   Smartphone
-   ========================================= */
-
-        @media (max-width: 480px) {
-
-            .aboutme-hero {
-                padding: 55px 15px;
-            }
-
-            .aboutme-hero h1 {
-                font-size: 1.6rem;
-            }
-
-            .aboutme-lead {
-                font-size: 0.95rem;
-            }
-
-            .aboutme-section {
-                padding: 50px 15px;
-            }
-
-            .aboutme-heading {
-                margin-bottom: 30px;
-            }
-
-            .aboutme-heading h2 {
-                font-size: 1.45rem;
-            }
-
-            .aboutme-content {
-                font-size: 0.95rem;
-            }
-
-            .aboutme-card {
-                padding: 20px;
-            }
-
-            .aboutme-note,
-            .aboutme-message,
-            .aboutme-final-message {
-                padding: 20px;
-            }
-
-            .aboutme-final-message strong {
-                font-size: 1.25rem;
+            .aboutme-cta {
+                padding: 20px 18px;
             }
         }
     </style>
@@ -423,335 +244,151 @@
     </nav>
 
     <main class="aboutme">
-
-        <!-- ページタイトル -->
         <section class="aboutme-hero">
             <div class="aboutme-hero-inner">
                 <p class="aboutme-eyebrow">ABOUT THIS SITE</p>
                 <h1>このサイトについて</h1>
                 <p class="aboutme-lead">
-                    この高専祭Webサイトがどのように作られたのか、について紹介します。
+                    高専祭の情報を、見やすく・わかりやすく・もっと楽しめる形で届けるために作られたWebサイトです。
                 </p>
             </div>
         </section>
 
+        <section class="aboutme-page">
+            <div class="aboutme-heading">
+                <p class="aboutme-label">01</p>
+                <h2>サイトの役割</h2>
+            </div>
 
-        <!-- このサイトについて -->
-        <section class="aboutme-section">
-            <div class="aboutme-inner">
-
-                <div class="aboutme-heading">
-                    <p class="aboutme-label">01</p>
-                    <h2>このサイトについて</h2>
-                </div>
-
-                <div class="aboutme-content">
+            <div class="aboutme-grid">
+                <article class="aboutme-card aboutme-highlight">
+                    <h3>情報を見つけやすくする</h3>
                     <p>
-                        普段何気なく見ているこのWebサイトも、
-                        ページを作り、デザインを考え、動作を確認し、
-                        サーバーに公開することで成り立っています。
+                        高専祭に関するイベント情報、アクセス情報、会場の流れを、必要なときにすぐ確認できるように整理しています。
                     </p>
+                </article>
 
+                <article class="aboutme-card">
+                    <h3>来場者が使いやすいようにする</h3>
                     <p>
-                        このページでは、今回の高専祭Webサイトが
-                        どのように作られたのか、なぜ作ろうと思ったのか、
-                        そして次の製作者へのメッセージを紹介します。
+                        スマートフォンでも見やすいレイアウトを意識し、移動や参加を考えた導線で構成しています。
                     </p>
-                </div>
+                </article>
 
+                <article class="aboutme-card">
+                    <h3>体験を増やす</h3>
+                    <p>
+                        単なる案内ではなく、スタンプラリーやイベント紹介など、参加体験が生まれるコンテンツを取り入れています。
+                    </p>
+                </article>
+
+                <article class="aboutme-card">
+                    <h3>情報の伝わり方を大切にする</h3>
+                    <p>
+                        難しすぎない表現とシンプルな見た目を心がけ、誰でも安心して使えるページを目指しました。
+                    </p>
+                </article>
             </div>
         </section>
 
+        <section class="aboutme-page aboutme-muted">
+            <div class="aboutme-heading">
+                <p class="aboutme-label">02</p>
+                <h2>使っている技術</h2>
+            </div>
 
-        <!-- 技術構成 -->
-        <section class="aboutme-section aboutme-section-gray">
-            <div class="aboutme-inner">
+            <div class="aboutme-grid">
+                <article class="aboutme-card">
+                    <h3>HTML</h3>
+                    <p>ページの全体構造を作り、文章や見出し、リンク、画像を整理して配置しています。</p>
+                </article>
 
-                <div class="aboutme-heading">
-                    <p class="aboutme-label">02</p>
-                    <h2>技術構成</h2>
-                </div>
+                <article class="aboutme-card">
+                    <h3>CSS</h3>
+                    <p>見た目の統一感や余白、レスポンシブ対応を行い、伝わりやすいレイアウトを整えています。</p>
+                </article>
 
-                <div class="aboutme-content">
+                <article class="aboutme-card">
+                    <h3>JavaScript</h3>
+                    <p>ページに動きをつけたり、情報の切り替えを行ったりすることで、より体験的なサイトにしています。</p>
+                </article>
 
-                    <p>
-                        このWebサイトは、主に以下の技術を組み合わせて
-                        製作しています。
-                    </p>
-
-                    <div class="aboutme-tech-grid">
-
-                        <article class="aboutme-card">
-                            <h3>HTML</h3>
-                            <p>
-                                Webページの構造を作るために使用しています。
-                                文章や画像、リンクなど、ページの基本的な構成を担当しています。
-                            </p>
-                        </article>
-
-                        <article class="aboutme-card">
-                            <h3>CSS</h3>
-                            <p>
-                                Webサイトのデザインやレイアウトを整えるために使用しています。
-                                PCだけでなく、スマートフォンでも見やすくなるよう設計しています。
-                            </p>
-                        </article>
-
-                        <article class="aboutme-card">
-                            <h3>JavaScript</h3>
-                            <p>
-                                ページに動きや機能を追加するために使用しています。
-                                ユーザーの操作に応じた処理や、サーバーとの通信などを行っています。
-                            </p>
-                        </article>
-
-                        <article class="aboutme-card">
-                            <h3>サーバー処理</h3>
-                            <p>
-                                公開時にはサーバー側の処理も組み合わせています。
-                                Webページを公開するだけでなく、動的な機能も実現しています。
-                            </p>
-                        </article>
-
-                    </div>
-
-                    <p>
-                        このように、Webサイトは一つの技術だけで作られているわけではありません。
-                        複数の技術を組み合わせることで、一つのWebサイトとして動作しています。
-                    </p>
-
-                </div>
-
+                <article class="aboutme-card">
+                    <h3>サーバー</h3>
+                    <p>公開環境で動くようにし、さまざまな機能やデータのやり取りを実際に動かせる形にしています。</p>
+                </article>
             </div>
         </section>
 
+        <section class="aboutme-page">
+            <div class="aboutme-heading">
+                <p class="aboutme-label">03</p>
+                <h2>制作の意図</h2>
+            </div>
 
-        <!-- 作った理由 -->
-        <section class="aboutme-section">
-            <div class="aboutme-inner">
+            <p>
+                高専祭には多くの来場者が訪れます。そのときに必要になるのは、ただ情報が載っていることではなく、「どこを見ればいいか」「どこに行けばいいか」をすぐに理解できることです。
+            </p>
 
-                <div class="aboutme-heading">
-                    <p class="aboutme-label">03</p>
-                    <h2>なぜ作ろうと思ったのか</h2>
-                </div>
+            <p>
+                そのため、このサイトでは、見た目を派手にしすぎず、情報の見やすさと使いやすさを優先して構成しました。必要な情報にたどり着きやすくし、安心して閲覧できるようにすることを大切にしています。
+            </p>
 
-                <div class="aboutme-content">
-
-                    <p>
-                        高専祭には毎年たくさんの人が訪れます。
-                    </p>
-
-                    <p>
-                        せっかく高専祭を開催するのであれば、
-                        情報を掲載するだけのWebページではなく、
-                        実際に来場者が使って楽しめるものを作ってみたい。
-                        そう考えたことが、このサイトを作るきっかけになりました。
-                    </p>
-
-                    <p>
-                        また、普段学校で学んでいる情報系の知識を、
-                        実際に多くの人が利用するものに使ってみたいという思いもありました。
-                    </p>
-
-                    <div class="aboutme-note">
-                        <h3>「実際に使われるもの」を作る</h3>
-
-                        <p>
-                            授業でプログラムを書くことと、
-                            実際に一般公開するWebサイトを作ることでは、
-                            考えなければならないことが大きく異なります。
-                        </p>
-
-                        <p>
-                            スマートフォンで見やすいか、
-                            多くの人が同時にアクセスしても大丈夫か、
-                            操作が分かりやすいかなど、
-                            実際に使われるものだからこそ考えることが増えていきます。
-                        </p>
-                    </div>
-
-                </div>
-
+            <div class="aboutme-note">
+                <h3>重要なのは「見やすさ」</h3>
+                <p>
+                    企画や情報が多くなるほど、ユーザーが迷いやすくなります。だからこそ、余白を確保し、見出しを整理し、必要な要素をシンプルに並べることが大切です。
+                </p>
             </div>
         </section>
 
+        <section class="aboutme-page aboutme-muted">
+            <div class="aboutme-heading">
+                <p class="aboutme-label">04</p>
+                <h2>このサイトが目指しているもの</h2>
+            </div>
 
-        <!-- 製作を通して -->
-        <section class="aboutme-section aboutme-section-gray">
-            <div class="aboutme-inner">
+            <ul class="aboutme-list">
+                <li>来場者が迷わず情報を見つけられること</li>
+                <li>学校の魅力やイベントの雰囲気を自然に伝えること</li>
+                <li>モバイルでも快適に閲覧できること</li>
+                <li>次の人が改修しやすい構造にすること</li>
+            </ul>
 
-                <div class="aboutme-heading">
-                    <p class="aboutme-label">04</p>
-                    <h2>製作を通して</h2>
-                </div>
-
-                <div class="aboutme-content">
-
-                    <p>
-                        今回の製作では、HTMLやCSS、JavaScriptを書くだけではなく、
-                        Webサイトを実際にサーバーへ公開するところまで経験しました。
-                    </p>
-
-                    <p>
-                        製作中には、思った通りに表示されなかったり、
-                        スマートフォンでは正常に動かなかったり、
-                        サーバー上ではローカル環境と異なる問題が発生したりと、
-                        多くの問題に直面しました。
-                    </p>
-
-                    <p>
-                        しかし、そのたびに調べて、試して、修正することで、
-                        少しずつ完成に近づけることができました。
-                    </p>
-
-                    <p>
-                        最初からすべての知識があったわけではありません。
-                        必要になった技術をその都度調べながら作っていくことで、
-                        実際に人が利用するWebサイトとして公開するところまで
-                        たどり着くことができました。
-                    </p>
-
-                </div>
-
+            <div class="aboutme-cta">
+                <strong>「作る」ことの価値</strong>
+                <p>このサイトは、学校のイベントをよりよく伝えるための手段でもあり、技術を使って人に届く形にするための一歩です。</p>
             </div>
         </section>
-
-
-        <!-- 次の製作者へ -->
-        <section class="aboutme-section">
-            <div class="aboutme-inner">
-
-                <div class="aboutme-heading">
-                    <p class="aboutme-label">05</p>
-                    <h2>次の製作者へ</h2>
-                </div>
-
-                <div class="aboutme-content">
-
-                    <p>
-                        もしこのWebサイトを次の高専祭でも使ってもらえるのであれば、
-                        ぜひ遠慮なく改造してください。
-                    </p>
-
-                    <p>
-                        全部を理解してから触る必要はありません。
-                    </p>
-
-                    <p>
-                        「ここを変えたい」と思ったところからコードを読んで、
-                        調べて、実際に変更してみてください。
-                    </p>
-
-                    <p>
-                        最初はよく分からなくても、
-                        実際に動かしてみると意外と何とかなります。
-                    </p>
-
-                    <div class="aboutme-message">
-                        <p>
-                            このサイトをそのまま維持することよりも、
-                            次の人が自分たちのアイデアを加えていくことの方が、
-                            このサイトを作った意味があると思っています。
-                        </p>
-
-                        <p>
-                            今年よりもさらに便利で、面白い高専祭Webサイトにしてください。
-                        </p>
-                    </div>
-
-                </div>
-
-            </div>
-        </section>
-
-
-        <!-- 高専に入ると -->
-        <section class="aboutme-section aboutme-section-gray">
-            <div class="aboutme-inner">
-
-                <div class="aboutme-heading">
-                    <p class="aboutme-label">06</p>
-                    <h2>高専に入ると、こんなものが作れます</h2>
-                    <p class="aboutme-subtitle">（人による）</p>
-                </div>
-
-                <div class="aboutme-content">
-
-                    <p>
-                        高専では、授業でプログラミングや情報技術について
-                        学ぶ機会があります。
-                    </p>
-
-                    <p>
-                        ただ、学校で学んだことを使って何を作るかは人それぞれです。
-                    </p>
-
-                    <div class="aboutme-example-grid">
-
-                        <article class="aboutme-card">
-                            <h3>Webサイト</h3>
-                            <p>
-                                HTMLやCSS、JavaScriptなどを使って、
-                                自分で考えたWebサイトを作ることができます。
-                            </p>
-                        </article>
-
-                        <article class="aboutme-card">
-                            <h3>アプリ・ゲーム</h3>
-                            <p>
-                                プログラミングを使って、
-                                アプリやゲームなどを作ることもできます。
-                            </p>
-                        </article>
-
-                        <article class="aboutme-card">
-                            <h3>ロボット・電子工作</h3>
-                            <p>
-                                プログラムだけでなく、
-                                電子回路や機械と組み合わせて動くものを作ることもできます。
-                            </p>
-                        </article>
-
-                        <article class="aboutme-card">
-                            <h3>その他いろいろ</h3>
-                            <p>
-                                AI、データ分析、ネットワークなど、
-                                興味を持った分野を掘り下げていくこともできます。
-                            </p>
-                        </article>
-
-                    </div>
-
-                    <div class="aboutme-final-message">
-
-                        <p>
-                            「高専に入ったら必ずこんなものが作れるようになる」
-                            というものではありません。
-                        </p>
-
-                        <p>
-                            ですが、興味を持って、自分で調べて、
-                            実際に手を動かしていけば、
-                            学校で学んだ知識を使って、
-                            自分が考えたものを形にすることができます。
-                        </p>
-
-                        <strong>何を作るかは、自分次第です。</strong>
-
-                        <p>
-                            このサイトを見て、
-                            「自分も何か作ってみたい」と思ってくれる人が
-                            一人でもいれば、このサイトを作った甲斐があったと思います。
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-        </section>
-
     </main>
+
+        <footer>
+
+        <!-- お問い合わせ・規約等 -->
+        <div class="footer-legal">
+
+            <a href="./privacy.html">プライバシーポリシー</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./contact.html">お問い合わせ</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./disclaimer.html">免責事項</a>
+
+            <span aria-hidden="true">|</span>
+
+            <a href="./copyright.html">著作権について</a>
+
+        </div>
+
+
+        <!-- コピーライト -->
+        <div class="footer-bottom">
+            <p> 2026 松江高専 高専祭実行委員会</p>
+        </div>
+    </footer>
 
 </body>
 

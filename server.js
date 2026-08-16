@@ -326,6 +326,14 @@ ensureColumn('sessions', { name: 'role', sql: 'role TEXT NOT NULL DEFAULT "visit
 ensureColumn('sessions', { name: 'scope', sql: 'scope TEXT NOT NULL DEFAULT "all"' });
 ensureColumn('sessions', { name: 'profile_attributes', sql: 'profile_attributes TEXT' });
 ensureColumn('sessions', { name: 'expires_at', sql: 'expires_at TEXT' });
+ensureColumn('stamp_visits', { name: 'survey_age', sql: 'survey_age TEXT' });
+ensureColumn('stamp_visits', { name: 'survey_discovery', sql: 'survey_discovery TEXT' });
+ensureColumn('stamp_visits', { name: 'survey_area', sql: 'survey_area TEXT' });
+ensureColumn('stamp_visits', { name: 'visitor_id', sql: 'visitor_id TEXT' });
+ensureColumn('stamp_visits', { name: 'company_id', sql: 'company_id TEXT' });
+ensureColumn('stamp_clicks', { name: 'survey_age', sql: 'survey_age TEXT' });
+ensureColumn('stamp_clicks', { name: 'survey_discovery', sql: 'survey_discovery TEXT' });
+ensureColumn('stamp_clicks', { name: 'survey_area', sql: 'survey_area TEXT' });
 
 // ============================================================================
 // 掲示板・アナウンス機能用テーブル
@@ -1869,17 +1877,23 @@ let page = pathname
       const userAgent = String(req.headers['user-agent'] || '').slice(0, 512);
       const stampName = LOCATION_LABELS[stampId];
 
+      // アンケート属性を抽出
+      const attributes = (payload && typeof payload.attributes === 'object') ? payload.attributes : {};
+      const surveyAge = String(attributes.age || '').trim() || null;
+      const surveyDiscovery = String(attributes.discovery || '').trim() || null;
+      const surveyArea = String(attributes.area || '').trim() || null;
+
       if (type === 'visit') {
         db.prepare(`
-          INSERT INTO stamp_visits (stamp_id, stamp_name, session_id, user_agent, page, created_at)
-          VALUES (?, ?, ?, ?, ?, datetime('now', '+9 hours'))
-        `).run(stampId, stampName, sessionId || null, userAgent, page || null);
+          INSERT INTO stamp_visits (stamp_id, stamp_name, session_id, user_agent, page, survey_age, survey_discovery, survey_area, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'))
+        `).run(stampId, stampName, sessionId || null, userAgent, page || null, surveyAge, surveyDiscovery, surveyArea);
 
         logEvent('stamp_visit', {
           sessionId,
           userAgent,
           page,
-          detail: JSON.stringify({ stampId, stampName })
+          detail: JSON.stringify({ stampId, stampName, attributes: { surveyAge, surveyDiscovery, surveyArea } })
         });
 
         return sendJson(res, 200, { ok: true });
@@ -1888,15 +1902,15 @@ let page = pathname
       // click / jump はどちらも stamp_clicks に記録（後方互換）
       if (type === 'click' || type === 'jump') {
         db.prepare(`
-          INSERT INTO stamp_clicks (stamp_id, stamp_name, session_id, user_agent, page, created_at)
-          VALUES (?, ?, ?, ?, ?, datetime('now', '+9 hours'))
-        `).run(stampId, stampName, sessionId || null, userAgent, page || null);
+          INSERT INTO stamp_clicks (stamp_id, stamp_name, session_id, user_agent, page, survey_age, survey_discovery, survey_area, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'))
+        `).run(stampId, stampName, sessionId || null, userAgent, page || null, surveyAge, surveyDiscovery, surveyArea);
 
         logEvent(`stamp_${type}`, {
           sessionId,
           userAgent,
           page,
-          detail: JSON.stringify({ stampId, stampName })
+          detail: JSON.stringify({ stampId, stampName, attributes: { surveyAge, surveyDiscovery, surveyArea } })
         });
 
         return sendJson(res, 200, { ok: true });
@@ -2982,9 +2996,26 @@ let page = pathname
       try {
         ensureVisitorRecord(visitorId, req);
 
+        // セッションからアンケート属性を取得
+        const session = db.prepare('SELECT profile_attributes FROM sessions WHERE id = ?').get(visitorId);
+        let surveyAge = null;
+        let surveyDiscovery = null;
+        let surveyArea = null;
+
+        if (session && session.profile_attributes) {
+          try {
+            const attributes = JSON.parse(session.profile_attributes);
+            surveyAge = attributes.age || null;
+            surveyDiscovery = attributes.discovery || null;
+            surveyArea = attributes.area || null;
+          } catch (e) {
+            // JSON パース失敗時は無視
+          }
+        }
+
         // スタンプが既に取得されているか確認
         const existingStamp = db.prepare(
-          'SELECT * FROM stamp_history WHERE visitor_id = ? AND company_id = ?'
+          'SELECT * FROM stamp_visits WHERE visitor_id = ? AND company_id = ?'
         ).get(visitorId, companyId);
 
         if (existingStamp) {
@@ -2997,16 +3028,33 @@ let page = pathname
 
         // スタンプを記録
         const result = db.prepare(`
-          INSERT INTO stamp_history (visitor_id, company_id, timestamp)
-          VALUES (?, ?, datetime('now', '+9 hours'))
-        `).run(visitorId, companyId);
+          INSERT INTO stamp_visits (stamp_id, stamp_name, session_id, visitor_id, company_id, survey_age, survey_discovery, survey_area, user_agent, page, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+9 hours'))
+        `).run(
+          companyId,
+          LOCATION_LABELS[companyId] || companyId,
+          visitorId,
+          visitorId,
+          companyId,
+          surveyAge,
+          surveyDiscovery,
+          surveyArea,
+          req.headers['user-agent'] || '',
+          req.url
+        );
 
         logEvent('stamp_acquired', {
           username: null,
           sessionId: getCookies(req)[SESSION_COOKIE_NAME],
           userAgent: req.headers['user-agent'] || '',
           page: pathname,
-          detail: JSON.stringify({ visitor_id: visitorId, company_id: companyId })
+          detail: JSON.stringify({ 
+            visitor_id: visitorId, 
+            company_id: companyId,
+            survey_age: surveyAge,
+            survey_discovery: surveyDiscovery,
+            survey_area: surveyArea
+          })
         });
 
         return sendJson(res, 201, { 
@@ -3036,7 +3084,7 @@ let page = pathname
       }
 
       const stamps = db.prepare(
-        'SELECT * FROM stamp_history WHERE visitor_id = ? ORDER BY timestamp ASC'
+        'SELECT * FROM stamp_visits WHERE visitor_id = ? AND company_id IS NOT NULL ORDER BY created_at ASC'
       ).all(visitorId);
 
       const totalCompanies = COMPANY_MASTER.length;
@@ -3090,7 +3138,7 @@ let page = pathname
             lottery_number: existingEntry.lottery_number,
             weight: parseFloat(Number(existingEntry.weight).toFixed(4)),
             acquired_stamps: db.prepare(
-              'SELECT COUNT(*) as count FROM stamp_history WHERE visitor_id = ?'
+              'SELECT COUNT(*) as count FROM stamp_visits WHERE visitor_id = ? AND company_id IS NOT NULL'
             ).get(visitorId).count,
             total_companies: COMPANY_MASTER.length,
             existing: true
@@ -3099,7 +3147,7 @@ let page = pathname
 
         // スタンプ取得履歴を取得
         const stamps = db.prepare(
-          'SELECT COUNT(*) as count FROM stamp_history WHERE visitor_id = ?'
+          'SELECT COUNT(*) as count FROM stamp_visits WHERE visitor_id = ? AND company_id IS NOT NULL'
         ).get(visitorId);
 
         const acquiredCount = stamps.count;
@@ -3256,7 +3304,8 @@ let page = pathname
         // 各ブースのスタンプ取得数
         const companyStats = db.prepare(`
           SELECT company_id, COUNT(*) as stamp_count
-          FROM stamp_history
+          FROM stamp_visits
+          WHERE company_id IS NOT NULL
           GROUP BY company_id
           ORDER BY stamp_count DESC
         `).all();
@@ -3267,9 +3316,9 @@ let page = pathname
             v.visitor_id,
             v.created_at,
             v.last_seen,
-            COUNT(sh.id) as stamps_acquired
+            COUNT(sv.id) as stamps_acquired
           FROM visitors v
-          LEFT JOIN stamp_history sh ON v.visitor_id = sh.visitor_id
+          LEFT JOIN stamp_visits sv ON v.visitor_id = sv.visitor_id AND sv.company_id IS NOT NULL
           GROUP BY v.visitor_id
           ORDER BY stamps_acquired DESC, v.last_seen DESC
         `).all();

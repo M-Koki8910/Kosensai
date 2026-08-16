@@ -43,8 +43,8 @@ function initStampRally() {
     const stampSection = document.getElementById("stamp-rally");
     const readerEl = document.getElementById("reader");
     const surveyAgeEl = document.getElementById("survey-age-group");
-    const surveyVisitorTypeEl = document.getElementById("survey-visitor-type");
-    const surveyGroupTypeEl = document.getElementById("survey-group-type");
+    const surveyDiscoveryEl = document.getElementById("survey-discovery");
+    const surveyAreaEl = document.getElementById("survey-area");
     const scanModalEl = document.getElementById("scan-modal");
     const scanModalCloseBtn = document.getElementById("scan-modal-close");
     const scanModalRetryBtn = document.getElementById("scan-modal-retry");
@@ -618,6 +618,7 @@ function initStampRally() {
 
     async function sendStampEvent(type, stampId) {
         try {
+            const attributes = collectSurveyAttributes();
             await fetch('/api/stamp-event', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -625,6 +626,7 @@ function initStampRally() {
                     type,
                     stampId,
                     page: window.location.pathname,
+                    attributes: attributes || {},
                 }),
             });
         } catch (error) {
@@ -634,9 +636,9 @@ function initStampRally() {
 
     function collectSurveyAttributes() {
         const attributes = {
-            ageGroup: surveyAgeEl ? surveyAgeEl.value : '',
-            visitorType: surveyVisitorTypeEl ? surveyVisitorTypeEl.value : '',
-            groupType: surveyGroupTypeEl ? surveyGroupTypeEl.value : '',
+            age: surveyAgeEl ? surveyAgeEl.value : '',
+            discovery: surveyDiscoveryEl ? surveyDiscoveryEl.value : '',
+            area: surveyAreaEl ? surveyAreaEl.value : '',
         };
 
         const filtered = Object.fromEntries(
