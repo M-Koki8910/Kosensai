@@ -1,0 +1,34 @@
+[
+  {
+    "id": "company-a",
+    "name": "企業A",
+    "note": "企業Aのブース前のQRコードを読み取る",
+    "linkText": "企業紹介へ",
+    "href": "../company.html",
+    "image": "../images/header_ed.jpg"
+  },
+  {
+    "id": "company-b",
+    "name": "企業B",
+    "note": "企業Bのブース前のQRコードを読み取る",
+    "linkText": "企業紹介へ",
+    "href": "../company.html",
+    "image": "../images/about.jpg"
+  },
+  {
+    "id": "company-c",
+    "name": "企業C",
+    "note": "企業Cのブース前のQRコードを読み取る",
+    "linkText": "企業紹介へ",
+    "href": "../company.html",
+    "image": "../images/event.jpg"
+  },
+  {
+    "id": "company-d",
+    "name": "企業D",
+    "note": "企業Dのブース前のQRコードを読み取る",
+    "linkText": "企業紹介へ",
+    "href": "../company.html",
+    "image": "../images/shop.jpg"
+  }
+]
