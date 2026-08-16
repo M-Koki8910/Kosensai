@@ -207,26 +207,32 @@ body {
 }
 
 .shop-page .grid {
-    padding-left: 10px;
-    padding-right: 10px;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 16px;
+    width: min(100%, 920px);
+    margin: 0 auto;
+    padding: 0 8px;
 }
 
 .shop-page .container-section {
+    max-width: 980px;
     padding-left: 16px;
     padding-right: 16px;
 }
 
 @media (max-width: 900px) {
     .shop-page .grid {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-        padding: 0 10px;
+        grid-template-columns: repeat(2, minmax(170px, 1fr));
+        gap: 14px;
+        padding: 0 8px;
     }
 }
 
 @media (max-width: 700px) {
     .shop-page .grid {
-        padding: 0 10px;
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+        gap: 12px;
+        padding: 0 8px;
     }
 
     .shop-page .container-section {
@@ -255,15 +261,30 @@ body {
     object-fit: cover;
 }
 
+/* ===== 模擬店カードを正方形にする ===== */
+.shop-card {
+    aspect-ratio: auto;
+    min-height: 0;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.shop-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+
 /* タイトル部分 */
 .card-body {
-    padding: 10px;
+    padding: 10px 10px 8px;
     text-align: center;
 }
 
 .card-body h3 {
-    font-size: 18px;
+    font-size: 0.98rem;
     margin: 0;
+    line-height: 1.5;
 }
 
 /* 詳細は普段非表示 */
@@ -564,11 +585,11 @@ h2::after {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: normal;
-    padding: 12px 15px;
+    padding: 0 12px 12px;
     background: #f9f9f9;
-    font-size: 14px;
+    font-size: 0.8rem;
     color: #666;
-    line-height: 1.5;
+    line-height: 1.45;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -582,16 +603,16 @@ h2::after {
 
 @media (max-width: 600px) {
     .shop-card .detail {
-        font-size: 13px;
-        padding: 10px 12px;
+        font-size: 0.74rem;
+        padding: 0 10px 10px;
         -webkit-line-clamp: 2;
     }
 }
 
 @media (max-width: 480px) {
     .shop-card .detail {
-        font-size: 12px;
-        padding: 8px 10px;
+        font-size: 0.72rem;
+        padding: 0 8px 8px;
         -webkit-line-clamp: 2;
     }
 }
@@ -1684,13 +1705,11 @@ h2::after {
 }
 
 .guest-left img {
-    width: 250px;
-    height: 250px;
-    border-radius: 50%;
-    border: 5px solid #fff;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    transition: transform 0.3s ease;
-    margin-bottom: 20px;
+    width: 100%;          
+    max-width: 300px;    
+    aspect-ratio: 1 / 1; 
+    object-fit: cover;   
+    border-radius: 8px;   
 }
 
 .guest-left img:hover {
