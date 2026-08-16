@@ -51,28 +51,34 @@
 
 
     <div class="container-section shop-page">
-        <h2>食べ物系</h2>
+        <h2>模擬店</h2>
         <div class="grid" id="food-grid">
             <!-- JavaScriptで動的に生成 -->
         </div>
 
-        <h2>体験系</h2>
+        <!-- <h2>体験系</h2> -->
         <div class="grid" id="experience-grid">
             <!-- JavaScriptで動的に生成 -->
         </div>
     </div>
 
     <!-- モーダルウィンドウ -->
-    <div class="modal" id="shopModal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div class="modal-body">
-                <h2 id="modalTitle"></h2>
-                <p class="modal-product"><strong>販売商品：</strong><span id="modalProduct"></span></p>
-                <p class="modal-description" id="modalDescription"></p>
-            </div>
+<div class="modal" id="shopModal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+
+        <img id="modalImage" class="modal-image" src="" alt="">
+
+        <div class="modal-body">
+            <h2 id="modalTitle"></h2>
+            <p class="modal-product">
+                <strong>内容：</strong>
+                <span id="modalProduct"></span>
+            </p>
+            <p class="modal-description" id="modalDescription"></p>
         </div>
     </div>
+</div>
 
     <script>
         // 団体データ
@@ -240,7 +246,7 @@
   },
   {
     "id": "shop-24",
-    "category": "experience",
+    "category": "food",
     "name": "帰宅部",
     "product": "フォトスポット・コスプレ",
     "description": "ギラギラで映えるフォトスポットや小物、コスプレ体験を用意しています！女子はもちろん、男子も大歓迎！みんなでワイワイ楽しみながら、高専祭の思い出を写真に残しませんか？高専生活ではなかなか味わえない青春気分を思いっきり楽しもう！"
@@ -264,7 +270,7 @@
     "category": "food",
     "name": "エコラン",
     "product": "ピザ",
-    "description": "エコランです。ピザを販売します。"
+    "description": "私たちエコラン部は子供でも食べやすい手のひらサイズのピザを販売します。定番からめちゃおもろな創作ピザまで様々な味を楽しめます。魂のピッツァをご賞味ください！"
   },
   {
     "id": "shop-28",
@@ -288,7 +294,6 @@
     "description": "私たち留学生はブラジル肉パンを販売します！ブラジルの伝統料理を日本の食材で再現します。留学生が作る本格的なブラジル料理にご興味がありましたら、ぜひお越しください！"
   }
 ];
-
         // 食べ物系と体験系に分類
         const foodShops = shops.filter(shop => shop.category === 'food');
         const experienceShops = shops.filter(shop => shop.category === 'experience');
@@ -330,11 +335,15 @@
         const closeBtn = document.querySelector('.close');
 
         function openModal(shop) {
-            document.getElementById('modalTitle').textContent = shop.name;
-            document.getElementById('modalProduct').textContent = shop.product;
-            document.getElementById('modalDescription').textContent = shop.description;
-            modal.style.display = 'block';
-        }
+         document.getElementById('modalImage').src = './images/shop.jpg';
+         document.getElementById('modalImage').alt = shop.name;
+
+         document.getElementById('modalTitle').textContent = shop.name;
+         document.getElementById('modalProduct').textContent = shop.product;
+         document.getElementById('modalDescription').textContent = shop.description;
+
+         modal.style.display = 'flex';
+         }
 
         closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
